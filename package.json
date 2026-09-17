@@ -2,10 +2,13 @@
   "name": "azm-landing",
   "version": "1.0.0",
   "private": true,
-  "type": "module",
   "description": "AZ Motorsport — landing de campagne (fitment). Page statique + une fonction Vercel qui écrit le lead dans GoHighLevel.",
   "scripts": {
-    "test": "node tools/lead.test.mjs",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "tsc --noEmit",
+    "test": "node --conditions=react-server --import ./tools/alias-hook.mjs tools/lead.test.mjs",
     "ghl:check": "node tools/ghl-check.mjs",
     "catalog": "node build-index.mjs",
     "shot": "node tools/shot.mjs",
@@ -13,5 +16,17 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "next": "^16.3.5",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^7.0.2"
   }
 }

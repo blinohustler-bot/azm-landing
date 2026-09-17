@@ -263,8 +263,12 @@ const catalog = {
   products,
 };
 
+// catalog.json est la seule source de la page : lib/catalog.ts l'importe côté serveur.
+// Il ne descend jamais dans le navigateur.
 writeFileSync(resolve(HERE, 'catalog.json'), JSON.stringify(catalog, null, 1));
-// Version <script> : la page s'ouvre en double-clic, sans serveur local (fetch est bloqué en file://).
+// Version <script>, pour logos-check.html seulement — cette page de contrôle s'ouvre
+// en double-clic, sans serveur, et fetch est bloqué en file://. La landing ne s'en
+// sert plus depuis le passage à Next.
 writeFileSync(resolve(HERE, 'catalog.js'), `window.AZM_CATALOG = ${JSON.stringify(catalog)};\n`);
 const nModels = catalog.makes.reduce((s, m) => s + m.models.length, 0);
 console.log(`→ catalog.json : ${catalog.makes.length} marques · ${nModels} modèles · ${Object.keys(products).length} produits`);

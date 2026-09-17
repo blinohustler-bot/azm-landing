@@ -4,9 +4,14 @@ Page d'atterrissage pour les pubs Meta d'AZ Motorsport. Le visiteur choisit son 
 trois clics, laisse ses coordonnées, et voit **les pièces réellement construites pour son
 châssis** — prix, stock et compatibilité tirés en direct du catalogue Shopify.
 
-Page statique — un fichier HTML, un catalogue JSON, aucune dépendance npm — plus une
-seule fonction serveur, `/api/lead`, qui écrit le lead dans GoHighLevel. Elle existe
-uniquement parce que le jeton GHL ne peut pas vivre dans une page publique.
+Application Next.js (App Router, TypeScript) déployée sur Vercel. Le catalogue est lu
+côté serveur, le lead part dans GoHighLevel par `/api/lead`, et le paiement reste
+entièrement chez Shopify.
+
+```bash
+npm install
+npm run dev          # http://localhost:3000
+```
 
 ---
 
@@ -28,7 +33,7 @@ dans le dépôt `tps-agent-os`.
 
 Deux endroits, et un seul est bloquant.
 
-**Dans `CONFIG`, en haut du bloc `<script>` de `index.html` :**
+**Dans `lib/config.ts`** — ce qui part dans le navigateur, et rien de secret :
 
 | Réglage | État | Sans ça |
 |---|---|---|
@@ -57,6 +62,63 @@ node tools/ghl-check.mjs     # imprime les pipelines, leurs étapes et les ids �
 
 ---
 
+## L'architecture
+
+```
+app/
+  page.tsx              décide l'écran à partir de l'URL, côté serveur
+  layout.tsx            coquille, police Archivo auto-hébergée, pixel Meta
+  globals.css           tout le style : tokens, écrans, cartes
+  api/lead/route.ts     le lead → GHL
+components/             un fichier par écran ; 'use client' seulement où il le faut
+lib/
+  catalog.ts            le catalogue, SERVEUR UNIQUEMENT (import 'server-only')
+  catalogTypes.ts       types + fonctions pures, importables côté client
+  config.ts             réglages publics de campagne
+  ghl.ts / leadPayload.ts   client GHL et normalisation du lead
+catalog.json            360 ko, généré ; ne descend jamais dans le navigateur
+```
+
+**Une étape = une URL.** `/?make=BMW&model=m3&year=2021`. Les sept écrans étaient
+empilés dans un seul document, masqués en `display:none`, avec un tableau `trail`
+maison qui doublait l'historique du navigateur et s'en désynchronisait dès qu'on
+touchait au bouton « précédent » du téléphone. Le serveur n'envoie plus que l'écran
+demandé, le bouton du navigateur marche, et une pub peut viser un modèle précis.
+
+**`lib/catalog.ts` porte `import 'server-only'`, et ce n'est pas décoratif.** Un
+composant `'use client'` qui l'importe embarque les 360 ko du catalogue dans le bundle.
+C'est arrivé pendant ce refactor — `ProductCard` importait `fitmentLines` de là, et le
+catalogue se retrouvait dans un chunk client de 42 ko gzip. D'où `lib/catalogTypes.ts`,
+qui ne touche à aucune donnée et que le client peut importer sans risque. La garde fait
+maintenant échouer le build au lieu de laisser passer.
+
+### Ce que le passage à Next a coûté et rapporté
+
+Mesuré sur le build de production, pas estimé :
+
+| | Ancienne page statique | Next |
+|---|---|---|
+| HTML (gzip) | 15 ko | 5 ko |
+| JS (gzip) | 28 ko (`catalog.js`) | **174 ko** |
+| CSS (gzip) | inline | 4 ko |
+| Une photo produit | 166 ko (Shopify `?width=900`) | **32 ko** (AVIF, `next/image`) |
+
+**Le JS a grossi, et c'est le prix réel du framework** : React et le runtime de l'App
+Router coûtent plus cher que ne coûtait le catalogue, qui se compressait très bien.
+Personne ne devrait lire « on a retiré 280 ko de JS » : c'est faux.
+
+Ce qui est gagné, en revanche :
+
+- **Le premier écran arrive en HTML.** L'ancienne page n'affichait *rien* tant que
+  `catalog.js` n'était pas téléchargé, analysé et exécuté. C'est ce que la pub paie.
+- **Les images.** 134 ko économisés par photo produit, et il y en a jusqu'à quatre sur
+  un écran de résultats. Sur ces écrans-là, l'image rembourse le JS à elle seule.
+- **La police est auto-hébergée.** Deux préconnexions et une feuille de style bloquante
+  vers Google Fonts en moins — et la CSP peut désormais interdire `fonts.gstatic.com`.
+- Le bouton « précédent », les liens profonds, l'accessibilité et le typage.
+
+---
+
 ## Le lead → GoHighLevel
 
 ```
@@ -66,9 +128,10 @@ formulaire  →  POST /api/lead  →  contacts/upsert      →  contactId
 ```
 
 **Le jeton ne descend jamais dans le navigateur.** L'API GHL s'ouvre avec un Private
-Integration token qui donne accès à tout le sous-compte : posé dans `index.html`, il
-serait public au premier « afficher la source ». Il vit dans `process.env` de la
-fonction, et la page ne connaît que l'URL `/api/lead`.
+Integration token qui donne accès à tout le sous-compte : posé dans `lib/config.ts`, il
+partirait dans le bundle du navigateur et serait public au premier « afficher la
+source ». Il vit dans `process.env`, côté serveur, et la page ne connaît que l'URL
+`/api/lead`.
 
 **Upsert, jamais create.** La page est publique et le même client revient — souvent pour
 essayer un deuxième char. GHL déduplique le contact sur le courriel et le téléphone ;
@@ -122,6 +185,24 @@ ou non*, et jusqu'à 1 600 $ d'écart. Choisir à la place du client serait une 
 
 ---
 
+## Une dette connue : les lignes de fitment
+
+`build-index.mjs` tire les lignes de compatibilité de la description Shopify, et sur
+**58 fiches sur 120** il ramasse aussi le corps du texte marketing. L'encadré « Built
+for these exact cars » affichait donc « Key Features », « Two Material Choices: Go T304
+stainless steel… » — au milieu de l'élément sur lequel repose tout l'argument de la
+page. Un bloc de fitment qui contient de la publicité ne prouve plus rien.
+
+`lib/catalogTypes.ts` filtre à l'affichage : une ligne de fitment commence par une
+année ou une plage d'années. Le filtre s'efface s'il ne laisse rien — la McLaren P1
+décrit sa compatibilité sans millésime, et une liste vide serait pire que le bruit.
+
+**Le vrai correctif est dans l'extraction**, côté `build-index.mjs`. Il demande de
+régénérer le catalogue depuis Shopify et de vérifier les 120 fiches ; le filtre tient
+en attendant.
+
+---
+
 ## Mettre à jour le catalogue
 
 ```bash
@@ -129,7 +210,7 @@ node build-index.mjs
 ```
 
 Tire `azmotorsport.ca/products.json` et les photos de collection, et régénère
-`catalog.json` + `catalog.js` : 9 marques, 99 modèles, 121 pièces, avec variantes, prix,
+`catalog.json` : 9 marques, 99 modèles, 121 pièces, avec variantes, prix,
 stock, lignes de compatibilité et générations. À relancer quand le catalogue Shopify bouge.
 
 Aucun jeton requis : `products.json` et `collections.json` sont publics.
@@ -139,21 +220,38 @@ Aucun jeton requis : `products.json` et `collections.json` sont publics.
 ## Outils (`tools/`)
 
 ```bash
-node tools/ghl-check.mjs                    # vérifie le jeton GHL, liste pipelines et ids
-node tools/lead.test.mjs                    # exerce /api/lead contre un faux GHL
-node tools/shot.mjs                         # capture la page en 390 / 820 / 1440 px
+npm run dev            # le serveur ; les outils de capture en ont besoin
+npm run build          # build de production
+npm run lint           # tsc --noEmit
+npm test               # exerce /api/lead contre un faux GHL, hors ligne
+npm run ghl:check      # vérifie le jeton GHL, liste pipelines et ids
+npm run catalog        # régénère catalog.json depuis Shopify
+
+node tools/shot.mjs                         # capture en 390 / 820 / 1440 px
 node tools/shot.mjs "?make=BMW&model=m3"    # capture un état précis du parcours
 node tools/audit.mjs                        # liste les éléments qui débordent, par largeur
 node tools/normalize-logos.mjs              # recadre les viewBox des logos sur leur dessin
 node tools/clean-logos.mjs                  # retire les fonds blancs des logos téléchargés
 ```
 
+`npm test` importe la vraie route : Node exécute le TypeScript nativement, et
+`tools/alias-hook.mjs` lui apprend l'alias `@/` de tsconfig. 41 vérifications, aucune
+requête ne sort de la machine.
+
+`AZM_URL` vise un autre serveur que `localhost:3000` — une préproduction Vercel, par
+exemple. `AZM_PATH` audite une autre étape du parcours.
+
 `ghl-check` lit `.env` à la racine (copié de `.env.example`, ignoré par git) et n'écrit
-rien dans GHL. `lead.test` ne sort pas de la machine.
+rien dans GHL.
 
 `shot` et `audit` passent par le Chrome déjà installé sur la machine — aucune dépendance.
 `--force-device-scale-factor=1` y est obligatoire : sans lui, l'échelle Windows à 125 %
 fait rendre une fenêtre de 390 px à 485 px CSS et fabrique des bugs qui n'existent pas.
+
+**Limite connue de `audit`** : Chrome sous Windows impose une largeur de fenêtre
+minimale d'environ 500 px, donc l'audit à « 390 px » mesure en réalité 500 px. Il attrape
+encore les débordements francs, mais il ne prouve pas que la page tient sur un iPhone.
+Pour ça, le mode appareil des outils de développement, ou un vrai téléphone.
 
 Deux pages de contrôle s'ouvrent directement dans un navigateur :
 `responsive-check.html` (téléphone / tablette / ordinateur côte à côte) et
@@ -176,12 +274,12 @@ rien d'autre à changer.
 
 ## Mise en ligne
 
-Vercel, parce que `/api/lead` a besoin d'un serveur. Le reste (`index.html`, le catalogue,
-les logos) est servi tel quel depuis la racine ; `vercel.json` pose les en-têtes de
-sécurité, la CSP et le cache.
+Vercel, parce que le rendu et `/api/lead` ont besoin d'un serveur. Les en-têtes de
+sécurité, la CSP et le cache sont dans `next.config.ts` — une seule source, appliquée
+aussi en `npm run dev`, là où une CSP cassée se voit tout de suite.
 
-1. **Importer le dépôt** sur [vercel.com/new](https://vercel.com/new). Aucun framework,
-   aucune commande de build, racine `/` — la détection automatique tombe juste.
+1. **Importer le dépôt** sur [vercel.com/new](https://vercel.com/new). Vercel détecte
+   Next.js et configure le build tout seul — rien à régler.
 2. **Poser les variables** (Settings > Environment Variables), pour les trois
    environnements. Voir `.env.example` ; `node tools/ghl-check.mjs` donne les ids.
 3. **Déployer**, puis remplir `ALLOWED_ORIGINS` avec l'URL obtenue et redéployer.

@@ -1,0 +1,396 @@
+/* ── AZ Motorsport — landing de campagne ───────────────────────────────────
+   Direction : atelier motorsport, pas page SaaS. Noir pur (le thème Shopify
+   d'AZM est en noir 0 0 0), lime #cefe01 en accent rare — c'est la couleur du
+   monogramme —, orange #f94c10 pour les alertes (leur couleur de promo).
+
+   Une seule famille : Archivo, chargée par next/font et auto-hébergée. La donnée
+   technique (étapes, millésimes, codes châssis, prix) gardait jusqu'ici un second
+   caractère mono pour se séparer du discours ; elle se distingue maintenant par le
+   graisse, l'interlettrage et les chiffres tabulaires — voir .tech. Le but reste
+   celui d'avant : on doit voir du premier coup d'œil ce qui est une donnée.
+
+   Données : catalog.json, lu côté serveur. Voir lib/catalog.ts.               */
+
+:root{
+  --ink:#000; --panel:#0c0d0e; --panel2:#121416; --line:#ffffff1c; --line2:#ffffff2e;
+  --text:#f4f5f6; --muted:#8b9196; --lime:#cefe01; --orange:#f94c10;
+  --cut:10px;            /* profondeur de la coupe d'angle — le motif de la marque */
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; min-height:100svh; background:var(--ink); color:var(--text);
+  font-family:var(--font-archivo),"Helvetica Neue",Arial,sans-serif;
+  font-size:16px; line-height:1.5;
+  display:flex; flex-direction:column; overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+img{max-width:100%; display:block}
+button,select,input{font:inherit; color:inherit}
+a{color:inherit}
+/* Les cartes et les choix sont des liens depuis que chaque étape a son URL, mais ils
+   se lisent comme des contrôles : pas de soulignement. Les vrais liens de texte
+   (.callout, le pied de page) gardent le leur. */
+.brand-card,.choice,.back{text-decoration:none}
+.wrap{width:min(1120px,100%); margin-inline:auto; padding-inline:20px}
+.wrap--narrow{width:min(880px,100%)}
+
+h1{
+  margin:0; font-style:italic; font-weight:900; text-transform:uppercase;
+  font-size:clamp(2rem,6.4vw,3.6rem); line-height:.95; letter-spacing:-.025em;
+}
+h2{margin:0; font-style:italic; font-weight:900; text-transform:uppercase; font-size:clamp(1.3rem,3.2vw,1.9rem); line-height:1; letter-spacing:-.02em}
+h3{margin:0; font-weight:800; font-size:1rem; line-height:1.25; letter-spacing:-.01em}
+.sub{margin:16px 0 0; color:var(--muted); font-size:1rem; max-width:56ch; line-height:1.6}
+.sub b{color:var(--text); font-weight:700}
+
+/* ── la donnée technique ───────────────────────────────────────────────────
+   Ce que portait le mono : les chiffres s'alignent en colonne (tabular-nums),
+   l'interlettrage s'ouvre, la graisse monte d'un cran et la casse reste haute.
+   Archivo a les chiffres tabulaires, donc les prix et les millésimes ne dansent
+   plus quand une valeur change sous un sélecteur. */
+.tech{
+  font-weight:600; letter-spacing:.02em; font-variant-numeric:tabular-nums slashed-zero;
+  font-feature-settings:"tnum" 1,"zero" 1;
+}
+.tech--label{
+  font-weight:600; font-size:.7rem; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--muted); font-variant-numeric:tabular-nums;
+}
+
+.rule{
+  display:flex; align-items:center; gap:14px; margin:0 0 26px;
+  font-weight:600; font-size:.72rem; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--muted); font-variant-numeric:tabular-nums;
+}
+.rule::after{content:""; flex:1; height:1px; background:var(--line)}
+.rule b{color:var(--lime); font-weight:700}
+.rule span{letter-spacing:.1em}
+
+/* ── barre du haut ─────────────────────────────────────────────────────── */
+.top{border-bottom:1px solid var(--line); background:var(--ink); position:sticky; top:0; z-index:20}
+.top__in{display:flex; align-items:center; gap:16px; padding-block:14px}
+.brand{display:flex; align-items:center; gap:11px; font-style:italic; font-weight:900; text-transform:uppercase; font-size:.96rem; letter-spacing:-.01em}
+.brand img{width:28px; height:28px}
+.top__spacer{flex:1}
+.phone{
+  display:inline-flex; align-items:center; gap:8px; text-decoration:none;
+  font-weight:600; font-size:.84rem; letter-spacing:.01em; white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+  padding:8px 0; border-bottom:1px solid transparent;
+  transition:color .18s ease, border-color .18s ease;
+}
+.phone:hover{border-bottom-color:var(--lime); color:var(--lime)}
+.phone svg{color:var(--lime)}
+.back{
+  background:none; border:1px solid var(--line); color:var(--muted); cursor:pointer;
+  border-radius:3px; padding:8px 12px; font-weight:600; font-size:.72rem;
+  letter-spacing:.12em; text-transform:uppercase; transition:border-color .18s ease, color .18s ease;
+}
+.back:hover{border-color:var(--line2); color:var(--text)}
+.bar{height:2px; background:#ffffff12; position:sticky; top:57px; z-index:19}
+.bar i{display:block; height:100%; width:0; background:var(--lime); transition:width .45s var(--ease)}
+
+/* ── écrans ────────────────────────────────────────────────────────────── */
+main{flex:1; padding-block:clamp(26px,4.5vw,52px) 56px; position:relative}
+.screen{position:relative; animation:in .34s var(--ease) both}
+@keyframes in{from{opacity:0; translate:0 12px} to{opacity:1; translate:0 0}}
+
+/* Intro en deux colonnes : le titre tient la gauche, la preuve occupe la droite.
+   Un bloc de texte seul dans une colonne étroite laisse la moitié de l'écran vide. */
+.intro{display:grid; gap:22px; grid-template-columns:1fr}
+@media(min-width:920px){
+  /* Les deux colonnes partent de la même ligne. Alignées en bas, le titre tombait
+     au bas de la colonne pendant que le texte restait en haut : une diagonale. */
+  .intro{grid-template-columns:1.08fr .92fr; gap:56px; align-items:start}
+  .intro h1{margin-top:-.08em}
+}
+.intro__side .sub{margin:0}
+.facts{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:0; margin:22px 0 0;
+  border-top:1px solid var(--line);
+}
+.facts div{padding:13px 14px 0 0}
+.facts dt{
+  font-weight:600; font-size:.66rem; letter-spacing:.14em; text-transform:uppercase;
+  color:#6a7075; margin-bottom:5px;
+}
+.facts dd{
+  margin:0; font-weight:700; font-size:.9rem; color:var(--text);
+  letter-spacing:.01em; font-variant-numeric:tabular-nums;
+}
+/* Sur téléphone, trois colonnes ne tiennent pas dans 350 px : elles poussaient la
+   page en débordement horizontal. */
+@media(max-width:560px){
+  .facts{grid-template-columns:1fr 1fr}
+  .facts div:last-child{grid-column:1 / -1; border-top:1px solid var(--line); margin-top:2px}
+  .facts dd{font-size:.8rem} .facts dt{font-size:.58rem; letter-spacing:.1em}
+}
+
+.authority{
+  margin:0 0 22px; font-weight:600; font-size:.74rem; letter-spacing:.08em;
+  color:var(--muted); display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+}
+.authority b{color:var(--lime); font-weight:700}
+.authority i{width:3px; height:3px; background:var(--line2); border-radius:50%; display:inline-block}
+@media(max-width:560px){
+  .authority{font-size:.66rem; gap:6px; margin-bottom:18px}
+  .authority i{display:none}
+  .authority span{width:100%}
+}
+.undertitle{margin:26px 0 0; font-weight:500; font-size:.76rem; color:#6a7075; letter-spacing:.06em}
+
+/* ── cartes de marque ──────────────────────────────────────────────────────
+   Le logo, le nom, le nombre de pièces. Rien d'autre : les photos de collection
+   d'AZM viennent de neuf séances différentes et se battaient avec les logos.
+
+   La carte portait un simple aplat #0c0d0e, identique neuf fois : une grille de
+   rectangles sans relief. Elle reprend maintenant la coupe d'angle du reste de la
+   marque (--cut, déjà sur .btn et .card) et un dégradé très court qui décolle le
+   logo du fond. Au survol la carte se soulève, le liseré lime balaie le bas. */
+.brands{display:grid; gap:12px; margin-top:30px; grid-template-columns:repeat(2,1fr)}
+@media(min-width:680px){ .brands{grid-template-columns:repeat(3,1fr)} }
+.brand-card{
+  position:relative; overflow:hidden; cursor:pointer; padding:0; display:flex;
+  border:1px solid var(--line); text-align:center;
+  background:linear-gradient(168deg,#16181a 0%,var(--panel) 46%,#080909 100%);
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
+  transition:border-color .2s ease, transform .22s var(--ease), box-shadow .22s ease;
+  min-height:clamp(132px,22vw,176px);   /* la carte suit son contenu, sans ratio imposé */
+}
+.brand-card:hover{
+  border-color:var(--line2); transform:translateY(-3px);
+  box-shadow:0 10px 28px -14px #000, 0 0 0 1px #ffffff10 inset;
+}
+.brand-card:active{transform:translateY(-1px)}
+/* Le liseré lime, tiré du bas-gauche : il suit le sens de lecture de la carte. */
+.brand-card::before{
+  content:""; position:absolute; inset:auto 0 0 0; height:2px; background:var(--lime);
+  transform:scaleX(0); transform-origin:left; transition:transform .3s var(--ease); z-index:2;
+}
+.brand-card:hover::before,
+.brand-card:focus-visible::before{transform:scaleX(1)}
+.brand-card:focus-visible{outline:2px solid var(--lime); outline-offset:-2px}
+.brand-card__label{
+  position:relative; z-index:1; display:flex; flex-direction:column; flex:1; height:100%;
+  align-items:center; justify-content:center; gap:clamp(12px,2.4vw,18px);
+  padding:clamp(16px,3vw,24px); text-align:center;
+}
+.brand-card__text{display:flex; flex-direction:column; gap:4px}
+/* Logos officiels, fonds retirés (clean-logos.mjs), viewBox recadrés sur le dessin
+   (normalize-logos.mjs) : le logo remplit donc sa boîte. On le contraint en hauteur
+   ET en largeur sans figer ni l'une ni l'autre — un bloc large comme McLaren (6:1)
+   bute sur la largeur, un écusson vertical comme Porsche bute sur la hauteur, et les
+   deux pèsent pareil dans la grille.
+   Neuf logos de formes très différentes n'ont pas le même poids visuel à taille
+   égale : chacun porte donc son facteur --k. */
+.brand-card__logo{
+  width:auto; height:auto;
+  max-height:calc(clamp(48px,8.8vw,72px) * var(--k,1));
+  max-width:min(78%, 190px);
+  object-fit:contain;
+  /* Moins désaturé qu'avant (.5 → .35) : sur le nouveau fond dégradé, les logos
+     sombres — BMW, Porsche, Chevrolet — disparaissaient à moitié. */
+  filter:grayscale(.35) contrast(1.05); opacity:.92;
+  transition:filter .32s ease, opacity .32s ease, scale .36s var(--ease);
+}
+.brand-card:hover .brand-card__logo,
+.brand-card:focus-visible .brand-card__logo{filter:grayscale(0) contrast(1); opacity:1; scale:1.06}
+.brand-card[data-brand="ferrari"]{--k:1.18}      /* cheval : étroit et haut */
+.brand-card[data-brand="porsche"]{--k:1.18}      /* écusson */
+.brand-card[data-brand="lamborghini"]{--k:1.18}  /* bouclier */
+.brand-card__name{
+  display:block; font-style:italic; font-weight:900; text-transform:uppercase;
+  font-size:clamp(.92rem,2.1vw,1.08rem); line-height:1; letter-spacing:-.02em;
+}
+.brand-card__n{
+  display:block; font-weight:600; font-size:.74rem; letter-spacing:.04em;
+  color:#b6bcc1; font-variant-numeric:tabular-nums; transition:color .2s ease;
+}
+.brand-card:hover .brand-card__n,
+.brand-card:focus-visible .brand-card__n{color:var(--lime)}
+@media(max-width:400px){ .brands{grid-template-columns:1fr 1fr; gap:10px} .brand-card{aspect-ratio:1/1} }
+
+/* le char choisi reste visible en fond de l'écran suivant */
+.ctx{position:absolute; inset:0 0 auto; height:min(48vh,420px); z-index:-1; overflow:hidden}
+.ctx img{width:100%; height:100%; object-fit:cover; opacity:.16; filter:grayscale(.2)}
+.ctx::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg,#000000a6,#000 88%)}
+
+/* ── grille de choix ───────────────────────────────────────────────────── */
+.choices{display:grid; gap:1px; margin-top:28px; grid-template-columns:repeat(2,1fr); background:var(--line); border:1px solid var(--line)}
+@media(min-width:680px){ .choices{grid-template-columns:repeat(3,1fr)} }
+.choices--tight{grid-template-columns:repeat(1,1fr)}
+@media(min-width:680px){ .choices--tight{grid-template-columns:repeat(2,1fr)} }
+.choice{
+  position:relative; display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  min-height:72px; padding:18px; cursor:pointer; text-align:left; border:0;
+  background:var(--ink); color:var(--text);
+  font-weight:800; font-size:1.02rem; text-transform:uppercase; font-style:italic; letter-spacing:-.015em;
+  transition:background .16s ease, color .16s ease, padding-left .16s var(--ease);
+}
+.choice::before{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:2px; background:transparent; transition:background .16s ease;
+}
+.choice:hover{background:var(--panel2); padding-left:22px}
+.choice:hover::before{background:var(--lime)}
+.choice:focus-visible{outline:2px solid var(--lime); outline-offset:-2px}
+.choice small{
+  font-weight:600; font-size:.74rem; font-style:normal; letter-spacing:.04em;
+  color:var(--muted); text-transform:none; white-space:nowrap;
+  font-variant-numeric:tabular-nums; transition:color .16s ease;
+}
+.choice:hover small{color:var(--lime)}
+.choice--plain{text-transform:none; font-style:normal; font-weight:600; font-size:.92rem; color:var(--muted); min-height:58px}
+
+.search{
+  margin-top:20px; width:100%; background:var(--ink); border:1px solid var(--line); color:var(--text);
+  border-radius:3px; padding:15px 16px; font-size:1rem;
+}
+.search:focus-visible{outline:2px solid var(--lime); outline-offset:-1px}
+.choices__empty{padding:22px 18px; color:var(--muted); font-size:.9rem; background:var(--ink)}
+
+/* ── formulaire ────────────────────────────────────────────────────────── */
+.form{margin-top:26px; display:grid; gap:16px; max-width:520px}
+.field label{
+  display:block; font-weight:600; font-size:.72rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--muted); margin-bottom:8px;
+}
+.field input{
+  width:100%; background:var(--ink); border:1px solid var(--line); border-radius:3px;
+  padding:16px; font-size:1.02rem; font-weight:600;
+  transition:border-color .18s ease;
+}
+.field input:hover{border-color:var(--line2)}
+.field input:focus-visible{outline:2px solid var(--lime); outline-offset:-1px}
+.field input::placeholder{color:#565c61; font-weight:500}
+.field.is-bad input{border-color:var(--orange)}
+.field .err{display:none; margin:7px 0 0; font-weight:600; font-size:.76rem; letter-spacing:.02em; color:var(--orange)}
+.field.is-bad .err{display:block}
+/* Champ piège à robots : hors flux, hors tabulation, hors lecteur d'écran. Un
+   remplisseur automatique le voit dans le DOM et le remplit ; personne d'autre. */
+.hp{position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden}
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;
+  border:0; padding:18px 28px; font-weight:900; font-size:.98rem; font-style:italic;
+  text-transform:uppercase; letter-spacing:.02em; text-decoration:none;
+  background:var(--lime); color:#000; transition:filter .16s ease, transform .1s ease;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
+}
+.btn:hover{filter:brightness(1.12)}
+.btn:active{transform:translateY(1px)}
+.btn:focus-visible{outline:2px solid var(--text); outline-offset:3px}
+.btn:disabled{opacity:.35; cursor:not-allowed; filter:none}
+.btn--ghost{background:transparent; color:var(--text); border:1px solid var(--line2); clip-path:none}
+.btn--ghost:hover{border-color:var(--lime); color:var(--lime); filter:none}
+.btn--ghost:focus-visible{outline-color:var(--lime)}
+.btn--wide{width:100%}
+.legal{margin:2px 0 0; font-size:.78rem; color:#6a7075; line-height:1.5; max-width:52ch}
+.formError{
+  margin:0; padding:12px 14px; border-left:2px solid var(--orange); background:#f94c1014;
+  font-size:.86rem; color:var(--text);
+}
+.vehicle-chip{
+  display:inline-flex; align-items:center; gap:10px; margin-top:20px; padding:10px 14px;
+  border-left:2px solid var(--lime); background:var(--panel);
+  font-weight:600; font-size:.82rem; letter-spacing:.02em; font-variant-numeric:tabular-nums;
+}
+.vehicle-chip b{color:var(--lime); font-weight:700}
+
+/* ── résultats ─────────────────────────────────────────────────────────── */
+.results__head{display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-bottom:24px; padding-bottom:18px; border-bottom:1px solid var(--line)}
+.badge{
+  font-weight:700; font-size:.78rem; color:#000; background:var(--lime);
+  padding:5px 10px; letter-spacing:.02em; font-variant-numeric:tabular-nums;
+}
+.results__change{margin-left:auto; padding:11px 16px; font-size:.8rem}
+.grid{display:grid; gap:18px; grid-template-columns:1fr}
+@media(min-width:760px){ .grid{grid-template-columns:1fr 1fr} }
+/* Une seule pièce compatible (42 % des combinaisons) : elle prend toute la largeur,
+   image à gauche, choix et prix à droite — plutôt qu'une carte étroite et du vide. */
+@media(min-width:760px){
+  .grid--one{grid-template-columns:1fr}
+  .grid--one .card{flex-direction:row; align-items:stretch}
+  .grid--one .card__media{flex:0 0 46%; aspect-ratio:auto; min-height:400px}
+  .grid--one .card__body{flex:1; padding:28px; gap:18px; justify-content:center}
+  .grid--one .card h3{font-size:1.3rem}
+  .grid--one .card__actions{grid-template-columns:1.2fr 1fr; max-width:460px}
+  .grid--one .price b{font-size:2.2rem}
+}
+.card{
+  background:var(--panel); border:1px solid var(--line); display:flex; flex-direction:column;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
+  transition:border-color .2s ease;
+}
+.card:hover{border-color:var(--line2)}
+.card__media{position:relative; aspect-ratio:4/3; background:#000; overflow:hidden}
+.card__media img{width:100%; height:100%; object-fit:cover; transition:scale .6s ease}
+.card:hover .card__media img{scale:1.03}
+.card__tag{
+  position:absolute; left:0; top:14px; background:var(--ink); border-left:2px solid var(--lime);
+  padding:6px 12px; font-weight:600; font-size:.71rem; letter-spacing:.12em; text-transform:uppercase;
+}
+.card__body{padding:20px; display:flex; flex-direction:column; gap:15px; flex:1}
+.fitbox{border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:12px 0}
+.fitbox__head{
+  margin:0 0 6px; display:flex; align-items:center; gap:7px; color:var(--lime);
+  font-weight:700; font-size:.68rem; letter-spacing:.16em; text-transform:uppercase;
+}
+.fitbox__body{margin:0; font-weight:600; font-size:.81rem; color:var(--text); line-height:1.55; letter-spacing:.01em; font-variant-numeric:tabular-nums}
+.specs{margin:0; padding:0; list-style:none; display:grid; gap:6px; font-size:.84rem; color:var(--muted)}
+.specs li{padding-left:16px; position:relative}
+.specs li::before{content:"·"; position:absolute; left:4px; color:var(--lime)}
+.opts{display:grid; gap:10px}
+.opts label{display:block; font-weight:600; font-size:.68rem; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
+.opts select{
+  width:100%; appearance:none; background:var(--ink); border:1px solid var(--line); color:var(--text);
+  border-radius:3px; padding:12px 34px 12px 13px; font-size:.88rem; font-weight:700; cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,#8b9196 50%),linear-gradient(135deg,#8b9196 50%,transparent 50%);
+  background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%; background-size:6px 6px,6px 6px; background-repeat:no-repeat;
+  transition:border-color .18s ease;
+}
+.opts select:hover{border-color:var(--line2)}
+.opts select:focus-visible{outline:2px solid var(--lime); outline-offset:-1px}
+.opt-help{margin:8px 0 0; font-size:.76rem; color:var(--muted); line-height:1.5}
+.opt-help b{color:var(--text); font-weight:700}
+.price{display:flex; align-items:baseline; gap:12px; margin-top:auto; padding-top:4px}
+.price b{font-weight:700; font-size:1.75rem; letter-spacing:-.02em; font-variant-numeric:tabular-nums slashed-zero}
+.price small{color:var(--muted); font-size:.72rem; letter-spacing:.12em; font-weight:600}
+.stock{font-weight:600; font-size:.73rem; letter-spacing:.1em; margin-left:auto; text-transform:uppercase}
+.stock--in{color:var(--lime)} .stock--out{color:var(--orange)}
+.card__actions{display:grid; gap:10px; grid-template-columns:1fr}
+@media(min-width:520px){ .card__actions{grid-template-columns:1.5fr 1fr} }
+.note{margin:0; font-size:.71rem; color:#6a7075; line-height:1.5; letter-spacing:.02em}
+
+.callout{
+  margin:30px 0 0; padding:18px 20px; border-left:2px solid var(--lime); background:var(--panel);
+  font-size:.94rem; color:var(--muted);
+}
+.callout a{color:var(--lime); font-weight:700; text-decoration:none; border-bottom:1px solid #cefe0155}
+.reassure{display:grid; gap:0; grid-template-columns:1fr; margin-top:18px; border-top:1px solid var(--line)}
+@media(min-width:780px){ .reassure{grid-template-columns:repeat(3,1fr)} }
+.reassure div{padding:22px 0; border-bottom:1px solid var(--line)}
+@media(min-width:780px){
+  .reassure div{padding:22px 24px 22px 0; border-bottom:0; border-right:1px solid var(--line)}
+  .reassure div:last-child{border-right:0; padding-right:0}
+}
+.reassure b{display:block; font-style:italic; text-transform:uppercase; font-size:.94rem; margin-bottom:8px; letter-spacing:-.01em}
+.reassure p{margin:0; color:var(--muted); font-size:.86rem; line-height:1.55}
+
+footer{border-top:1px solid var(--line); padding-block:24px; color:#5f6569; font-size:.74rem; letter-spacing:.02em}
+footer p{margin:0 0 6px}
+
+.hidden{display:none !important}
+/* Visible pour les lecteurs d'écran seulement — sert à annoncer le changement
+   d'étape sans l'écrire à l'écran, où le titre le dit déjà. */
+.srOnly{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+  clip-path:inset(50%); white-space:nowrap; border:0;
+}
+
+@media(prefers-reduced-motion:reduce){
+  *{transition:none !important; animation:none !important}
+  .brand-card:hover{transform:none}
+  .choice:hover{padding-left:18px}
+}

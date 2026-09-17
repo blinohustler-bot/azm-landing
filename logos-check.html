@@ -36,7 +36,7 @@ function paint(box,plain){
     var photo='';
     if(!plain&&CAT){ var m=CAT.makes.filter(function(x){return x.make===p[1];})[0];
       if(m&&m.image) photo='<img class="bg" src="'+m.image+'?width=600" alt="">'; }
-    d.innerHTML=photo+'<img class="logo" src="assets/brands/'+p[0]+'.svg" alt=""><span>'+p[0]+'</span>';
+    d.innerHTML=photo+'<img class="logo" src="public/assets/brands/'+p[0]+'.svg" alt=""><span>'+p[0]+'</span>';
     box.appendChild(d);
   });
 }

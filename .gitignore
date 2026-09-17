@@ -8,3 +8,6 @@ Thumbs.db
 .env.*
 !.env.example
 .vercel
+.next
+.shots
+next-env.d.ts

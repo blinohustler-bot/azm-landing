@@ -27,7 +27,11 @@ const only = process.argv[3];
 const sizes = only ? [[Number(only), 900]] : [[390, 844], [820, 1100], [1440, 900]];
 
 mkdirSync(OUT, { recursive: true });
-const page = 'file:///' + resolve(ROOT, 'index.html').replace(/\\/g, '/') + query;
+/* La page est servie par Next : il faut un serveur en face (`npm run dev`, ou
+   `npm run build && npm start` pour capturer ce qui partira vraiment en production).
+   AZM_URL vise une autre adresse — une préproduction Vercel, par exemple. */
+const BASE = (process.env.AZM_URL || 'http://localhost:3000').replace(/\/$/, '');
+const page = BASE + '/' + (query && !query.startsWith('?') ? '?' + query : query);
 const tag = (query.replace(/[^a-z0-9]+/gi, '') || 'home').slice(0, 24);
 
 for (const [w, h] of sizes) {
