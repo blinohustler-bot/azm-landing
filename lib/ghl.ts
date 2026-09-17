@@ -10,7 +10,11 @@
 
 import 'server-only';
 
-const API_ROOT = 'https://services.leadconnectorhq.com';
+/* GHL_API_ROOT permet de viser un bouchon local au lieu du vrai sous-compte : c'est ce
+   qui rend le parcours vérifiable de bout en bout sans écrire un faux contact dans le
+   CRM de production. Non renseigné — le cas normal, et celui de Vercel — c'est la vraie
+   API. */
+const API_ROOT = process.env.GHL_API_ROOT || 'https://services.leadconnectorhq.com';
 const TIMEOUT_MS = 8000;
 
 const version = () => process.env.GHL_API_VERSION || '2021-07-28';

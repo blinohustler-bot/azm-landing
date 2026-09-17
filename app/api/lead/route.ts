@@ -57,10 +57,24 @@ function bucket(ip: string): Bucket {
 const allowedOrigins = () =>
   (process.env.ALLOWED_ORIGINS || '')
     .split(',')
-    .map((s) => s.trim().replace(/\/$/, ''))
+    .map((s) => s.trim().replace(/\/+$/, '').toLowerCase())
     .filter(Boolean);
 
-const clean = (o: string) => o.replace(/\/$/, '');
+/* L'en-tête Origin porte toujours un schéma : « https://azm.ca », jamais « azm.ca ».
+   Une liste écrite à la main, elle, contient volontiers « localhost:3000 » ou
+   « fitment.azmotorsport.ca » — et la comparaison stricte n'aurait alors jamais
+   correspondu. Le lead partait en 403, sans autre trace qu'un avertissement dans la
+   console du visiteur : une campagne entière peut se vider comme ça.
+   On accepte donc les deux écritures, en comparant aussi sur l'hôte (nom + port). */
+function originAllowed(origin: string, list: string[]): boolean {
+  const o = origin.replace(/\/+$/, '').toLowerCase();
+  if (list.includes(o)) return true;
+  try {
+    return list.includes(new URL(origin).host.toLowerCase());
+  } catch {
+    return false;
+  }
+}
 
 function corsHeaders(origin: string | null): Headers {
   const h = new Headers({
@@ -69,7 +83,7 @@ function corsHeaders(origin: string | null): Headers {
     'Cache-Control': 'no-store'
   });
   const list = allowedOrigins();
-  if (origin && (!list.length || list.includes(clean(origin)))) {
+  if (origin && (!list.length || originAllowed(origin, list))) {
     h.set('Access-Control-Allow-Origin', origin);
     h.set('Vary', 'Origin');
   }
@@ -82,7 +96,7 @@ function corsHeaders(origin: string | null): Headers {
 function originRejected(origin: string | null): boolean {
   const list = allowedOrigins();
   if (!list.length || !origin) return false;
-  return !list.includes(clean(origin));
+  return !originAllowed(origin, list);
 }
 
 const json = (body: unknown, status: number, headers: Headers) =>

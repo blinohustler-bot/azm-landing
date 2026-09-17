@@ -11,3 +11,4 @@ Thumbs.db
 .next
 .shots
 next-env.d.ts
+*.tsbuildinfo

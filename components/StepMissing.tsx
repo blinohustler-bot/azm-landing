@@ -30,8 +30,9 @@ export default function StepMissing({
   const shownAt = useRef(Date.now());
   const [sending, setSending] = useState(false);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (sending) return;
 
     const cOk = car.value.trim().length > 2;
     const nOk = okName(name.value);
@@ -45,7 +46,12 @@ export default function StepMissing({
 
     setSending(true);
     const carText = car.value.trim();
-    sendLead({
+    track('Lead', { content_name: carText, content_type: 'not_listed' });
+
+    /* Un char hors catalogue est un lead qui vaut cher — souvent une pièce sur mesure.
+       On attend la confirmation avant de dire merci ; si elle ne vient pas, LeadRetry
+       rejoue l'envoi au chargement suivant. */
+    await sendLead({
       source: 'fitment_lp_not_listed',
       name: name.value.trim(),
       email: email.value.trim(),
@@ -57,7 +63,6 @@ export default function StepMissing({
       elapsedMs: Date.now() - shownAt.current,
       company
     });
-    track('Lead', { content_name: carText, content_type: 'not_listed' });
 
     router.push(`/?step=thanks&car=${encodeURIComponent(carText)}`, { scroll: false });
   }

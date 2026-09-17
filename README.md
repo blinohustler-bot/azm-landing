@@ -133,6 +133,18 @@ partirait dans le bundle du navigateur et serait public au premier « afficher l
 source ». Il vit dans `process.env`, côté serveur, et la page ne connaît que l'URL
 `/api/lead`.
 
+**L'opportunité naît à l'étape 04, pas aux résultats.** La personne a donné ses
+coordonnées : elle peut regarder les pièces et refermer l'onglet dans la minute. Le
+formulaire attend donc la confirmation d'écriture — au plus cinq secondes — avant
+d'afficher les pièces. Si elle ne vient pas, la personne passe quand même aux pièces,
+le lead est conservé dans le navigateur, et `LeadRetry` le rejoue au chargement
+suivant puis à chaque visite. Rejouer est sans danger : voir le paragraphe suivant.
+
+Le cookie « ce visiteur est dans GHL » n'est posé **qu'après** une écriture confirmée.
+Il l'était auparavant avant même la requête : un premier envoi raté marquait la
+personne comme connue à vie, elle ne revoyait jamais le formulaire, et elle n'entrait
+donc jamais dans GHL.
+
 **Upsert, jamais create.** La page est publique et le même client revient — souvent pour
 essayer un deuxième char. GHL déduplique le contact sur le courriel et le téléphone ;
 côté opportunité, la fonction cherche d'abord un deal **ouvert** du même contact dans le

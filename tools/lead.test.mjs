@@ -159,6 +159,24 @@ r = await POST(post(GOOD));
 check('Origin absent → toléré', r.status === 200, r.status);
 const pre = await OPTIONS(post(GOOD, { origin: 'https://azm.vercel.app' }));
 check('préflight → 204', pre.status === 204, pre.status);
+
+/* Une liste écrite à la main mélange les écritures. L'en-tête Origin, lui, porte
+   toujours un schéma : sans tolérance, « localhost:3000 » dans la liste n'aurait
+   jamais correspondu à « http://localhost:3000 » et tous les leads seraient partis
+   en 403, sans autre trace qu'un avertissement dans la console du visiteur. */
+process.env.ALLOWED_ORIGINS =
+  'https://azm-landing.vercel.app,fitment.azmotorsport.ca,localhost:3000';
+for (const [label, origin, want] of [
+  ['entrée avec schéma', 'https://azm-landing.vercel.app', 200],
+  ['entrée sans schéma', 'https://fitment.azmotorsport.ca', 200],
+  ['hôte:port sans schéma', 'http://localhost:3000', 200],
+  ['casse différente', 'https://AZM-Landing.Vercel.App', 200],
+  ['port non listé', 'http://localhost:9999', 403],
+  ['domaine étranger', 'https://evil.example', 403]
+]) {
+  const rr = await POST(post(GOOD, { origin }));
+  check(`origine « ${label} » → ${want}`, rr.status === want, rr.status);
+}
 delete process.env.ALLOWED_ORIGINS;
 
 /* 7 — les deux étages de la limite de débit */

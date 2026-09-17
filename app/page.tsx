@@ -8,10 +8,13 @@ import StepGate from '@/components/StepGate';
 import StepResults from '@/components/StepResults';
 import StepMissing from '@/components/StepMissing';
 import StepThanks from '@/components/StepThanks';
+import LeadRetry from '@/components/LeadRetry';
 import Track from '@/components/Track';
 import { CONFIG, type StepName } from '@/lib/config';
 import { LEAD_COOKIE } from '@/lib/sendLead';
-import { SHOP, findMake, findModel, findGeneration, partsFor, carName } from '@/lib/catalog';
+import {
+  SHOP, findMake, findModel, findGeneration, partsFor, carName, generationLabel
+} from '@/lib/catalog';
 
 /* Le parcours, décidé côté serveur à partir de l'URL.
  *
@@ -140,12 +143,22 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
               partCount={parts.length}
               resultsHref={`${gen ? `${modelHref}&year=${gen.from}` : modelHref}&step=results`}
               parts={parts.map((p) => ({ title: p.title, price: p.price }))}
+              /* Sans ces trois-là, l'opportunité arrivait dans GHL sans marque : pas de
+                 tag de marque sur le contact, et une note qui disait « Marque : — ». */
+              make={make?.make ?? null}
+              model={model?.label ?? null}
+              generation={gen ? generationLabel(gen) : null}
             />
           </>
         ) : null}
 
         {step === 'results' ? (
-          <StepResults carName={car} parts={parts} shop={SHOP} />
+          <>
+            {/* Le filet sous la garantie du gate : rejoue un lead que /api/lead
+                n'aurait pas réussi à écrire à l'étape précédente. */}
+            <LeadRetry />
+            <StepResults carName={car} parts={parts} shop={SHOP} />
+          </>
         ) : null}
 
         {step === 'missing' ? (

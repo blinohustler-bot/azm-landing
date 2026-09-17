@@ -19,12 +19,18 @@ export default function StepGate({
   carName,
   partCount,
   resultsHref,
-  parts
+  parts,
+  make,
+  model,
+  generation
 }: {
   carName: string;
   partCount: number;
   resultsHref: string;
   parts: { title: string; price: number }[];
+  make: string | null;
+  model: string | null;
+  generation: string | null;
 }) {
   const router = useRouter();
   const [name, setName] = useState(blank);
@@ -34,8 +40,9 @@ export default function StepGate({
   const shownAt = useRef(Date.now());
   const [sending, setSending] = useState(false);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
+    if (sending) return;
 
     const nOk = okName(name.value);
     const eOk = okEmail(email.value);
@@ -46,20 +53,28 @@ export default function StepGate({
     if (!nOk || !eOk || !pOk) return;
 
     setSending(true);
-    sendLead({
+    track('CompleteRegistration', { content_name: carName, status: 'fitment_lead' });
+
+    /* C'est ICI que l'opportunité doit naître : la personne a donné ses coordonnées,
+       elle peut regarder les pièces et refermer l'onglet dans la minute. On attend donc
+       la confirmation — mais jamais plus de cinq secondes (le délai vit dans sendLead).
+       Si l'écriture n'a pas abouti, on passe quand même aux pièces : le lead est
+       conservé et LeadRetry le rejoue sur l'écran suivant. */
+    await sendLead({
       source: 'fitment_lp',
       name: name.value.trim(),
       email: email.value.trim(),
       phone: phone.value.trim(),
       car: carName,
+      make,
+      model,
+      generation,
       parts,
       page: window.location.href,
       elapsedMs: Date.now() - shownAt.current,
       company
     });
-    track('CompleteRegistration', { content_name: carName, status: 'fitment_lead' });
 
-    /* On ne se met pas en travers : la requête est partie, les pièces s'affichent. */
     router.push(resultsHref, { scroll: false });
   }
 
