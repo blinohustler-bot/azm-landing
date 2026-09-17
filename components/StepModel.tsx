@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import VehicleContext from './VehicleContext';
 
 export type ModelChoice = {
   key: string;
@@ -21,10 +22,12 @@ export type ModelChoice = {
  */
 export default function StepModel({
   make,
-  models
+  models,
+  parts
 }: {
   make: string;
   models: ModelChoice[];
+  parts: number;
 }) {
   const [q, setQ] = useState('');
   const withSearch = models.length >= 12;
@@ -40,10 +43,13 @@ export default function StepModel({
   const base = `/?make=${encodeURIComponent(make)}`;
 
   return (
-    <section className="screen wrap wrap--narrow" aria-labelledby="step-title">
+    /* Pleine largeur : une colonne de 880 px centrée laissait deux grandes marges
+       vides de part et d'autre d'une grille de quinze modèles. */
+    <section className="screen wrap" aria-labelledby="step-title">
       <p className="rule">
         <b>02</b> Model
       </p>
+      <VehicleContext make={make} parts={parts} models={models.length} />
       <h1 id="step-title">Which {make}?</h1>
       <p className="sub">
         If yours isn&rsquo;t on the list, we don&rsquo;t build for it yet — say so and you&rsquo;ll

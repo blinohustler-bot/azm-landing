@@ -127,11 +127,17 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
               years: m.years ? `${m.years[0]}–${m.years[1]}` : '',
               search: m.fits.join(' ').toLowerCase()
             }))}
+            parts={make.models.reduce((n, m) => n + m.products.length, 0)}
           />
         ) : null}
 
         {step === 'generation' && make && model ? (
-          <StepGeneration make={make.make} model={model} generations={model.generations} />
+          <StepGeneration
+            make={make.make}
+            model={model}
+            generations={model.generations}
+            parts={model.products.length}
+          />
         ) : null}
 
         {step === 'gate' ? (

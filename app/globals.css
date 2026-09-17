@@ -109,7 +109,11 @@ main{flex:1; padding-block:clamp(26px,4.5vw,52px) 56px; position:relative}
 body::after{
   content:""; position:fixed; inset:0; z-index:9999; pointer-events:none;
   opacity:.035; mix-blend-mode:overlay;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  /* feColorMatrix saturate=0 n'est pas un détail : feTurbulence produit un bruit
+     COLORÉ — les canaux R, G et B sont tirés indépendamment. Mélangé en overlay, il
+     teintait tout ce qui était gris, et le pied de page ressortait bleuté. Le grain
+     doit être monochrome sur une palette noir / lime. */
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 @media(prefers-reduced-motion:reduce){ body::after{opacity:.02} }
 .screen{position:relative; animation:in .34s var(--ease) both}
@@ -482,3 +486,60 @@ footer p{margin:0 0 6px}
   .brand-card:hover{transform:none}
   .choice:hover{padding-left:18px}
 }
+
+/* ── bandeau de contexte véhicule ──────────────────────────────────────────
+   Les écrans 02 à 04 ne portaient aucune trace de la marque qu'on venait de
+   choisir : un titre, une grille, et rien qui rattache la page au geste
+   précédent. C'est ce qui leur donnait leur air de gabarit — elles auraient pu
+   appartenir à n'importe quel site. Le logo revient donc en tête, avec ce que la
+   marque couvre. */
+.vctx{
+  display:flex; align-items:center; gap:clamp(14px,2.2vw,20px);
+  margin:0 0 clamp(20px,2.8vw,28px); padding:0 0 16px;
+  border-bottom:1px solid var(--line);
+}
+.vctx__logo{
+  width:auto; height:auto; max-height:clamp(34px,4.6vw,46px); max-width:120px;
+  object-fit:contain; flex:none;
+  filter:grayscale(.2); opacity:.95;
+}
+.vctx__text{display:flex; flex-direction:column; gap:5px; min-width:0}
+.vctx__make{
+  margin:0; font-style:italic; font-weight:900; text-transform:uppercase;
+  font-size:clamp(1rem,2.1vw,1.22rem); line-height:1; letter-spacing:-.025em;
+}
+.vctx__meta{
+  margin:0; display:flex; align-items:center; flex-wrap:wrap; gap:9px;
+  font-weight:600; font-size:.76rem; letter-spacing:.02em; color:#767c81;
+  font-variant-numeric:tabular-nums;
+}
+.vctx__meta b{color:var(--lime); font-weight:700}
+.vctx__meta i{width:3px; height:3px; border-radius:50%; background:var(--line2); display:inline-block}
+
+/* ── la grille de choix, resserrée ─────────────────────────────────────────
+   Les cellules étaient des rectangles identiques dans une colonne centrée de
+   880 px, avec de larges marges vides de part et d'autre : la mise en page par
+   défaut. Elles occupent maintenant la largeur utile, et chaque ligne porte un
+   chevron qui n'apparaît qu'au survol — on voit que c'est une liste sur laquelle
+   on agit, pas un tableau qu'on lit. */
+.choice::after{
+  content:"→"; position:absolute; right:16px; top:50%; translate:0 -50%;
+  font-weight:700; font-size:.9rem; color:var(--lime);
+  opacity:0; transition:opacity .16s ease, translate .22s var(--ease);
+}
+.choice:hover::after,
+.choice:focus-visible::after{opacity:1; translate:4px -50%}
+/* Le chevron prend la place du millésime : on décale le texte pour qu'il ne se
+   fasse pas recouvrir. */
+.choice:hover small{translate:-18px 0; transition:translate .22s var(--ease), color .16s ease}
+@media(prefers-reduced-motion:reduce){
+  .choice:hover small{translate:0 0}
+  .choice:hover::after{translate:0 -50%}
+}
+
+/* Le fond contextuel était réglé à 16 % d'opacité sous un dégradé qui devenait
+   opaque à 88 % : autant dire invisible. Il sert à quelque chose ou il ne sert à
+   rien — on le remonte, et on garde le dégradé pour que le texte reste lisible. */
+.ctx{height:min(42vh,360px)}
+.ctx img{opacity:.3; filter:grayscale(.35) contrast(1.1)}
+.ctx::after{background:linear-gradient(180deg,#00000073 0%,#000000d9 58%,#000 96%)}

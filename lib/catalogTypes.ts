@@ -108,3 +108,8 @@ export const partLabel = (p: Product) => PART_LABEL[p.part] ?? p.part.replace(/-
 
 export const money = (n: number) =>
   `$${Number(n).toLocaleString('en-CA', { maximumFractionDigits: 0 })}`;
+
+/* Le nom de fichier d'un logo de marque : « Mercedes-AMG » → « mercedes-amg ».
+   Ici et pas dans lib/catalog.ts, parce que des composants clients en ont besoin et
+   que lib/catalog.ts embarque les 360 ko du catalogue. */
+export const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');

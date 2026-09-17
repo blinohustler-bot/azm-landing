@@ -25,9 +25,10 @@ import raw from '@/catalog.json';
 export type {
   Generation, Model, Make, Variant, PartKind, Product, Catalog
 } from './catalogTypes';
-export { fitmentLines, partLabel, money } from './catalogTypes';
+export { fitmentLines, partLabel, money, slugify } from './catalogTypes';
 
 import type { Catalog, Generation, Make, Model, Product } from './catalogTypes';
+import { slugify } from './catalogTypes';
 
 const catalog = raw as unknown as Catalog;
 
@@ -43,7 +44,7 @@ export const modelCount = catalog.makes.reduce((s, m) => s + m.models.length, 0)
 
 export type MakeCard = { make: string; slug: string; parts: number; models: string[] };
 
-export const slugify = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
 
 /* Catalogues les plus profonds en premier : la première rangée doit contenir les
    marques qui couvrent le plus de visiteurs, pas l'ordre alphabétique. */

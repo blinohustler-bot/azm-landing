@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import VehicleContext from './VehicleContext';
 import type { Generation, Model } from '@/lib/catalog';
 
 /* 03 — la génération, sautée quand le modèle n'en a qu'une.
@@ -12,11 +13,13 @@ import type { Generation, Model } from '@/lib/catalog';
 export default function StepGeneration({
   make,
   model,
-  generations
+  generations,
+  parts
 }: {
   make: string;
   model: Model;
   generations: Generation[];
+  parts: number;
 }) {
   const base = `/?make=${encodeURIComponent(make)}&model=${encodeURIComponent(model.key)}`;
 
@@ -25,6 +28,7 @@ export default function StepGeneration({
       <p className="rule">
         <b>03</b> Generation
       </p>
+      <VehicleContext make={make} parts={parts} models={generations.length} detail={model.label} />
       <h1 id="step-title">Which {model.label}?</h1>
       <p className="sub">
         Your car was built in more than one shape, and they don&rsquo;t share a single part. Pick the

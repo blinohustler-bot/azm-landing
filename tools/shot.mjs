@@ -39,6 +39,12 @@ for (const [w, h] of sizes) {
   execFileSync(CHROME, [
     '--headless=new', '--disable-gpu', '--hide-scrollbars',
     '--force-device-scale-factor=1',   // sinon l'échelle Windows (125 %) fausse la largeur rendue
+    /* Sans --disable-lcd-text, le rendu sous-pixel (ClearType) pose des franges de
+       couleur sur le petit texte clair sur fond noir : le pied de page ressortait
+       franchement bleu sur les captures alors qu'il est gris dans un vrai navigateur.
+       Une capture qui ment fait corriger des bogues qui n'existent pas. */
+    '--disable-lcd-text',
+    '--force-color-profile=srgb',
     '--virtual-time-budget=4000',          // laisse le JS peindre et les polices charger
     `--window-size=${w},${h}`,
     `--screenshot=${file}`,
