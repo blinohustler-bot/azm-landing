@@ -21,6 +21,7 @@ delete process.env.LEAD_DEBUG;
 const calls = [];
 let existingOpp = null;
 let forceFailure = null;
+let refuseDoublon = false;
 
 const realFetch = globalThis.fetch;
 
@@ -48,8 +49,32 @@ globalThis.fetch = async (url, init) => {
       ] }
     ] });
   }
-  if (u.pathname === '/opportunities/search') return json({ opportunities: existingOpp ? [existingOpp] : [] });
-  if (u.pathname === '/opportunities/') return json({ opportunity: { id: 'op_1' } });
+  if (u.pathname === '/opportunities/search') {
+    /* Le vrai GHL REFUSE les variantes camelCase ici, au lieu de les ignorer. Le
+       bouchon fait pareil : c'est ce qui a bloqué tous les leads en production, et
+       c'est exactement ce qu'un test doit rendre impossible à réintroduire. */
+    const interdits = ['locationId', 'contactId', 'pipelineId']
+      .filter((k) => u.searchParams.has(k));
+    if (interdits.length) {
+      return json({
+        statusCode: 422,
+        error: 'Unprocessable Entity',
+        message: interdits.map((k) => `property ${k} should not exist`)
+      }, 422);
+    }
+    return json({ opportunities: existingOpp ? [existingOpp] : [] });
+  }
+  if (u.pathname === '/opportunities/') {
+    if (refuseDoublon) {
+      return json({
+        statusCode: 400, error: 'Bad Request',
+        code: 'OPPORTUNITY_NO_DUPLICATE',
+        message: 'Can not create duplicate opportunity for the contact.',
+        meta: { existingId: 'op_existante' }
+      }, 400);
+    }
+    return json({ opportunity: { id: 'op_1' } });
+  }
   if (/^\/opportunities\/op_/.test(u.pathname)) return json({ opportunity: { id: 'op_1' } });
   if (/^\/contacts\/.+\/notes$/.test(u.pathname)) return json({ note: { id: 'nt_1' } });
   return json({ message: 'route inattendue ' + u.pathname }, 404);
@@ -210,6 +235,29 @@ check('panne GHL → 502', r.status === 502, r.status);
 check('réponse sans détail', JSON.stringify(failBody) === '{"error":"upstream"}', failBody);
 check('le jeton ne fuit pas', !JSON.stringify(failBody).includes('pit-fake'), failBody);
 forceFailure = null;
+
+/* 9 — la recherche d'opportunité parle snake_case, et seulement snake_case */
+resetPipelineCache();
+calls.length = 0;
+r = await POST(post({ ...GOOD, email: 'snake@x.co' }, { 'x-vercel-forwarded-for': '198.51.100.1' }));
+const recherche = calls.find((c) => c.path === '/opportunities/search');
+check('recherche → 200 malgré le bouchon strict', r.status === 200, r.status);
+check('recherche en snake_case', !!recherche && 'location_id' in recherche.query
+  && 'contact_id' in recherche.query && 'pipeline_id' in recherche.query, recherche?.query);
+check('aucun paramètre camelCase envoyé',
+  !!recherche && !['locationId', 'contactId', 'pipelineId'].some((k) => k in recherche.query),
+  recherche?.query);
+
+/* 10 — GHL refuse lui-même un doublon : on met à jour au lieu d'échouer */
+resetPipelineCache();
+calls.length = 0;
+refuseDoublon = true;
+r = await POST(post({ ...GOOD, email: 'dup@x.co' }, { 'x-vercel-forwarded-for': '198.51.100.2' }));
+check('refus de doublon GHL → 200 quand même', r.status === 200, await bodyOf(r));
+check("l'opportunité existante est mise à jour",
+  calls.some((c) => c.method === 'PUT' && c.path === '/opportunities/op_existante'),
+  calls.map((c) => c.method + ' ' + c.path));
+refuseDoublon = false;
 
 globalThis.fetch = realFetch;
 console.log(fails ? `\n  ${fails} échec(s)\n` : '\n  tout passe\n');

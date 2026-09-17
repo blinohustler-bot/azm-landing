@@ -21,10 +21,16 @@ const version = () => process.env.GHL_API_VERSION || '2021-07-28';
 
 export class GhlError extends Error {
   status: number;
-  constructor(message: string, status: number) {
+  /* Le code métier de GHL (« OPPORTUNITY_NO_DUPLICATE »…) et son meta : certaines
+     erreurs ne sont pas des pannes mais des réponses, et il faut pouvoir les lire. */
+  code: string | null;
+  meta: Record<string, unknown> | null;
+  constructor(message: string, status: number, code: string | null = null, meta: Record<string, unknown> | null = null) {
     super(message);
     this.name = 'GhlError';
     this.status = status;
+    this.code = code;
+    this.meta = meta;
   }
 }
 
@@ -80,11 +86,13 @@ async function request<T>(method: string, path: string, opts: RequestOpts = {}):
   }
 
   if (!res.ok) {
-    const msg = (parsed as { message?: string | string[] } | null)?.message;
+    const p = parsed as
+      { message?: string | string[]; code?: string; meta?: Record<string, unknown> } | null;
+    const msg = p?.message;
     const detail = Array.isArray(msg)
       ? msg.join('; ')
       : msg || text.slice(0, 300) || res.statusText;
-    throw new GhlError(redact(detail, token), res.status);
+    throw new GhlError(redact(detail, token), res.status, p?.code ?? null, p?.meta ?? null);
   }
   return (parsed ?? {}) as T;
 }
@@ -186,14 +194,17 @@ export async function findOpenOpportunity(
   contactId: string,
   pipelineId: string
 ): Promise<Opportunity | null> {
-  /* La version courante attend location_id, une plus ancienne locationId : on envoie
-     les deux, comme le fait la skill ghl. */
+  /* /opportunities/search est en snake_case, et strictement : il REFUSE les variantes
+     camelCase par un 422 « property locationId should not exist » au lieu de les
+     ignorer. Le code envoyait les deux graphies par prudence — ce qui faisait échouer
+     chaque appel, donc chaque lead, avant même d'arriver à la création.
+     Vérifié en direct sur le sous-compte AZM : location_id / contact_id / pipeline_id
+     passent, leurs équivalents camelCase renvoient 422. Ne pas « remettre les deux ». */
   const out = await request<{ opportunities?: Opportunity[] }>('GET', '/opportunities/search', {
     query: {
       location_id: process.env.GHL_LOCATION_ID,
-      locationId: process.env.GHL_LOCATION_ID,
-      contactId,
-      pipelineId,
+      contact_id: contactId,
+      pipeline_id: pipelineId,
       status: 'open',
       limit: 1
     }
@@ -209,22 +220,39 @@ export async function createOpportunity(input: {
   contactId: string;
   monetaryValue: number;
 }): Promise<string | null> {
-  const out = await request<{ opportunity?: { id?: string }; id?: string }>(
-    'POST',
-    '/opportunities/',
-    {
-      body: {
-        locationId: process.env.GHL_LOCATION_ID,
-        pipelineId: input.pipelineId,
-        pipelineStageId: input.stageId,
-        contactId: input.contactId,
-        name: input.name,
-        status: 'open',
-        monetaryValue: input.monetaryValue || undefined
+  try {
+    const out = await request<{ opportunity?: { id?: string }; id?: string }>(
+      'POST',
+      '/opportunities/',
+      {
+        body: {
+          locationId: process.env.GHL_LOCATION_ID,
+          pipelineId: input.pipelineId,
+          pipelineStageId: input.stageId,
+          contactId: input.contactId,
+          name: input.name,
+          status: 'open',
+          monetaryValue: input.monetaryValue || undefined
+        }
+      }
+    );
+    return out.opportunity?.id ?? out.id ?? null;
+  } catch (e) {
+    /* GHL refuse lui-même une seconde opportunité ouverte pour le même contact, et
+       rend l'id de celle qui existe déjà. C'est une garantie plus solide que notre
+       recherche préalable : elle tient même si la recherche échoue, et même si deux
+       envois partent en même temps. On met donc à jour au lieu d'échouer. */
+    if (e instanceof GhlError && e.code === 'OPPORTUNITY_NO_DUPLICATE') {
+      const existingId = e.meta?.existingId;
+      if (typeof existingId === 'string') {
+        return updateOpportunity(existingId, {
+          name: input.name,
+          monetaryValue: input.monetaryValue
+        });
       }
     }
-  );
-  return out.opportunity?.id ?? out.id ?? null;
+    throw e;
+  }
 }
 
 export async function updateOpportunity(
