@@ -1,0 +1,896 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AZ Motorsport — Find the exact parts that fit your car</title>
+<meta name="description" content="Pick your make, model and generation. We show the exact AZ Motorsport downpipes and exhaust built for your chassis — real prices, real stock, printed fitment.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="assets/azm-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,500;0,600;0,700;0,800;1,800;1,900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── AZ Motorsport — landing de campagne ───────────────────────────────────
+   Direction : atelier motorsport, pas page SaaS. Noir pur (le thème Shopify
+   d'AZM est en noir 0 0 0), lime #cefe01 en accent rare — c'est la couleur du
+   monogramme —, orange #f94c10 pour les alertes (leur couleur de promo).
+   Toute la donnée technique (étapes, millésimes, codes châssis, prix) est en
+   mono : c'est le langage du créneau, et ça sépare la donnée du discours.
+   Données : catalog.js, généré par build-index.mjs depuis products.json.    */
+:root{
+  --ink:#000; --panel:#0c0d0e; --panel2:#121416; --line:#ffffff1c; --line2:#ffffff2e;
+  --text:#f4f5f6; --muted:#8b9196; --lime:#cefe01; --orange:#f94c10;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --cut:10px; /* profondeur de la coupe d'angle */
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; min-height:100svh; background:var(--ink); color:var(--text);
+  font-family:Archivo,"Helvetica Neue",Arial,sans-serif; font-size:16px; line-height:1.5;
+  display:flex; flex-direction:column; overflow-x:hidden;
+}
+img{max-width:100%; display:block}
+button,select,input{font:inherit; color:inherit}
+a{color:inherit}
+.wrap{width:min(1120px,100%); margin-inline:auto; padding-inline:20px}
+.wrap--narrow{width:min(880px,100%)}
+
+h1{
+  margin:0; font-style:italic; font-weight:900; text-transform:uppercase;
+  font-size:clamp(2rem,6.4vw,3.6rem); line-height:.95; letter-spacing:-.025em;
+}
+h2{margin:0; font-style:italic; font-weight:900; text-transform:uppercase; font-size:clamp(1.3rem,3.2vw,1.9rem); line-height:1; letter-spacing:-.02em}
+h3{margin:0; font-weight:800; font-size:1rem; line-height:1.25; letter-spacing:-.01em}
+.sub{margin:16px 0 0; color:var(--muted); font-size:1rem; max-width:56ch; line-height:1.6}
+.sub b{color:var(--text); font-weight:700}
+
+/* données techniques — tout ce qui est chiffre ou code passe en mono */
+.mono{font-family:var(--mono); font-weight:500; letter-spacing:-.01em; font-variant-numeric:tabular-nums}
+.rule{
+  display:flex; align-items:center; gap:14px; margin:0 0 26px;
+  font-family:var(--mono); font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+}
+.rule::after{content:""; flex:1; height:1px; background:var(--line)}
+.rule b{color:var(--lime); font-weight:600}
+
+/* ── barre du haut ─────────────────────────────────────────────────────── */
+.top{border-bottom:1px solid var(--line); background:var(--ink)}
+.top__in{display:flex; align-items:center; gap:16px; padding-block:14px}
+.brand{display:flex; align-items:center; gap:11px; font-style:italic; font-weight:900; text-transform:uppercase; font-size:.96rem; letter-spacing:-.01em}
+.brand img{width:28px; height:28px}
+.top__spacer{flex:1}
+.phone{
+  display:inline-flex; align-items:center; gap:8px; text-decoration:none;
+  font-family:var(--mono); font-size:.82rem; font-weight:600; letter-spacing:-.01em; white-space:nowrap;
+  padding:8px 0; border-bottom:1px solid transparent;
+}
+.phone:hover{border-bottom-color:var(--lime); color:var(--lime)}
+.phone svg{color:var(--lime)}
+.back{
+  background:none; border:1px solid var(--line); color:var(--muted); cursor:pointer;
+  border-radius:3px; padding:8px 12px; font-family:var(--mono); font-size:.72rem;
+  letter-spacing:.1em; text-transform:uppercase;
+}
+.back:hover{border-color:var(--line2); color:var(--text)}
+.bar{height:2px; background:#ffffff12}
+.bar i{display:block; height:100%; width:0; background:var(--lime); transition:width .4s cubic-bezier(.2,.8,.2,1)}
+
+/* ── écrans ────────────────────────────────────────────────────────────── */
+main{flex:1; padding-block:clamp(26px,4.5vw,52px) 56px; position:relative}
+.screen{display:none; position:relative}
+.screen.is-on{display:block; animation:in .3s cubic-bezier(.2,.8,.2,1) both}
+@keyframes in{from{opacity:0; translate:0 12px} to{opacity:1; translate:0 0}}
+
+
+/* Intro en deux colonnes : le titre tient la gauche, la preuve occupe la droite.
+   Un bloc de texte seul dans une colonne étroite laisse la moitié de l'écran vide. */
+.intro{display:grid; gap:22px; grid-template-columns:1fr}
+@media(min-width:920px){
+  /* Les deux colonnes partent de la même ligne. Alignées en bas, le titre tombait
+     au bas de la colonne pendant que le texte restait en haut : une diagonale. */
+  .intro{grid-template-columns:1.08fr .92fr; gap:56px; align-items:start}
+  .intro h1{margin-top:-.08em}
+}
+.intro__side .sub{margin:0}
+.facts{
+  display:grid; grid-template-columns:repeat(3,1fr); gap:0; margin:22px 0 0;
+  border-top:1px solid var(--line);
+}
+.facts div{padding:13px 14px 0 0}
+.facts dt{
+  font-family:var(--mono); font-size:.66rem; letter-spacing:.1em; text-transform:uppercase;
+  color:#6a7075; margin-bottom:5px;
+}
+.facts dd{
+  margin:0; font-family:var(--mono); font-size:.86rem; font-weight:600; color:var(--text);
+  letter-spacing:-.01em;
+}
+/* Sur téléphone, trois colonnes de texte mono ne tiennent pas dans 350 px :
+   elles poussaient la page en débordement horizontal. */
+@media(max-width:560px){
+  .facts{grid-template-columns:1fr 1fr}
+  .facts div:last-child{grid-column:1 / -1; border-top:1px solid var(--line); margin-top:2px}
+  .facts dd{font-size:.76rem} .facts dt{font-size:.58rem; letter-spacing:.06em}
+}
+
+.authority{
+  margin:0 0 22px; font-family:var(--mono); font-size:.73rem; letter-spacing:.06em;
+  color:var(--muted); display:flex; flex-wrap:wrap; align-items:center; gap:10px;
+}
+.authority b{color:var(--lime); font-weight:600}
+.authority i{width:3px; height:3px; background:var(--line2); border-radius:50%; display:inline-block}
+@media(max-width:560px){
+  .authority{font-size:.64rem; gap:6px; margin-bottom:18px}
+  .authority i{display:none}
+  .authority span{width:100%}
+}
+.undertitle{margin:26px 0 0; font-family:var(--mono); font-size:.74rem; color:#6a7075; letter-spacing:.04em}
+
+/* ── cartes de marque : le logo, le nom, le nombre de pièces. Rien d'autre.
+   Les photos de collection d'AZM viennent de neuf séances différentes et se
+   battaient avec les logos ; la carte est plus lisible sans. */
+.brands{display:grid; gap:12px; margin-top:30px; grid-template-columns:repeat(2,1fr)}
+@media(min-width:680px){ .brands{grid-template-columns:repeat(3,1fr)} }
+.brand-card{
+  position:relative; overflow:hidden; cursor:pointer; padding:0; display:flex;
+  border:1px solid var(--line); background:var(--panel); text-align:center;
+  transition:background .18s ease, border-color .18s ease;
+  min-height:clamp(132px,22vw,176px);   /* la carte suit son contenu, sans ratio imposé */
+}
+.brand-card:hover{background:var(--panel2); border-color:var(--line2)}
+.brand-card::before{
+  content:""; position:absolute; inset:auto 0 0 0; height:2px; background:var(--lime);
+  transform:scaleX(0); transform-origin:left; transition:transform .28s cubic-bezier(.2,.8,.2,1); z-index:2;
+}
+.brand-card:hover::before{transform:scaleX(1)}
+.brand-card:focus-visible{outline:2px solid var(--lime); outline-offset:-2px}
+/* Logo, nom, nombre de pièces — empilés et centrés. Si un fichier manque dans
+   assets/brands/, le logo s'efface et le nom reste : la carte tient quand même. */
+.brand-card__label{
+  position:relative; z-index:1; display:flex; flex-direction:column; flex:1; height:100%;
+  align-items:center; justify-content:center; gap:clamp(12px,2.4vw,18px);
+  padding:clamp(16px,3vw,24px); text-align:center;
+}
+.brand-card__text{display:flex; flex-direction:column; gap:4px}
+/* Logos officiels, fonds retirés (clean-logos.mjs). Neuf logos de formes très
+   différentes — un bowtie large, un cheval vertical, quatre anneaux — n'ont pas le
+   même poids visuel à taille égale : chacun porte donc son propre facteur, pour
+   qu'ils pèsent pareil dans la grille. Légèrement désaturés au repos, pleine
+   couleur au survol : la grille se lit comme un système, la carte regardée s'allume. */
+/* Les viewBox sont recadrés sur le dessin (normalize-logos.mjs) : le logo remplit
+   donc sa boîte. On le contraint en hauteur ET en largeur, sans figer ni l'une ni
+   l'autre — un bloc large comme McLaren (6:1) bute sur la largeur, un écusson
+   vertical comme Porsche bute sur la hauteur, et les deux pèsent pareil. */
+.brand-card__logo{
+  width:auto; height:auto;
+  max-height:calc(clamp(46px,8.5vw,68px) * var(--k,1));
+  max-width:min(78%, 190px);
+  object-fit:contain;
+  filter:grayscale(.5); opacity:.9;
+  transition:filter .3s ease, opacity .3s ease, scale .35s cubic-bezier(.2,.8,.2,1);
+}
+.brand-card:hover .brand-card__logo{filter:grayscale(0); opacity:1; scale:1.05}
+.brand-card[data-brand="ferrari"]{--k:1.18}      /* cheval : étroit et haut */
+.brand-card[data-brand="porsche"]{--k:1.18}      /* écusson */
+.brand-card[data-brand="lamborghini"]{--k:1.18}  /* bouclier */
+.brand-card__name{
+  display:block; font-style:italic; font-weight:900; text-transform:uppercase;
+  font-size:clamp(.92rem,2.1vw,1.08rem); line-height:1; letter-spacing:-.02em;
+}
+.brand-card__n{
+  display:block; font-family:var(--mono); font-size:.72rem;
+  color:#b6bcc1; letter-spacing:-.01em; transition:color .2s ease;
+}
+.brand-card:hover .brand-card__n{color:var(--lime)}
+@media(max-width:400px){ .brands{grid-template-columns:1fr 1fr; gap:10px} .brand-card{aspect-ratio:1/1} }
+
+/* le char choisi reste visible en fond de l'écran suivant */
+.ctx{position:absolute; inset:0 0 auto; height:min(48vh,420px); z-index:-1; overflow:hidden}
+.ctx img{width:100%; height:100%; object-fit:cover; opacity:.16; filter:grayscale(.2)}
+.ctx::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg,#000000a6,#000 88%)}
+
+/* ── grille de choix ───────────────────────────────────────────────────── */
+.choices{display:grid; gap:1px; margin-top:28px; grid-template-columns:repeat(2,1fr); background:var(--line); border:1px solid var(--line)}
+@media(min-width:680px){ .choices{grid-template-columns:repeat(3,1fr)} }
+.choices--tight{grid-template-columns:repeat(1,1fr)}
+@media(min-width:680px){ .choices--tight{grid-template-columns:repeat(2,1fr)} }
+.choice{
+  position:relative; display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+  min-height:72px; padding:18px 18px; cursor:pointer; text-align:left; border:0;
+  background:var(--ink); color:var(--text);
+  font-weight:800; font-size:1.02rem; text-transform:uppercase; font-style:italic; letter-spacing:-.015em;
+  transition:background .14s ease, color .14s ease;
+}
+.choice::before{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:2px; background:transparent; transition:background .14s ease;
+}
+.choice:hover{background:var(--panel2)}
+.choice:hover::before{background:var(--lime)}
+.choice:focus-visible{outline:2px solid var(--lime); outline-offset:-2px}
+.choice small{
+  font-family:var(--mono); font-size:.72rem; font-weight:500; font-style:normal;
+  letter-spacing:0; color:var(--muted); text-transform:none; white-space:nowrap;
+}
+.choice:hover small{color:var(--lime)}
+.choice--plain{text-transform:none; font-style:normal; font-weight:600; font-size:.92rem; color:var(--muted); min-height:58px}
+
+.search{
+  margin-top:20px; width:100%; background:var(--ink); border:1px solid var(--line); color:var(--text);
+  border-radius:3px; padding:15px 16px; font-size:1rem;
+}
+.search:focus-visible{outline:2px solid var(--lime); outline-offset:-1px}
+
+/* ── formulaire ────────────────────────────────────────────────────────── */
+.form{margin-top:26px; display:grid; gap:16px; max-width:520px}
+.field label{
+  display:block; font-family:var(--mono); font-size:.72rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted); margin-bottom:8px;
+}
+.field input{
+  width:100%; background:var(--ink); border:1px solid var(--line); border-radius:3px;
+  padding:16px; font-size:1.02rem; font-weight:600;
+}
+.field input:focus-visible{outline:2px solid var(--lime); outline-offset:-1px}
+.field input::placeholder{color:#565c61; font-weight:500}
+.field.is-bad input{border-color:var(--orange)}
+.field .err{display:none; margin:7px 0 0; font-family:var(--mono); font-size:.74rem; color:var(--orange)}
+.field.is-bad .err{display:block}
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;
+  border:0; padding:18px 28px; font-weight:900; font-size:.98rem; font-style:italic;
+  text-transform:uppercase; letter-spacing:.02em; text-decoration:none;
+  background:var(--lime); color:#000; transition:filter .15s ease, transform .1s ease;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
+}
+.btn:hover{filter:brightness(1.12)}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.3; cursor:not-allowed}
+.btn--ghost{background:transparent; color:var(--text); border:1px solid var(--line2); clip-path:none}
+.btn--ghost:hover{border-color:var(--lime); color:var(--lime); filter:none}
+.btn--wide{width:100%}
+.legal{margin:2px 0 0; font-size:.78rem; color:#6a7075; line-height:1.5; max-width:52ch}
+.vehicle-chip{
+  display:inline-flex; align-items:center; gap:10px; margin-top:20px; padding:10px 14px;
+  border-left:2px solid var(--lime); background:var(--panel);
+  font-family:var(--mono); font-size:.8rem; letter-spacing:-.01em;
+}
+.vehicle-chip b{color:var(--lime); font-weight:600}
+
+/* ── résultats ─────────────────────────────────────────────────────────── */
+.results__head{display:flex; flex-wrap:wrap; align-items:center; gap:14px; margin-bottom:24px; padding-bottom:18px; border-bottom:1px solid var(--line)}
+.badge{
+  font-family:var(--mono); font-size:.76rem; font-weight:600; color:#000; background:var(--lime);
+  padding:5px 10px; letter-spacing:-.01em;
+}
+.grid{display:grid; gap:18px; grid-template-columns:1fr}
+@media(min-width:760px){ .grid{grid-template-columns:1fr 1fr} }
+/* Une seule pièce compatible (42 % des combinaisons) : elle prend toute la largeur,
+   image à gauche, choix et prix à droite — plutôt qu'une carte étroite et du vide. */
+@media(min-width:760px){
+  .grid--one{grid-template-columns:1fr}
+  .grid--one .card{flex-direction:row; align-items:stretch}
+  .grid--one .card__media{flex:0 0 46%; aspect-ratio:auto; min-height:400px}
+  .grid--one .card__body{flex:1; padding:28px; gap:18px; justify-content:center}
+  .grid--one .card h3{font-size:1.3rem}
+  .grid--one .card__actions{grid-template-columns:1.2fr 1fr; max-width:460px}
+  .grid--one .price b{font-size:2.2rem}
+}
+.card{
+  background:var(--panel); border:1px solid var(--line); display:flex; flex-direction:column;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
+  transition:border-color .18s ease;
+}
+.card:hover{border-color:var(--line2)}
+.card__media{position:relative; aspect-ratio:4/3; background:#000; overflow:hidden}
+.card__media img{width:100%; height:100%; object-fit:cover; transition:scale .6s ease}
+.card:hover .card__media img{scale:1.03}
+.card__tag{
+  position:absolute; left:0; top:14px; background:var(--ink); border-left:2px solid var(--lime);
+  padding:6px 12px; font-family:var(--mono); font-size:.7rem; letter-spacing:.08em; text-transform:uppercase;
+}
+.card__body{padding:20px; display:flex; flex-direction:column; gap:15px; flex:1}
+.fitbox{border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:12px 0}
+.fitbox__head{
+  margin:0 0 6px; display:flex; align-items:center; gap:7px; color:var(--lime);
+  font-family:var(--mono); font-size:.68rem; letter-spacing:.12em; text-transform:uppercase;
+}
+.fitbox__body{margin:0; font-family:var(--mono); font-size:.79rem; color:var(--text); line-height:1.55}
+.specs{margin:0; padding:0; list-style:none; display:grid; gap:6px; font-size:.84rem; color:var(--muted)}
+.specs li{padding-left:16px; position:relative}
+.specs li::before{content:"·"; position:absolute; left:4px; color:var(--lime)}
+.opts{display:grid; gap:10px}
+.opts label{display:block; font-family:var(--mono); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin-bottom:6px}
+.opts select{
+  width:100%; appearance:none; background:var(--ink); border:1px solid var(--line); color:var(--text);
+  border-radius:3px; padding:12px 34px 12px 13px; font-size:.88rem; font-weight:700; cursor:pointer;
+  background-image:linear-gradient(45deg,transparent 50%,#8b9196 50%),linear-gradient(135deg,#8b9196 50%,transparent 50%);
+  background-position:calc(100% - 18px) 50%,calc(100% - 12px) 50%; background-size:6px 6px,6px 6px; background-repeat:no-repeat;
+}
+.opt-help{margin:8px 0 0; font-size:.76rem; color:var(--muted); line-height:1.5}
+.opt-help b{color:var(--text); font-weight:700}
+.price{display:flex; align-items:baseline; gap:12px; margin-top:auto; padding-top:4px}
+.price b{font-family:var(--mono); font-size:1.75rem; font-weight:600; letter-spacing:-.03em}
+.price small{font-family:var(--mono); color:var(--muted); font-size:.72rem; letter-spacing:.06em}
+.stock{font-family:var(--mono); font-size:.72rem; letter-spacing:.06em; margin-left:auto}
+.stock--in{color:var(--lime)} .stock--out{color:var(--orange)}
+.card__actions{display:grid; gap:10px; grid-template-columns:1fr}
+@media(min-width:520px){ .card__actions{grid-template-columns:1.5fr 1fr} }
+.note{margin:0; font-family:var(--mono); font-size:.69rem; color:#6a7075; line-height:1.5}
+
+.callout{
+  margin:30px 0 0; padding:18px 20px; border-left:2px solid var(--lime); background:var(--panel);
+  font-size:.94rem; color:var(--muted);
+}
+.callout a{color:var(--lime); font-weight:700; text-decoration:none; border-bottom:1px solid #cefe0155}
+.reassure{display:grid; gap:0; grid-template-columns:1fr; margin-top:18px; border-top:1px solid var(--line)}
+@media(min-width:780px){ .reassure{grid-template-columns:repeat(3,1fr)} }
+.reassure div{padding:22px 0; border-bottom:1px solid var(--line)}
+@media(min-width:780px){
+  .reassure div{padding:22px 24px 22px 0; border-bottom:0; border-right:1px solid var(--line)}
+  .reassure div:last-child{border-right:0; padding-right:0}
+}
+.reassure b{display:block; font-style:italic; text-transform:uppercase; font-size:.94rem; margin-bottom:8px; letter-spacing:-.01em}
+.reassure p{margin:0; color:var(--muted); font-size:.86rem; line-height:1.55}
+
+footer{border-top:1px solid var(--line); padding-block:24px; color:#5f6569; font-family:var(--mono); font-size:.72rem; letter-spacing:-.01em}
+footer p{margin:0 0 6px}
+.hidden{display:none !important}
+@media(prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap top__in">
+    <div class="brand"><img src="assets/azm-mark.png" alt="" width="28" height="28"> AZ Motorsport</div>
+    <span class="top__spacer"></span>
+    <a class="phone" href="tel:+15817458680">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+      581-745-8680
+    </a>
+    <button class="back hidden" id="back" type="button">← Back</button>
+  </div>
+</header>
+<div class="bar"><i id="bar"></i></div>
+
+<main>
+  <!-- 1 ─ marque ------------------------------------------------------- -->
+  <section class="screen is-on wrap" id="s-make" data-step="1">
+    <p class="authority">
+      <b>Official downpipe supplier — Stage 4 Tuning Canada</b>
+      <i></i><span>Canada's #1 choice for Euro &amp; Exotic</span>
+    </p>
+    <p class="rule"><b>01</b> Your car <span class="mono">· 6 sec</span></p>
+    <div class="intro">
+      <h1>What are you<br>driving?</h1>
+      <div class="intro__side">
+        <p class="sub">
+          <b>86% of parts returned online are simply the wrong fitment.</b> So we start with your
+          chassis and finish by printing the exact years the part was built for — you check it
+          yourself before you spend a dollar.
+        </p>
+        <dl class="facts">
+          <div><dt>In the catalog</dt><dd id="factParts">—</dd></div>
+          <div><dt>Chassis covered</dt><dd id="factModels">—</dd></div>
+          <div><dt>Material</dt><dd>304 stainless</dd></div>
+        </dl>
+      </div>
+    </div>
+    <div class="brands" id="makes"></div>
+    <p class="undertitle">Built by car enthusiasts, for car enthusiasts.</p>
+  </section>
+
+  <!-- 2 ─ modèle ------------------------------------------------------- -->
+  <section class="screen wrap wrap--narrow" id="s-model" data-step="2">
+    <p class="rule"><b>02</b> Model</p>
+    <h1 id="modelTitle">Which model?</h1>
+    <p class="sub">If yours isn't on the list, we don't build for it yet — say so and you'll get a straight answer instead of a maybe.</p>
+    <input class="search hidden" id="modelSearch" type="search" placeholder="Type your model…" autocomplete="off">
+    <div class="choices" id="models"></div>
+  </section>
+
+  <!-- 3 ─ génération --------------------------------------------------- -->
+  <section class="screen wrap wrap--narrow" id="s-year" data-step="3">
+    <p class="rule"><b>03</b> Generation</p>
+    <h1 id="genTitle">Which generation?</h1>
+    <p class="sub">Your car was built in more than one shape, and they don't share a single part. Pick the years that match yours — the chassis code is on your registration.</p>
+    <div class="choices choices--tight" id="years"></div>
+  </section>
+
+  <!-- 4 ─ coordonnées -------------------------------------------------- -->
+  <section class="screen wrap wrap--narrow" id="s-gate" data-step="4">
+    <p class="rule"><b>04</b> Where to send it</p>
+    <h1>Your fitment<br>sheet.</h1>
+    <p class="sub" id="gateSub">We'll show your parts right away, and send the fitment sheet so you can check it against your car before you buy.</p>
+    <div class="vehicle-chip" id="chip" hidden>Your car <b id="chipCar">—</b></div>
+    <form class="form" id="gate" novalidate>
+      <div class="field" id="f-name">
+        <label for="i-name">Full name</label>
+        <input id="i-name" name="name" type="text" autocomplete="name" placeholder="Alex Tremblay" required>
+        <p class="err">Tell us who we're talking to.</p>
+      </div>
+      <div class="field" id="f-email">
+        <label for="i-email">Email</label>
+        <input id="i-email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" required>
+        <p class="err">That email doesn't look right.</p>
+      </div>
+      <div class="field" id="f-phone">
+        <label for="i-phone">Phone</label>
+        <input id="i-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(514) 555-0134" required>
+        <p class="err">We need a number our builder can reach.</p>
+      </div>
+      <button class="btn btn--wide" id="gateGo" type="submit">Show my parts →</button>
+      <p class="legal">No spam. We use this to confirm the fitment on your chassis and to answer install questions. One message, from a human.</p>
+    </form>
+  </section>
+
+  <!-- 5 ─ résultats ---------------------------------------------------- -->
+  <section class="screen wrap" id="s-results" data-step="5">
+    <div class="results__head">
+      <span class="badge" id="resBadge">0 parts</span>
+      <h2 id="resTitle">—</h2>
+      <button class="btn btn--ghost" id="restart" type="button" style="margin-left:auto; padding:11px 16px; font-size:.8rem">Change car</button>
+    </div>
+    <div class="grid" id="cards"></div>
+    <p class="callout">
+      Not sure which one you want? <a href="tel:+15817458680">Call 581-745-8680</a> —
+      a builder confirms the fit and the sound before you order.
+    </p>
+    <div class="reassure">
+      <div><b>The fitment is printed</b><p>Every part lists the exact years and chassis codes it was built for. If your car isn't on that line, don't buy — call us instead.</p></div>
+      <div><b>304 stainless, TIG-welded</b><p>CNC-machined flanges, OEM mounting points, direct bolt-on. No cutting, no welding on your car.</p></div>
+      <div><b>Catless is off-road only</b><p>Race (catless) parts aren't legal for road use or on vehicles that must meet emissions rules in Canada or the US. High Flow (catted) is listed where it exists.</p></div>
+    </div>
+  </section>
+
+  <!-- 6 ─ modèle absent ------------------------------------------------ -->
+  <section class="screen wrap wrap--narrow" id="s-miss" data-step="5">
+    <p class="rule"><b>—</b> Not in the catalog</p>
+    <h1>We don't list<br>that one — yet.</h1>
+    <p class="sub">Some chassis are built to order and never make the catalog. Leave the car and a number: you'll get a straight answer on whether we can build it, and what it runs.</p>
+    <form class="form" id="missForm" novalidate>
+      <div class="field" id="mf-car">
+        <label for="m-car">Your car — year, model, engine</label>
+        <input id="m-car" type="text" placeholder="2019 BMW 540i xDrive B58" required>
+        <p class="err">Tell us the car.</p>
+      </div>
+      <div class="field" id="mf-name">
+        <label for="m-name">Full name</label>
+        <input id="m-name" type="text" autocomplete="name" placeholder="Alex Tremblay" required>
+        <p class="err">Tell us who we're talking to.</p>
+      </div>
+      <div class="field" id="mf-email">
+        <label for="m-email">Email</label>
+        <input id="m-email" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" required>
+        <p class="err">That email doesn't look right.</p>
+      </div>
+      <div class="field" id="mf-phone">
+        <label for="m-phone">Phone</label>
+        <input id="m-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(514) 555-0134" required>
+        <p class="err">We need a number our builder can reach.</p>
+      </div>
+      <button class="btn btn--wide" type="submit">Ask about my car →</button>
+    </form>
+  </section>
+
+  <!-- 7 ─ merci -------------------------------------------------------- -->
+  <section class="screen wrap wrap--narrow" id="s-thanks" data-step="5">
+    <p class="rule"><b>✓</b> Received</p>
+    <h1>We have<br>your car.</h1>
+    <p class="sub" id="thanksSub">A builder comes back to you with what fits and what it costs. If you'd rather not wait, the shop is open.</p>
+    <p style="margin-top:28px"><a class="btn" id="thanksShop" href="https://azmotorsport.ca">Browse the shop</a></p>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Prices in CAD, pulled live from azmotorsport.ca · checkout happens on azmotorsport.ca</p>
+    <!-- Mention d'usage des marques : obligatoire dès qu'on affiche les logos des
+         constructeurs. C'est la formule que le créneau utilise (Fabspeed, ECS). -->
+    <p>All manufacturer names, symbols and descriptions are used for identification purposes only.
+       AZ Motorsport is not affiliated with, nor endorsed by, these manufacturers.</p>
+    <p id="stamp">Catalog —</p>
+  </div>
+</footer>
+
+<script src="catalog.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ── À REMPLIR AVANT LA MISE EN LIGNE ──────────────────────────────────
+     LEAD_ENDPOINT : URL qui reçoit le lead en POST JSON (webhook Make, GHL,
+                     fonction Vercel…). Vide = le lead reste dans le
+                     navigateur et n'arrive nulle part : à brancher.
+     TALK          : lien de conversation (m.me de la Page). Vide → téléphone.
+     PIXEL         : id du pixel Meta pour mesurer la LP (854592952776027).
+     GATE_FIRST    : true = coordonnées AVANT le choix du char.
+                     false (défaut) = 3 clics char, puis coordonnées.
+                     Les taux de base disent que le gate en premier abandonne
+                     le plus ; c'est le A/B à trancher sur le CPL servable.  */
+  var CONFIG = {
+    SHOP: (window.AZM_CATALOG && window.AZM_CATALOG.shop) || 'https://azmotorsport.ca',
+    LEAD_ENDPOINT: '',
+    TALK: '',
+    PHONE: '581-745-8680',      // publié sur azmotorsport.ca
+    PIXEL: '',
+    GATE_FIRST: false,
+    UTM: 'utm_source=meta&utm_medium=paid&utm_campaign=fitment_lp'
+  };
+
+  var C = window.AZM_CATALOG;
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { make: null, model: null, gen: null, lead: null };
+  var trail = [];
+
+  if (!C) { $('makes').textContent = 'catalog.js manquant — lance node build-index.mjs'; return; }
+
+  var nModels = C.makes.reduce(function (s, m) { return s + m.models.length; }, 0);
+  $('stamp').textContent = 'Catalog ' + new Date(C.generated).toISOString().slice(0, 10)
+    + ' · ' + Object.keys(C.products).length + ' parts · ' + C.makes.length + ' makes';
+  $('factParts').textContent = Object.keys(C.products).length + ' parts';
+  $('factModels').textContent = nModels + ' models';
+  $('thanksShop').href = CONFIG.SHOP;
+
+  function track(ev, data) { if (window.fbq) window.fbq('track', ev, data || {}); }
+  if (CONFIG.PIXEL) {
+    /* eslint-disable */
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,
+    'script','https://connect.facebook.net/en_US/fbevents.js');
+    /* eslint-enable */
+    window.fbq('init', CONFIG.PIXEL); track('PageView');
+  }
+
+  /* ── navigation ──────────────────────────────────────────────────────── */
+  var SCREENS = ['s-make', 's-model', 's-year', 's-gate', 's-results', 's-miss', 's-thanks'];
+  function show(id, push) {
+    var cur = SCREENS.filter(function (s) { return $(s).classList.contains('is-on'); })[0];
+    if (cur === id) return;
+    if (push !== false && cur) trail.push(cur);
+    SCREENS.forEach(function (s) { $(s).classList.toggle('is-on', s === id); });
+    $('back').classList.toggle('hidden', trail.length === 0);
+    $('bar').style.width = (Number($(id).dataset.step || 1) / 5 * 100) + '%';
+    window.scrollTo(0, 0);
+    if (id === 's-gate') setTimeout(function () { $('i-name').focus(); }, 240);
+  }
+  $('back').addEventListener('click', function () {
+    var prev = trail.pop();
+    if (prev) show(prev, false);
+    $('back').classList.toggle('hidden', trail.length === 0);
+  });
+  $('restart').addEventListener('click', function () { trail = []; show('s-make', false); });
+
+  /* ── helpers catalogue ───────────────────────────────────────────────── */
+  function makeByName(n) { return C.makes.filter(function (m) { return m.make === n; })[0] || null; }
+  function modelByKey(mk, k) {
+    var m = makeByName(mk);
+    return m ? (m.models.filter(function (x) { return x.key === k; })[0] || null) : null;
+  }
+  function money(n) { return '$' + Number(n).toLocaleString('en-CA', { maximumFractionDigits: 0 }); }
+  var PART_LABEL = { downpipe: 'Downpipes', 'exhaust-system': 'Race exhaust', headers: 'Racing headers' };
+  function partLabel(p) { return PART_LABEL[p.part] || p.part.replace(/-/g, ' '); }
+  function genLabel(g) { return g ? g.from + '–' + g.to + (g.chassis ? ' · ' + g.chassis : '') : ''; }
+  function carName() {
+    var mo = state.model && modelByKey(state.make, state.model);
+    var base = [state.make, mo && mo.label].filter(Boolean).join(' ');
+    return state.gen ? base + ' (' + genLabel(state.gen) + ')' : base;
+  }
+  function partsFor() {
+    var mo = modelByKey(state.make, state.model);
+    if (!mo) return [];
+    var ids = state.gen ? state.gen.products : mo.products;
+    return ids.map(function (id) { return C.products[id]; }).filter(Boolean)
+      .sort(function (a, b) { return a.part.localeCompare(b.part) || a.price - b.price; });
+  }
+  function button(label, sub, on) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'choice';
+    b.innerHTML = '<span>' + label + '</span>' + (sub ? '<small>' + sub + '</small>' : '');
+    b.addEventListener('click', on);
+    return b;
+  }
+
+  /* ── 01 marque — carte photo, catalogues les plus profonds en premier ──── */
+  var mkBox = $('makes');
+  C.makes.slice().sort(function (a, b) {
+    var na = a.models.reduce(function (s, x) { return s + x.products.length; }, 0);
+    var nb = b.models.reduce(function (s, x) { return s + x.products.length; }, 0);
+    return nb - na;
+  }).forEach(function (m) {
+    var n = m.models.reduce(function (s, x) { return s + x.products.length; }, 0);
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'brand-card';
+    /* Si AZM dépose ses logos dans assets/brands/, ils remplacent le mot-symbole ;
+       sinon le nom reste, et la carte est identique pour les neuf marques. */
+    var slug = m.make.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+    b.dataset.brand = slug;   // sert au facteur de taille optique, propre à chaque logo
+    b.innerHTML = '<span class="brand-card__label">'
+      + '<img class="brand-card__logo" alt="" src="assets/brands/' + slug + '.svg">'
+      + '<span class="brand-card__text">'
+      + '<span class="brand-card__name">' + m.make + '</span>'
+      + '<span class="brand-card__n">' + n + ' parts</span></span></span>';
+
+    var logo = b.querySelector('.brand-card__logo');
+    logo.addEventListener('error', function () { logo.remove(); });   // pas de fichier : le nom suffit
+
+    b.addEventListener('click', function () {
+      state.make = m.make; state.model = null; state.gen = null;
+      setContext(m.image);
+      renderModels(); show('s-model');
+    });
+    mkBox.appendChild(b);
+  });
+
+  /* Le char de la marque reste en fond des écrans suivants : le visiteur garde
+     son véhicule sous les yeux pendant qu'il répond. */
+  function setContext(src) {
+    ['s-model', 's-year', 's-gate'].forEach(function (id) {
+      var sec = $(id);
+      var ctx = sec.querySelector('.ctx');
+      if (!src) { if (ctx) ctx.remove(); return; }
+      if (!ctx) {
+        ctx = document.createElement('div');
+        ctx.className = 'ctx'; ctx.setAttribute('aria-hidden', 'true');
+        ctx.innerHTML = '<img alt="">';
+        sec.insertBefore(ctx, sec.firstChild);
+      }
+      ctx.querySelector('img').src = src + '?width=1200';
+    });
+  }
+
+  /* ── 02 modèle ───────────────────────────────────────────────────────── */
+  function renderModels() {
+    var m = makeByName(state.make);
+    $('modelTitle').textContent = 'Which ' + state.make + '?';
+    var box = $('models'), search = $('modelSearch');
+    search.classList.toggle('hidden', m.models.length < 12);
+    search.value = '';
+
+    function paint(filter) {
+      box.innerHTML = '';
+      m.models.filter(function (x) {
+        return !filter || x.label.toLowerCase().indexOf(filter) > -1
+          || x.fits.join(' ').toLowerCase().indexOf(filter) > -1;
+      }).forEach(function (x) {
+        box.appendChild(button(x.label, x.years ? x.years[0] + '–' + x.years[1] : '', function () {
+          state.model = x.key; state.gen = null;
+          if (!renderGens()) show('s-year');
+        }));
+      });
+      var miss = button('My model isn\'t listed', '', function () { show('s-miss'); });
+      miss.className = 'choice choice--plain';
+      box.appendChild(miss);
+    }
+    search.oninput = function () { paint(search.value.trim().toLowerCase()); };
+    paint('');
+  }
+
+  /* ── 03 génération — sautée quand le modèle n'en a qu'une ──────────────
+     Vérifié sur le catalogue : 82 % des modèles n'ont qu'une génération, donc
+     leur demander l'année serait une étape pour rien. Les 18 autres sont les
+     gros vendeurs (M3, M5, 911 Turbo, GT3) où deux générations ne partagent
+     aucune pièce — là, la question est ce qui évite la mauvaise vente. */
+  function renderGens() {
+    var mo = modelByKey(state.make, state.model);
+    var gens = (mo && mo.generations) || [];
+    if (gens.length <= 1) { state.gen = gens[0] || null; afterCar(); return true; }
+
+    $('genTitle').textContent = 'Which ' + mo.label + '?';
+    var box = $('years');
+    box.innerHTML = '';
+    gens.slice().reverse().forEach(function (g) {
+      box.appendChild(button(g.from + '–' + g.to, g.chassis || (g.products.length + ' parts'), function () {
+        state.gen = g; afterCar();
+      }));
+    });
+    var older = button('Older / not sure', '', function () { show('s-miss'); });
+    older.className = 'choice choice--plain';
+    box.appendChild(older);
+    return false;
+  }
+
+  function afterCar() {
+    track('Lead', { content_name: carName(), content_type: 'vehicle_selected' });
+    if (state.lead || CONFIG.GATE_FIRST) { renderResults(); return; }
+    $('chipCar').textContent = carName();
+    $('chip').hidden = false;
+    var n = partsFor().length;
+    $('gateSub').textContent = n
+      ? 'We found ' + n + (n === 1 ? ' part' : ' parts') + ' built for your ' + carName()
+        + '. Tell us where to send the fitment sheet and they show up right now.'
+      : 'Tell us where to reach you and we\'ll confirm what we can build for your ' + carName() + '.';
+    show('s-gate');
+  }
+
+  /* ── validation + envoi ──────────────────────────────────────────────── */
+  function valid(f, ok) { $(f).classList.toggle('is-bad', !ok); return ok; }
+  function okEmail(v) { return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v.trim()); }
+  function okPhone(v) { return v.replace(/\D/g, '').length >= 10; }
+
+  function sendLead(payload) {
+    var body = JSON.stringify(payload);
+    try { localStorage.setItem('azm_lead', body); } catch (e) { /* navigation privée */ }
+    if (!CONFIG.LEAD_ENDPOINT) { console.warn('[AZM] LEAD_ENDPOINT vide — le lead n\'est envoyé nulle part.'); return; }
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(CONFIG.LEAD_ENDPOINT, new Blob([body], { type: 'application/json' }));
+    } else {
+      fetch(CONFIG.LEAD_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true })
+        .catch(function () { /* on n'empêche jamais l'utilisateur d'avancer */ });
+    }
+  }
+
+  $('gate').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = $('i-name').value.trim(), email = $('i-email').value.trim(), phone = $('i-phone').value.trim();
+    var ok = valid('f-name', name.length > 1);
+    ok = valid('f-email', okEmail(email)) && ok;
+    ok = valid('f-phone', okPhone(phone)) && ok;
+    if (!ok) return;
+    state.lead = { name: name, email: email, phone: phone };
+    sendLead({
+      source: 'fitment_lp', at: new Date().toISOString(),
+      name: name, email: email, phone: phone,
+      make: state.make, model: (modelByKey(state.make, state.model) || {}).label || null,
+      generation: genLabel(state.gen) || null,
+      years: state.gen ? [state.gen.from, state.gen.to] : null,
+      car: carName(),
+      parts: partsFor().map(function (p) { return p.title; }),
+      page: window.location.href
+    });
+    track('CompleteRegistration', { content_name: carName(), status: 'fitment_lead' });
+    if (CONFIG.GATE_FIRST && !state.make) { show('s-make'); return; }
+    renderResults();
+  });
+
+  $('missForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var car = $('m-car').value.trim(), name = $('m-name').value.trim();
+    var email = $('m-email').value.trim(), phone = $('m-phone').value.trim();
+    var ok = valid('mf-car', car.length > 2);
+    ok = valid('mf-name', name.length > 1) && ok;
+    ok = valid('mf-email', okEmail(email)) && ok;
+    ok = valid('mf-phone', okPhone(phone)) && ok;
+    if (!ok) return;
+    sendLead({
+      source: 'fitment_lp_not_listed', at: new Date().toISOString(),
+      name: name, email: email, phone: phone, car: car,
+      make: state.make, model: (modelByKey(state.make, state.model) || {}).label || null,
+      page: window.location.href
+    });
+    track('Lead', { content_name: car, content_type: 'not_listed' });
+    $('thanksSub').textContent = 'A builder comes back to you about the ' + car
+      + ' — whether we can build it, and what it runs.';
+    show('s-thanks');
+  });
+
+  /* ── carte produit ───────────────────────────────────────────────────── */
+  function card(p) {
+    var el = document.createElement('article');
+    el.className = 'card';
+    var img = p.images[0] || '';
+    var opts = p.optionNames.filter(function (n) { return n && n !== 'Title'; });
+
+    var html = '<div class="card__media">'
+      + (img ? '<img loading="lazy" alt="' + p.title.replace(/"/g, '') + '" src="' + img + '?width=900">' : '')
+      + '<span class="card__tag">' + partLabel(p) + '</span></div>'
+      + '<div class="card__body"><h3>' + p.title + '</h3>';
+
+    /* Le bloc de fitment attaque le frein n°1 du créneau : 86 % des retours de
+       pièces en ligne sont un mauvais fitment. On l'imprime, on ne le cache pas. */
+    if (p.fitments.length) {
+      html += '<div class="fitbox"><p class="fitbox__head">'
+        + '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'
+        + 'Built for these exact cars</p><p class="fitbox__body">' + p.fitments.join(' · ') + '</p></div>';
+    }
+    if (p.features.length) {
+      html += '<ul class="specs">' + p.features.slice(0, 3).map(function (f) { return '<li>' + f + '</li>'; }).join('') + '</ul>';
+    }
+    if (opts.length) {
+      html += '<div class="opts">' + opts.map(function (name, i) {
+        var values = [];
+        p.variants.forEach(function (v) { if (v.options[i] && values.indexOf(v.options[i]) === -1) values.push(v.options[i]); });
+        return '<div><label for="opt-' + p.id + '-' + i + '">' + name + '</label>'
+          + '<select id="opt-' + p.id + '-' + i + '" data-opt="' + i + '">'
+          + values.map(function (v) { return '<option>' + v + '</option>'; }).join('') + '</select></div>';
+      }).join('') + '<p class="opt-help" data-help></p></div>';
+    }
+    html += '<div class="price"><b data-price>' + money(p.price) + '</b><small>CAD</small>'
+      + '<span class="stock stock--in" data-stock>In stock</span></div>'
+      + '<div class="card__actions"><a class="btn" data-buy href="#">Buy now</a>'
+      + '<a class="btn btn--ghost" data-talk href="#">Ask a builder</a></div>';
+    /* La mention off-road n'apparaît que si aucune option ne l'explique déjà :
+       sur la fiche, l'aide sous le sélecteur dit la même chose, en plus clair. */
+    if (p.offroad && !opts.length) {
+      html += '<p class="note">Race (catless) versions are for off-road / competition use only.</p>';
+    }
+    html += '</div>';
+    el.innerHTML = html;
+
+    function current() {
+      var chosen = [].slice.call(el.querySelectorAll('[data-opt]')).map(function (s) { return s.value; });
+      if (!chosen.length) return p.variants[0];
+      return p.variants.filter(function (v) {
+        return chosen.every(function (val, i) { return v.options[i] === val; });
+      })[0] || p.variants[0];
+    }
+    /* Le choix catless / catted n'est pas une option technique : c'est la question
+       du son et de la légalité, celle qui bloque vraiment l'achat. */
+    function help(v) {
+      var t = v.options.join(' ').toLowerCase();
+      if (t.indexOf('catless') > -1 || t.indexOf('race') > -1) {
+        return '<b>Loudest, most aggressive.</b> No catalytic converters — off-road and competition use only, not legal on public roads.';
+      }
+      if (t.indexOf('catted') > -1 || t.indexOf('high flow') > -1) {
+        return '<b>Keeps the converters.</b> Calmer at cold start and easier to live with daily, still opens up the flow.';
+      }
+      return '';
+    }
+    function refresh() {
+      var v = current();
+      var tip = el.querySelector('[data-help]');
+      if (tip) { tip.innerHTML = help(v); tip.style.display = help(v) ? '' : 'none'; }
+      el.querySelector('[data-price]').textContent = money(v.price);
+      var st = el.querySelector('[data-stock]');
+      st.textContent = v.available ? 'In stock' : 'Built to order';
+      st.className = 'stock ' + (v.available ? 'stock--in' : 'stock--out');
+      el.querySelector('[data-buy]').href = CONFIG.SHOP + '/cart/' + v.id + ':1?' + CONFIG.UTM
+        + '&utm_content=' + encodeURIComponent(p.handle);
+      /* 84 % du revenu d'AZM se facture par conversation : on ne cache pas ce canal. */
+      el.querySelector('[data-talk]').href = CONFIG.TALK || ('tel:' + CONFIG.PHONE.replace(/[^+\d]/g, ''));
+    }
+    el.addEventListener('change', function (e) { if (e.target.dataset.opt !== undefined) refresh(); });
+    el.querySelector('[data-buy]').addEventListener('click', function () {
+      var v = current();
+      track('AddToCart', { content_ids: [String(v.id)], content_name: p.title, value: v.price, currency: 'CAD' });
+    });
+    refresh();
+    return el;
+  }
+
+  /* ── résultats ───────────────────────────────────────────────────────── */
+  function renderResults() {
+    var parts = partsFor();
+    if (!parts.length) { show('s-miss'); return; }
+    $('resBadge').textContent = parts.length + (parts.length === 1 ? ' part' : ' parts');
+    $('resTitle').textContent = 'fit your ' + carName();
+    var grid = $('cards');
+    grid.innerHTML = '';
+    grid.className = 'grid' + (parts.length === 1 ? ' grid--one' : '');
+    parts.forEach(function (p) { grid.appendChild(card(p)); });
+    track('ViewContent', { content_name: carName(), content_type: 'vehicle_fitment', num_items: parts.length });
+    try {
+      localStorage.setItem('azm_vehicle', JSON.stringify({ make: state.make, model: state.model, year: state.gen && state.gen.from }));
+      var url = new URL(window.location.href);
+      url.searchParams.set('make', state.make);
+      url.searchParams.set('model', state.model);
+      if (state.gen) url.searchParams.set('year', state.gen.from);
+      history.replaceState(null, '', url);
+    } catch (err) { /* navigation privée */ }
+    show('s-results');
+  }
+
+  /* ── deep link : ?make=BMW&model=m3&year=2023 (une pub par modèle) ───── */
+  var q = new URLSearchParams(window.location.search);
+  try { state.lead = JSON.parse(localStorage.getItem('azm_lead') || 'null'); } catch (e) { /* rien */ }
+  if (CONFIG.GATE_FIRST && !state.lead) { show('s-gate', false); $('chip').hidden = true; }
+  if (q.get('make') && makeByName(q.get('make'))) {
+    state.make = q.get('make');
+    if (q.get('model') && modelByKey(state.make, q.get('model'))) {
+      state.model = q.get('model');
+      var gens = (modelByKey(state.make, state.model) || {}).generations || [];
+      var y = Number(q.get('year'));
+      state.gen = y ? (gens.filter(function (g) { return y >= g.from && y <= g.to; })[0] || null) : null;
+      if (state.gen || gens.length <= 1) { if (!state.gen) state.gen = gens[0] || null; afterCar(); }
+      else if (!renderGens()) { /* une seule génération : afterCar déjà appelé */ }
+      else show('s-year', false);
+    } else { renderModels(); show('s-model', false); }
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8"><title>AZM — contrôle responsive</title>
+<style>
+ body{margin:0;background:#141517;color:#e9eaeb;font:14px system-ui,sans-serif;padding:20px}
+ h1{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#cefe01;margin:0 0 4px}
+ p{color:#9aa0a6;margin:0 0 18px;font-size:12.5px}
+ .row{display:flex;gap:18px;align-items:flex-start;overflow-x:auto;padding-bottom:16px}
+ .dev{flex:0 0 auto}
+ .dev h2{font:600 11px ui-monospace,monospace;color:#9aa0a6;margin:0 0 7px;letter-spacing:.06em}
+ .dev iframe{border:1px solid #33363a;background:#000;display:block}
+ .p390 iframe{width:390px;height:780px}
+ .p820 iframe{width:820px;height:780px}
+ .p1440 iframe{width:1440px;height:780px}
+ .scale{transform-origin:top left}
+</style>
+<h1>Contrôle responsive</h1>
+<p>Même page, trois largeurs réelles. iPhone 14/15 = 390 px · iPad = 820 px · portable = 1440 px.
+   Fais défiler à l'intérieur de chaque cadre.</p>
+<div class="row">
+  <div class="dev p390"><h2>iPhone — 390 px</h2><iframe src="index.html"></iframe></div>
+  <div class="dev p820"><h2>iPad — 820 px</h2><iframe src="index.html"></iframe></div>
+  <div class="dev p1440"><h2>Ordinateur — 1440 px</h2><iframe src="index.html"></iframe></div>
+</div>

@@ -1,0 +1,6 @@
+_audit.html
+_shot*.html
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
