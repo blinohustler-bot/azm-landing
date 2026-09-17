@@ -33,14 +33,40 @@ export function splitName(full: string): { firstName: string; lastName: string }
 
 /* Les UTM voyagent dans l'URL de la page, pas dans un champ à part : on les relit ici
    plutôt que de faire confiance à un champ que n'importe qui peut poser. */
-export function utmsFrom(pageUrl: string): Record<string, string> {
+/* Les identifiants de clic des régies. Ce ne sont pas des utm_, mais c'est par eux que
+   Meta et Google rattachent la conversion à l'annonce exacte — sans eux, on sait d'où
+   vient le lead, pas ce qui l'a produit. */
+const CLICK_IDS = new Set([
+  'fbclid', 'gclid', 'gbraid', 'wbraid', 'msclkid', 'ttclid', 'twclid',
+  'li_fat_id', 'epik', 'igshid', 'dclid', 'yclid',
+  /* Paramètres dynamiques que Meta sait remplir dans l'URL d'une annonce. */
+  'ad_id', 'adset_id', 'campaign_id', 'placement', 'site_source_name'
+]);
+
+/* Un lien de campagne malformé ou forgé ne doit pas transformer la note en pavé. */
+const MAX_PARAMS = 30;
+const MAX_KEY = 40;
+
+/* Toutes les données de provenance portées par l'URL.
+ *
+ * C'était une liste figée de cinq utm_. Toute autre clé — utm_id, utm_ad, utm_placement,
+ * n'importe quelle convention de nommage de l'agence — était jetée en silence.
+ * On prend maintenant tout ce qui commence par utm_, plus les identifiants de clic
+ * connus, bornés en nombre et en longueur.
+ */
+export function utmsFrom(url: string): Record<string, string> {
   try {
-    const q = new URL(pageUrl).searchParams;
-    const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid'];
     const out: Record<string, string> = {};
-    for (const k of keys) {
-      const v = q.get(k);
-      if (v) out[k] = clip(v, MAX.text);
+    let n = 0;
+    for (const [rawKey, rawValue] of new URL(url).searchParams) {
+      if (n >= MAX_PARAMS) break;
+      const key = rawKey.trim().toLowerCase();
+      if (key.length > MAX_KEY) continue;
+      if (!key.startsWith('utm_') && !CLICK_IDS.has(key)) continue;
+      const value = clip(rawValue, MAX.text);
+      if (!value || out[key]) continue;   // première occurrence seulement
+      out[key] = value;
+      n++;
     }
     return out;
   } catch {
@@ -63,6 +89,7 @@ export type Lead = {
   parts: LeadPart[];
   value: number;
   page: string;
+  landing: string;
   utms: Record<string, string>;
   at: string;
 };
@@ -99,6 +126,10 @@ export function parseLead(raw: unknown): { lead?: Lead; error?: string } {
     : [];
 
   const page = clip(r.page, MAX.url);
+  /* L'attribution se lit sur l'URL d'ARRIVÉE, pas sur celle du moment : le parcours
+     reconstruit ses liens et perd les utm dès le premier clic. On retombe sur `page`
+     quand le navigateur n'a rien pu retenir (navigation privée). */
+  const landing = clip(r.landing, MAX.url) || page;
 
   return {
     lead: {
@@ -114,7 +145,8 @@ export function parseLead(raw: unknown): { lead?: Lead; error?: string } {
       parts,
       value: parts.reduce((s, p) => s + p.price, 0),
       page,
-      utms: utmsFrom(page),
+      landing,
+      utms: utmsFrom(landing),
       at: new Date().toISOString()
     }
   };
@@ -152,11 +184,20 @@ export function noteBody(lead: Lead): string {
   } else if (lead.source !== 'fitment_lp_not_listed') {
     lines.push('', 'Aucune pièce au catalogue pour ce char.');
   }
-  const utm = Object.entries(lead.utms);
+  /* Les utm_ d'abord — c'est ce que lit le rapport de campagne — puis les identifiants
+     de clic, qui servent au rapprochement avec la régie. */
+  const utm = Object.entries(lead.utms).sort(([a], [b]) => {
+    const rang = (k: string) => (k.startsWith('utm_') ? 0 : 1);
+    return rang(a) - rang(b) || a.localeCompare(b);
+  });
   if (utm.length) {
-    lines.push('', 'Provenance :');
-    for (const [k, v] of utm) lines.push(`  ${k} = ${v}`);
+    lines.push('', `Provenance (${utm.length}) :`);
+    const pad = Math.max(...utm.map(([k]) => k.length));
+    for (const [k, v] of utm) lines.push(`  ${k.padEnd(pad)} = ${v}`);
+  } else {
+    lines.push('', "Provenance : aucun paramètre de campagne dans l'URL d'arrivée.");
   }
-  if (lead.page) lines.push('', `Page : ${lead.page}`);
+  if (lead.landing) lines.push('', `Arrivée : ${lead.landing}`);
+  if (lead.page && lead.page !== lead.landing) lines.push(`Envoi   : ${lead.page}`);
   return lines.join('\n');
 }

@@ -30,6 +30,9 @@ export type LeadPayload = {
   generation?: string | null;
   parts?: { title: string; price: number }[];
   page: string;
+  /* L'URL d'arrivée, retenue par LandingCapture. C'est la seule qui porte encore les
+     utm : le parcours les perd dès le premier clic. */
+  landing?: string;
   elapsedMs: number;
   company: string;
 };
@@ -40,6 +43,16 @@ export type LeadPayload = {
 const SEND_TIMEOUT_MS = 5000;
 
 const PENDING_KEY = 'azm_lead_pending';
+export const LANDING_KEY = 'azm_landing';
+
+/* L'URL d'arrivée de cette session, ou l'URL courante si on n'a rien pu retenir. */
+export function landingUrl(): string {
+  try {
+    return sessionStorage.getItem(LANDING_KEY) || window.location.href;
+  } catch {
+    return window.location.href;
+  }
+}
 export const LEAD_COOKIE = 'azm_lead';
 
 /* Marque « ce visiteur est dans GHL ».
@@ -103,7 +116,8 @@ async function postOnce(body: string): Promise<boolean> {
 /* Attend la réponse, mais jamais plus que SEND_TIMEOUT_MS. Rend `true` si
    l'opportunité est écrite. */
 export async function sendLead(payload: LeadPayload): Promise<boolean> {
-  const body = JSON.stringify(payload);
+  /* Posée ici et pas dans l'appelant : aucun formulaire ne doit pouvoir l'oublier. */
+  const body = JSON.stringify({ ...payload, landing: payload.landing ?? landingUrl() });
 
   /* Consigné AVANT la tentative : un onglet fermé au mauvais moment ne doit pas
      emporter le lead avec lui. */

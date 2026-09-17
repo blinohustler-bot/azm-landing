@@ -135,7 +135,8 @@ check('statut open', create.body.status === 'open');
 const note = calls.find((c) => /notes$/.test(c.path));
 check('note écrite', !!note);
 check('note porte les pièces', note.body.body.includes('BMW F80 M3 Downpipes'), note.body.body);
-check("note porte l'utm", note.body.body.includes('utm_source = meta'));
+/* Les clés sont alignées par padEnd dans la note : on vérifie la paire, pas l'espacement. */
+check("note porte l'utm", /utm_source\s+= meta/.test(note.body.body), note.body.body.slice(-220));
 
 /* 2 — le même contact revient : mise à jour, pas de doublon */
 calls.length = 0;
@@ -258,6 +259,58 @@ check("l'opportunité existante est mise à jour",
   calls.some((c) => c.method === 'PUT' && c.path === '/opportunities/op_existante'),
   calls.map((c) => c.method + ' ' + c.path));
 refuseDoublon = false;
+
+/* 11 — la provenance : tout ce que l'URL d'arrivée porte, pas une liste figée de cinq */
+resetPipelineCache();
+calls.length = 0;
+const ATTERRISSAGE =
+  'https://azm.ca/?utm_source=meta&utm_medium=paid&utm_campaign=fitment_q4'
+  + '&utm_content=video_a&utm_term=downpipe&utm_id=120210&utm_ad=creative_7'
+  + '&fbclid=IwAR123&ad_id=6712&adset_id=99&placement=reels'
+  + '&make=BMW&model=m3';
+r = await POST(post({
+  ...GOOD,
+  email: 'utm@x.co',
+  /* Au moment de l'envoi, l'URL courante a perdu les utm — c'est le cas réel. */
+  page: 'https://azm.ca/?make=BMW&model=m3&year=2021&step=results',
+  landing: ATTERRISSAGE
+}, { 'x-vercel-forwarded-for': '198.51.100.3' }));
+check('lead avec provenance → 200', r.status === 200, r.status);
+
+const noteUtm = calls.find((c) => /notes$/.test(c.path))?.body.body ?? '';
+for (const attendu of [
+  'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term',
+  'utm_id', 'utm_ad', 'fbclid', 'ad_id', 'adset_id', 'placement'
+]) {
+  check(`note porte ${attendu}`, noteUtm.includes(attendu), noteUtm.slice(0, 200));
+}
+check('les utm hors liste figée passent (utm_id, utm_ad)',
+  noteUtm.includes('utm_id') && noteUtm.includes('utm_ad'));
+check('make/model ne polluent pas la provenance',
+  !/^\s{2}(make|model)\s/m.test(noteUtm), noteUtm.slice(0, 300));
+check("l'URL d'arrivée est notée", noteUtm.includes('Arrivée'), noteUtm.slice(-200));
+
+const srcUtm = calls.find((c) => c.path === '/contacts/upsert')?.body.source;
+check('source du contact tirée de utm_source', srcUtm === 'meta — fitment LP', srcUtm);
+
+/* Sans rien dans l'URL, la note doit le dire au lieu de se taire. */
+calls.length = 0;
+r = await POST(post({
+  ...GOOD, email: 'noutm@x.co', page: 'https://azm.ca/', landing: 'https://azm.ca/'
+}, { 'x-vercel-forwarded-for': '198.51.100.4' }));
+const noteVide = calls.find((c) => /notes$/.test(c.path))?.body.body ?? '';
+check('absence de provenance signalée', noteVide.includes('aucun paramètre de campagne'),
+  noteVide.slice(-160));
+
+/* Une URL forgée ne doit pas transformer la note en pavé. */
+calls.length = 0;
+const bourrage = 'https://azm.ca/?' + Array.from({ length: 80 }, (_, i) => `utm_x${i}=v${i}`).join('&');
+r = await POST(post({
+  ...GOOD, email: 'flood@x.co', page: bourrage, landing: bourrage
+}, { 'x-vercel-forwarded-for': '198.51.100.5' }));
+const noteFlood = calls.find((c) => /notes$/.test(c.path))?.body.body ?? '';
+const compte = Number((noteFlood.match(/Provenance \((\d+)\)/) || [])[1]);
+check('bourrage d\'URL plafonné à 30 paramètres', compte === 30, compte);
 
 globalThis.fetch = realFetch;
 console.log(fails ? `\n  ${fails} échec(s)\n` : '\n  tout passe\n');

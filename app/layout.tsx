@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Archivo } from 'next/font/google';
 import Script from 'next/script';
 import { CONFIG } from '@/lib/config';
+import LandingCapture from '@/components/LandingCapture';
 import './globals.css';
 
 /* Archivo, auto-hébergée par next/font : la page tirait jusqu'ici une feuille de style
@@ -35,6 +36,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={archivo.variable}>
       <body>
+        {/* Retient l'URL d'arrivée avant que le parcours ne la remplace. */}
+        <LandingCapture />
         {children}
 
         <footer>
