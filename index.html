@@ -237,6 +237,9 @@ main{flex:1; padding-block:clamp(26px,4.5vw,52px) 56px; position:relative}
 .field.is-bad input{border-color:var(--orange)}
 .field .err{display:none; margin:7px 0 0; font-family:var(--mono); font-size:.74rem; color:var(--orange)}
 .field.is-bad .err{display:block}
+/* Champ piège à robots : hors flux, hors tabulation, hors lecteur d'écran. Un
+   remplisseur automatique le voit dans le DOM et le remplit ; personne d'autre. */
+.hp{position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden}
 .btn{
   display:inline-flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;
   border:0; padding:18px 28px; font-weight:900; font-size:.98rem; font-style:italic;
@@ -421,6 +424,8 @@ footer p{margin:0 0 6px}
         <input id="i-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(514) 555-0134" required>
         <p class="err">We need a number our builder can reach.</p>
       </div>
+      <div class="hp" aria-hidden="true"><label for="i-company">Company</label>
+        <input id="i-company" name="company" type="text" tabindex="-1" autocomplete="off"></div>
       <button class="btn btn--wide" id="gateGo" type="submit">Show my parts →</button>
       <p class="legal">No spam. We use this to confirm the fitment on your chassis and to answer install questions. One message, from a human.</p>
     </form>
@@ -471,6 +476,8 @@ footer p{margin:0 0 6px}
         <input id="m-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(514) 555-0134" required>
         <p class="err">We need a number our builder can reach.</p>
       </div>
+      <div class="hp" aria-hidden="true"><label for="m-company">Company</label>
+        <input id="m-company" name="company" type="text" tabindex="-1" autocomplete="off"></div>
       <button class="btn btn--wide" type="submit">Ask about my car →</button>
     </form>
   </section>
@@ -501,9 +508,10 @@ footer p{margin:0 0 6px}
   'use strict';
 
   /* ── À REMPLIR AVANT LA MISE EN LIGNE ──────────────────────────────────
-     LEAD_ENDPOINT : URL qui reçoit le lead en POST JSON (webhook Make, GHL,
-                     fonction Vercel…). Vide = le lead reste dans le
-                     navigateur et n'arrive nulle part : à brancher.
+     LEAD_ENDPOINT : URL qui reçoit le lead en POST JSON. Par défaut /api/lead,
+                     la fonction Vercel de ce dépôt : elle crée le contact et
+                     l'opportunité dans GHL. Le jeton GHL vit là-bas, en
+                     variable d'environnement — jamais dans cette page.
      TALK          : lien de conversation (m.me de la Page). Vide → téléphone.
      PIXEL         : id du pixel Meta pour mesurer la LP (854592952776027).
      GATE_FIRST    : true = coordonnées AVANT le choix du char.
@@ -512,10 +520,10 @@ footer p{margin:0 0 6px}
                      le plus ; c'est le A/B à trancher sur le CPL servable.  */
   var CONFIG = {
     SHOP: (window.AZM_CATALOG && window.AZM_CATALOG.shop) || 'https://azmotorsport.ca',
-    LEAD_ENDPOINT: '',
+    LEAD_ENDPOINT: '/api/lead',
     TALK: '',
     PHONE: '581-745-8680',      // publié sur azmotorsport.ca
-    PIXEL: '',
+    PIXEL: '854592952776027',
     GATE_FIRST: false,
     UTM: 'utm_source=meta&utm_medium=paid&utm_campaign=fitment_lp'
   };
@@ -523,6 +531,7 @@ footer p{margin:0 0 6px}
   var C = window.AZM_CATALOG;
   var $ = function (id) { return document.getElementById(id); };
   var state = { make: null, model: null, gen: null, lead: null };
+  var shownAt = Date.now();
   var trail = [];
 
   if (!C) { $('makes').textContent = 'catalog.js manquant — lance node build-index.mjs'; return; }
@@ -557,6 +566,9 @@ footer p{margin:0 0 6px}
     $('bar').style.width = (Number($(id).dataset.step || 1) / 5 * 100) + '%';
     window.scrollTo(0, 0);
     if (id === 's-gate') setTimeout(function () { $('i-name').focus(); }, 240);
+    /* Le serveur écarte un formulaire rempli plus vite qu'un humain ne le peut ;
+       il lui faut donc le moment où l'écran s'est ouvert. */
+    if (id === 's-gate' || id === 's-miss') shownAt = Date.now();
   }
   $('back').addEventListener('click', function () {
     var prev = trail.pop();
@@ -712,15 +724,24 @@ footer p{margin:0 0 6px}
   function okEmail(v) { return /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(v.trim()); }
   function okPhone(v) { return v.replace(/\D/g, '').length >= 10; }
 
-  function sendLead(payload) {
+  function sendLead(payload, hp) {
+    payload.elapsedMs = Date.now() - shownAt;
+    payload.company = hp || '';
     var body = JSON.stringify(payload);
     try { localStorage.setItem('azm_lead', body); } catch (e) { /* navigation privée */ }
     if (!CONFIG.LEAD_ENDPOINT) { console.warn('[AZM] LEAD_ENDPOINT vide — le lead n\'est envoyé nulle part.'); return; }
-    if (navigator.sendBeacon) {
+    /* fetch d'abord, plus sendBeacon : keepalive survit lui aussi à la navigation, et
+       il rend un statut. Un lead qui n'atteint pas GHL doit laisser une trace quelque
+       part. sendBeacon ne reste qu'en secours, pour un navigateur sans fetch. */
+    if (window.fetch) {
+      fetch(CONFIG.LEAD_ENDPOINT, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: body, keepalive: true, credentials: 'omit'
+      }).then(function (r) {
+        if (!r.ok) console.warn('[AZM] lead refusé par ' + CONFIG.LEAD_ENDPOINT + ' — HTTP ' + r.status);
+      }).catch(function () { /* on n'empêche jamais l'utilisateur d'avancer */ });
+    } else if (navigator.sendBeacon) {
       navigator.sendBeacon(CONFIG.LEAD_ENDPOINT, new Blob([body], { type: 'application/json' }));
-    } else {
-      fetch(CONFIG.LEAD_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: body, keepalive: true })
-        .catch(function () { /* on n'empêche jamais l'utilisateur d'avancer */ });
     }
   }
 
@@ -739,9 +760,9 @@ footer p{margin:0 0 6px}
       generation: genLabel(state.gen) || null,
       years: state.gen ? [state.gen.from, state.gen.to] : null,
       car: carName(),
-      parts: partsFor().map(function (p) { return p.title; }),
+      parts: partsFor().map(function (p) { return { title: p.title, price: p.price }; }),
       page: window.location.href
-    });
+    }, $('i-company').value);
     track('CompleteRegistration', { content_name: carName(), status: 'fitment_lead' });
     if (CONFIG.GATE_FIRST && !state.make) { show('s-make'); return; }
     renderResults();
@@ -761,7 +782,7 @@ footer p{margin:0 0 6px}
       name: name, email: email, phone: phone, car: car,
       make: state.make, model: (modelByKey(state.make, state.model) || {}).label || null,
       page: window.location.href
-    });
+    }, $('m-company').value);
     track('Lead', { content_name: car, content_type: 'not_listed' });
     $('thanksSub').textContent = 'A builder comes back to you about the ' + car
       + ' — whether we can build it, and what it runs.';

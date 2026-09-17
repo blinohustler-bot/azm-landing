@@ -1,0 +1,17 @@
+{
+  "name": "azm-landing",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AZ Motorsport — landing de campagne (fitment). Page statique + une fonction Vercel qui écrit le lead dans GoHighLevel.",
+  "scripts": {
+    "test": "node tools/lead.test.mjs",
+    "ghl:check": "node tools/ghl-check.mjs",
+    "catalog": "node build-index.mjs",
+    "shot": "node tools/shot.mjs",
+    "audit": "node tools/audit.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
