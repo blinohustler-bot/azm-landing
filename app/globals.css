@@ -282,22 +282,39 @@ body::after{
 .ctx img{width:100%; height:100%; object-fit:cover; opacity:.16; filter:grayscale(.2)}
 .ctx::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg,#000000a6,#000 88%)}
 
-/* ── grille de choix ───────────────────────────────────────────────────── */
-.choices{display:grid; gap:1px; margin-top:28px; grid-template-columns:repeat(2,1fr); background:var(--line); border:1px solid var(--line)}
-@media(min-width:680px){ .choices{grid-template-columns:repeat(3,1fr)} }
-.choices--tight{grid-template-columns:repeat(1,1fr)}
+/* ── grille de choix ─────────────────────────────────────────────────────
+   Les cellules se touchaient : gap de 1px sur un fond clair, le vide entre elles
+   dessinait le trait. C'est la recette d'un tableur, et ça se lisait comme tel.
+   Chaque choix est maintenant une tuile qui se tient seule — son propre cadre,
+   son propre fond, la coupe d'angle de la marque — separee des autres par un vrai
+   ecart. On voit des boutons sur lesquels on clique, pas des lignes qu'on lit. */
+.choices{display:grid; gap:10px; margin-top:28px; grid-template-columns:1fr}
+/* Une seule colonne sur telephone. A 390 px, deux tuiles cote a cote ne laissent
+   pas 190 px chacune : le nom cassait sur trois lignes (« CAYENNE / TURBO / GT »)
+   et le millesime, insecable, sortait de l'ecran. Pleine largeur, le nom tient sur
+   une ligne et le millesime reste lisible a droite. */
+@media(min-width:560px){ .choices{grid-template-columns:repeat(2,1fr)} }
+@media(min-width:680px){ .choices{grid-template-columns:repeat(3,1fr); gap:12px} }
+.choices--tight{grid-template-columns:1fr}
 @media(min-width:680px){ .choices--tight{grid-template-columns:repeat(2,1fr)} }
 .choice{
-  position:relative; display:flex; align-items:baseline; justify-content:space-between; gap:12px;
-  min-height:72px; padding:18px; cursor:pointer; text-align:left; border:0;
-  background:var(--ink); color:var(--text);
+  position:relative; overflow:hidden; display:flex; align-items:baseline;
+  justify-content:space-between; gap:12px;
+  min-height:72px; padding:18px; cursor:pointer; text-align:left;
+  border:1px solid var(--line); color:var(--text);
+  background:linear-gradient(162deg,#17191b 0%,var(--panel) 52%,#070808 100%);
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
   font-weight:800; font-size:1.02rem; text-transform:uppercase; font-style:italic; letter-spacing:-.015em;
-  transition:background .16s ease, color .16s ease, padding-left .16s var(--ease);
+  transition:border-color .2s ease, transform .22s var(--ease), box-shadow .22s ease, color .16s ease;
 }
 .choice::before{
   content:""; position:absolute; left:0; top:0; bottom:0; width:2px; background:transparent; transition:background .16s ease;
 }
-.choice:hover{background:var(--panel2); padding-left:22px}
+.choice:hover{
+  border-color:var(--line2); transform:translateY(-3px);
+  box-shadow:0 12px 30px -16px #000, 0 0 0 1px #ffffff10 inset;
+}
+.choice:active{transform:translateY(-1px)}
 .choice:hover::before{background:var(--lime)}
 .choice:focus-visible{outline:2px solid var(--lime); outline-offset:-2px}
 .choice small{
@@ -306,14 +323,23 @@ body::after{
   font-variant-numeric:tabular-nums; transition:color .16s ease;
 }
 .choice:hover small{color:var(--lime)}
-.choice--plain{text-transform:none; font-style:normal; font-weight:600; font-size:.92rem; color:var(--muted); min-height:58px}
+/* « My model isn't listed » n'est pas un modele : cadre tirete, fond nu. La
+   difference se voit avant de lire. */
+.choice--plain{
+  text-transform:none; font-style:normal; font-weight:600; font-size:.92rem;
+  color:var(--muted); min-height:58px;
+  background:none; border-style:dashed;
+}
 
 .search{
   margin-top:20px; width:100%; background:var(--ink); border:1px solid var(--line); color:var(--text);
   border-radius:3px; padding:15px 16px; font-size:1rem;
 }
 .search:focus-visible{outline:2px solid var(--lime); outline-offset:-1px}
-.choices__empty{padding:22px 18px; color:var(--muted); font-size:.9rem; background:var(--ink)}
+.choices__empty{
+  grid-column:1/-1; padding:22px 18px; color:var(--muted); font-size:.9rem;
+  background:var(--panel); border:1px solid var(--line);
+}
 
 /* ── formulaire ────────────────────────────────────────────────────────── */
 .form{margin-top:26px; display:grid; gap:16px; max-width:520px}
@@ -456,7 +482,7 @@ footer p{margin:0 0 6px}
 @media(prefers-reduced-motion:reduce){
   *{transition:none !important; animation:none !important}
   .brand-card:hover{transform:none}
-  .choice:hover{padding-left:18px}
+  .choice:hover{transform:none}
 }
 
 /* ── bandeau de contexte véhicule ──────────────────────────────────────────
@@ -491,9 +517,8 @@ footer p{margin:0 0 6px}
 /* ── la grille de choix, resserrée ─────────────────────────────────────────
    Les cellules étaient des rectangles identiques dans une colonne centrée de
    880 px, avec de larges marges vides de part et d'autre : la mise en page par
-   défaut. Elles occupent maintenant la largeur utile, et chaque ligne porte un
-   chevron qui n'apparaît qu'au survol — on voit que c'est une liste sur laquelle
-   on agit, pas un tableau qu'on lit. */
+   défaut. Elles occupent maintenant la largeur utile, et chaque tuile porte un
+   chevron qui n'apparaît qu'au survol — on voit ce sur quoi on agit. */
 .choice::after{
   content:"→"; position:absolute; right:16px; top:50%; translate:0 -50%;
   font-weight:700; font-size:.9rem; color:var(--lime);
