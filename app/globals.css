@@ -188,15 +188,15 @@ body::after{
    gauche, et le nombre de pièces est un chiffre, gros, à droite. C'est la donnée
    qui décide du regard, pas la symétrie.
 
-   La première carte est deux fois plus large. Ce n'est pas décoratif : BMW couvre
-   64 des 121 pièces, plus que les trois marques suivantes réunies. La grille dit
-   ce que le catalogue dit. */
+   Neuf cartes de taille identique. Sur trois colonnes elles tombent en trois
+   rangées pleines, sans carte orpheline en bas. La hiérarchie passe par le nombre
+   de pièces, pas par la taille de la boîte : le visiteur cherche sa marque à lui,
+   et la trouve aussi vite qu'elle soit première ou dernière. */
 .brands{
   display:grid; gap:10px; margin-top:26px;
   grid-template-columns:repeat(2,1fr);
 }
 @media(min-width:680px){ .brands{grid-template-columns:repeat(3,1fr); gap:12px} }
-@media(min-width:900px){ .brand-card--lead{grid-column:span 2} }
 
 .brand-card{
   position:relative; overflow:hidden; cursor:pointer; padding:0; display:flex;
@@ -275,34 +275,6 @@ body::after{
 .brand-card__n span{font-weight:600; font-size:.64rem; letter-spacing:.1em; text-transform:uppercase; color:#6a7075}
 .brand-card:hover .brand-card__n b{color:var(--lime)}
 
-/* La carte large : le logo prend la gauche, le texte se cale à droite. */
-@media(min-width:900px){
-  .brand-card--lead .brand-card__label{
-    flex-direction:row; align-items:center; gap:clamp(26px,3.6vw,44px);
-  }
-  .brand-card--lead .brand-card__logo{
-    margin-inline:0; flex:0 0 auto; max-height:128px; max-width:30%;
-  }
-  .brand-card--lead .brand-card__foot{
-    flex:1; flex-direction:column; align-items:flex-start; gap:10px;
-    border-top:0; border-left:1px solid var(--line); padding:6px 0 6px 28px;
-  }
-  .brand-card--lead:hover .brand-card__foot{border-left-color:#cefe0155}
-  .brand-card--lead .brand-card__name{font-size:clamp(1.9rem,3.4vw,2.6rem)}
-  .brand-card--lead .brand-card__n{align-items:baseline}
-  .brand-card--lead .brand-card__n b{font-size:2.1rem}
-  /* La carte large a de la place : on y met les modèles, ce qui est exactement ce que
-     le visiteur cherche à vérifier avant de cliquer. Les autres cartes n'en ont pas la
-     place, et n'en ont pas besoin — elles couvrent moins de châssis. */
-  .brand-card--lead .brand-card__models{display:block}
-}
-/* Masquée partout ailleurs : sur une carte étroite elle écraserait le nom. */
-.brand-card__models{
-  display:none; margin:0; max-width:46ch;
-  font-weight:600; font-size:.74rem; line-height:1.5; letter-spacing:.01em;
-  color:#767c81;
-}
-.brand-card:hover .brand-card__models{color:#9aa0a5}
 @media(max-width:400px){ .brands{gap:8px} .brand-card{min-height:134px} }
 
 /* le char choisi reste visible en fond de l'écran suivant */

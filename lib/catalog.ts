@@ -42,7 +42,7 @@ export const modelCount = catalog.makes.reduce((s, m) => s + m.models.length, 0)
 
 /* ── marques ─────────────────────────────────────────────────────────────── */
 
-export type MakeCard = { make: string; slug: string; parts: number; models: string[] };
+export type MakeCard = { make: string; slug: string; parts: number };
 
 
 
@@ -53,14 +53,7 @@ export function makeCards(): MakeCard[] {
     .map((m) => ({
       make: m.make,
       slug: slugify(m.make),
-      parts: m.models.reduce((s, x) => s + x.products.length, 0),
-      /* Les modèles les mieux fournis d'abord : sur la carte large, c'est ce que le
-         visiteur vérifie avant de cliquer. */
-      models: m.models
-        .slice()
-        .sort((a, b) => b.products.length - a.products.length)
-        .slice(0, 10)
-        .map((x) => x.label)
+      parts: m.models.reduce((s, x) => s + x.products.length, 0)
     }))
     .sort((a, b) => b.parts - a.parts);
 }

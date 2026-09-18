@@ -66,9 +66,7 @@ export default function StepMake() {
         {cards.map((m, i) => (
           <Link
             key={m.slug}
-            /* La première porte le plus gros catalogue : elle prend deux colonnes.
-               La grille dit ce que le catalogue dit. */
-            className={`brand-card${i === 0 ? ' brand-card--lead' : ''}`}
+            className="brand-card"
             data-brand={m.slug}
             href={`/?make=${encodeURIComponent(m.make)}`}
             scroll={false}
@@ -84,9 +82,6 @@ export default function StepMake() {
               <img className="brand-card__logo" alt="" src={`/assets/brands/${m.slug}.svg`} />
               <span className="brand-card__foot">
                 <span className="brand-card__name">{m.make}</span>
-                {/* Visible seulement sur la carte large — ailleurs le CSS la masque,
-                    parce qu'elle y écraserait le nom. */}
-                <span className="brand-card__models">{m.models.join(' · ')}</span>
                 <span className="brand-card__n">
                   <b>{m.parts}</b>
                   <span>parts</span>
