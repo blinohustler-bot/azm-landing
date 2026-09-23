@@ -264,3 +264,20 @@ export async function updateOpportunity(
   });
   return opportunityId;
 }
+
+/* Le courriel du client, recopié dans le champ personnalisé de l'opportunité
+   ({{opportunity.customer_email}}) : les workflows et les vues pipeline de GHL le
+   lisent là, sans passer par le contact.
+
+   Par clé par défaut : le jeton n'a pas le scope locations/customFields.readonly, donc
+   pas de quoi résoudre l'id au démarrage. GHL_OPP_EMAIL_FIELD_ID le fournit si la clé
+   venait à ne pas être reconnue — l'id se lit dans Settings > Custom Fields. */
+export async function setOpportunityEmail(opportunityId: string, email: string) {
+  const id = process.env.GHL_OPP_EMAIL_FIELD_ID;
+  const field = id
+    ? { id, field_value: email }
+    : { key: process.env.GHL_OPP_EMAIL_FIELD_KEY || 'opportunity.customer_email', field_value: email };
+  await request<unknown>('PUT', `/opportunities/${encodeURIComponent(opportunityId)}`, {
+    body: { customFields: [field] }
+  });
+}

@@ -64,6 +64,14 @@ t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,do
 fbq('init','${CONFIG.PIXEL}');fbq('track','PageView');`}
           </Script>
         ) : null}
+        {/* Sans JS, Meta ne voit que ce PageView-là : l'image fait le hit elle-même. */}
+        {CONFIG.PIXEL ? (
+          <noscript>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img height="1" width="1" style={{ display: 'none' }} alt=""
+              src={`https://www.facebook.com/tr?id=${CONFIG.PIXEL}&ev=PageView&noscript=1`} />
+          </noscript>
+        ) : null}
       </body>
     </html>
   );

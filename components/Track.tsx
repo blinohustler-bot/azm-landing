@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { track } from '@/lib/track';
+import { track, trackCustom } from '@/lib/track';
 
 /* Déclare un événement Meta à l'affichage d'un écran.
  *
@@ -10,12 +10,17 @@ import { track } from '@/lib/track';
  * seule fois par montage — `key` sur l'appelant suffit à le refaire tirer quand le
  * char change, et le garde-fou `sent` protège du double montage de React en dev.
  */
-export default function Track({ event, data }: { event: string; data?: Record<string, unknown> }) {
+export default function Track({ event, data, custom = false }: {
+  event: string;
+  data?: Record<string, unknown>;
+  /** true = événement maison (fbq trackCustom) plutôt qu'un événement standard. */
+  custom?: boolean;
+}) {
   const sent = useRef(false);
   useEffect(() => {
     if (sent.current) return;
     sent.current = true;
-    track(event, data);
-  }, [event, data]);
+    (custom ? trackCustom : track)(event, data);
+  }, [event, data, custom]);
   return null;
 }

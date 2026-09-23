@@ -13,6 +13,7 @@
  *   GHL_STAGE_ID       optionnel  idem
  *   GHL_PIPELINE_NAME  optionnel  sinon : le premier pipeline du sous-compte
  *   GHL_STAGE_NAME     optionnel  sinon : la première étape du pipeline
+ *   GHL_OPP_EMAIL_FIELD_ID  optionnel  id du champ {{opportunity.customer_email}} (sinon : par clé)
  *   ALLOWED_ORIGINS    optionnel  origines autorisées, séparées par des virgules
  *   LEAD_DEBUG         optionnel  "1" renvoie le détail d'erreur dans la réponse (préprod)
  */
@@ -20,7 +21,7 @@
 import { parseLead, splitName, opportunityName, noteBody } from '@/lib/leadPayload';
 import {
   upsertContact, addNote, resolvePipeline,
-  findOpenOpportunity, createOpportunity, updateOpportunity, GhlError
+  findOpenOpportunity, createOpportunity, updateOpportunity, setOpportunityEmail, GhlError
 } from '@/lib/ghl';
 
 /* La route touche une API externe et un état en mémoire : rien à mettre en cache. */
@@ -190,6 +191,17 @@ export async function POST(req: Request) {
     const opportunityId = existing?.id
       ? await updateOpportunity(existing.id, { name, monetaryValue: lead.value })
       : await createOpportunity({ name, pipelineId, stageId, contactId, monetaryValue: lead.value });
+
+    /* Le courriel dans le champ {{opportunity.customer_email}}. Appel à part et non
+       bloquant, comme la note : un champ mal nommé côté GHL ne doit pas coûter le lead. */
+    if (opportunityId) {
+      try {
+        await setOpportunityEmail(opportunityId, lead.email);
+      } catch (e) {
+        console.error("[lead] courriel non recopié sur l'opportunité:",
+          e instanceof GhlError ? `GHL ${e.status}: ${e.message}` : e instanceof Error ? e.message : String(e));
+      }
+    }
 
     /* La note porte le détail du fitment. Elle ne doit jamais faire échouer le lead :
        le contact et l'opportunité, eux, sont déjà écrits. */

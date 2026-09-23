@@ -46,6 +46,12 @@ const STEP_LABEL: Record<StepName, string> = {
   thanks: 'Received'
 };
 
+/* La position dans l'entonnoir, pour l'événement FormStep. Les écrans hors parcours
+   (char absent, merci) n'ont pas de rang. */
+const STEP_NUMBER: Record<StepName, number | null> = {
+  make: 1, model: 2, generation: 3, gate: 4, results: 5, missing: null, thanks: null
+};
+
 export default async function Page({ searchParams }: { searchParams: Params }) {
   const sp = await searchParams;
   const qs = {
@@ -115,6 +121,22 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
           {STEP_LABEL[step]}
           {car ? ` — ${car}` : ''}
         </p>
+
+        {/* Un événement maison par écran affiché : l'entonnoir complet dans Meta, étape
+            par étape, pour voir où l'on décroche. La `key` le refait tirer à chaque
+            changement d'écran ou de char — sans elle, React garderait le même composant
+            (et son garde-fou) d'une étape à l'autre. */}
+        <Track
+          key={`${step}|${make?.make ?? ''}|${model?.key ?? ''}|${gen?.from ?? ''}`}
+          custom
+          event="FormStep"
+          data={{
+            step,
+            step_number: STEP_NUMBER[step],
+            ...(make ? { make: make.make } : {}),
+            ...(car ? { content_name: car } : {})
+          }}
+        />
 
         {step === 'make' ? <StepMake /> : null}
 

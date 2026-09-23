@@ -13,7 +13,24 @@ declare global {
   interface Window { fbq?: Fbq }
 }
 
+/* Le premier écran se monte souvent avant que le script du pixel soit injecté : on
+   patiente un peu (≈ 5 s) plutôt que de perdre l'étape 1, la plus importante de
+   l'entonnoir. Au-delà, un bloqueur a probablement retiré le script — on abandonne. */
+function send(action: 'track' | 'trackCustom', event: string, data?: Record<string, unknown>, tries = 20) {
+  if (typeof window === 'undefined') return;
+  if (typeof window.fbq !== 'function') {
+    if (tries > 0) setTimeout(() => send(action, event, data, tries - 1), 250);
+    return;
+  }
+  try { window.fbq(action, event, data ?? {}); } catch { /* jamais bloquant */ }
+}
+
 export function track(event: string, data?: Record<string, unknown>) {
-  if (typeof window === 'undefined' || typeof window.fbq !== 'function') return;
-  try { window.fbq('track', event, data ?? {}); } catch { /* jamais bloquant */ }
+  send('track', event, data);
+}
+
+/* Les événements maison (trackCustom) : Meta ne les optimise pas, mais ils servent
+   d'audiences et de conversions personnalisées — ici, l'entonnoir étape par étape. */
+export function trackCustom(event: string, data?: Record<string, unknown>) {
+  send('trackCustom', event, data);
 }
