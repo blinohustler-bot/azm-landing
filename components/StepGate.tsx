@@ -53,6 +53,11 @@ export default function StepGate({
     if (!nOk || !eOk || !pOk) return;
 
     setSending(true);
+    /* Le Lead de Meta, c'est ICI : des coordonnées valides, juste avant que l'opportunité
+       naisse dans GHL et que les pièces s'affichent. Pas à l'affichage du formulaire —
+       ça comptait comme lead toute personne qui l'avait seulement vu. */
+    const value = parts.reduce((sum, p) => sum + (p.price || 0), 0);
+    track('Lead', { content_name: carName, content_type: 'fitment_form', value, currency: 'CAD' });
     track('CompleteRegistration', { content_name: carName, status: 'fitment_lead' });
 
     /* C'est ICI que l'opportunité doit naître : la personne a donné ses coordonnées,

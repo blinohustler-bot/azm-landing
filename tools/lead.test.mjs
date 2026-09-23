@@ -133,7 +133,7 @@ check('nom lisible', create.body.name === 'BMW M3 (2015–2020 · F80) — Alex 
 check('statut open', create.body.status === 'open');
 
 const emailField = calls.find((c) => c.method === 'PUT' && c.path === '/opportunities/op_1' && c.body?.customFields);
-check("courriel recopié sur l'opportunité", emailField?.body.customFields[0]?.key === 'opportunity.customer_email'
+check("courriel recopié sur l'opportunité", emailField?.body.customFields[0]?.key === 'customer_email'
   && emailField.body.customFields[0].field_value === 'alex@email.com', emailField?.body);
 
 const note = calls.find((c) => /notes$/.test(c.path));

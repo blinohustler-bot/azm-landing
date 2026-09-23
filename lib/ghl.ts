@@ -270,13 +270,15 @@ export async function updateOpportunity(
    lisent là, sans passer par le contact.
 
    Par clé par défaut : le jeton n'a pas le scope locations/customFields.readonly, donc
-   pas de quoi résoudre l'id au démarrage. GHL_OPP_EMAIL_FIELD_ID le fournit si la clé
-   venait à ne pas être reconnue — l'id se lit dans Settings > Custom Fields. */
+   pas de quoi résoudre l'id au démarrage. Attention, la clé attendue est la clé NUE
+   (« customer_email ») : la forme complète « opportunity.customer_email », celle du
+   merge tag, répond 200 et n'écrit RIEN — aucune erreur, le champ reste vide. Vérifié
+   en direct sur le sous-compte AZM. On retire donc le préfixe s'il est fourni.
+   GHL_OPP_EMAIL_FIELD_ID (IKF4OBVpWPlS9nlIvEP0 chez AZM) court-circuite la clé. */
 export async function setOpportunityEmail(opportunityId: string, email: string) {
   const id = process.env.GHL_OPP_EMAIL_FIELD_ID;
-  const field = id
-    ? { id, field_value: email }
-    : { key: process.env.GHL_OPP_EMAIL_FIELD_KEY || 'opportunity.customer_email', field_value: email };
+  const key = (process.env.GHL_OPP_EMAIL_FIELD_KEY || 'customer_email').replace(/^opportunity\./, '');
+  const field = id ? { id, field_value: email } : { key, field_value: email };
   await request<unknown>('PUT', `/opportunities/${encodeURIComponent(opportunityId)}`, {
     body: { customFields: [field] }
   });

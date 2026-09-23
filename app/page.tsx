@@ -164,8 +164,6 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
 
         {step === 'gate' ? (
           <>
-            {/* Le char est choisi : c'est le moment où Meta doit compter un lead. */}
-            {car ? <Track event="Lead" data={{ content_name: car, content_type: 'vehicle_selected' }} /> : null}
             <StepGate
               carName={car || 'car'}
               partCount={parts.length}
