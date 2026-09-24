@@ -12,7 +12,8 @@ const SHOP = 'https://azmotorsport.ca';
 const MAKE_ALIAS = {
   'mercedes-benz': 'Mercedes-AMG', mercedes: 'Mercedes-AMG', bmw: 'BMW', audi: 'Audi',
   porsche: 'Porsche', ferrari: 'Ferrari', lamborghini: 'Lamborghini', mclaren: 'McLaren',
-  chevrolet: 'Chevrolet', toyota: 'Toyota',
+  /* Tout le catalogue Chevrolet d'AZM est Corvette : c'est le nom que le client cherche. */
+  chevrolet: 'Corvette', corvette: 'Corvette', toyota: 'Toyota',
 };
 
 // Bruit à retirer d'un tag modèle : marques, codes moteur, millésimes, mentions de version.
@@ -76,7 +77,7 @@ const ALIAS = {
    produit sont des pièces seules sur plancher d'atelier. */
 const COLLECTION_OF = {
   BMW: 'bmw', Porsche: 'porsche', McLaren: 'mclaren', Ferrari: 'ferrari', Audi: 'audi',
-  Lamborghini: 'lamborghini', 'Mercedes-AMG': 'mercedes-benz', Chevrolet: 'chevrolet', Toyota: 'toyota',
+  Lamborghini: 'lamborghini', 'Mercedes-AMG': 'mercedes-benz', Corvette: 'chevrolet', Toyota: 'toyota',
 };
 
 async function fetchBrandImages() {

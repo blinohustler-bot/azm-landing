@@ -3,7 +3,7 @@
 Dépose ici un fichier par marque, nommé d'après la marque en minuscules :
 
     bmw.svg · porsche.svg · mclaren.svg · ferrari.svg · audi.svg
-    lamborghini.svg · mercedes-amg.svg · chevrolet.svg · toyota.svg
+    lamborghini.svg · mercedes-amg.svg · corvette.svg · toyota.svg
 
 La page les détecte toute seule : si le fichier existe, le logo remplace le
 nom écrit sur la carte ; s'il n'existe pas, le nom reste. Rien d'autre à changer.

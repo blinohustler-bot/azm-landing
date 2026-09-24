@@ -58,9 +58,13 @@ export function makeCards(): MakeCard[] {
     .sort((a, b) => b.parts - a.parts);
 }
 
+/* Anciens noms encore présents dans des liens déjà publiés (pubs, courriels). */
+const MAKE_RENAMED: Record<string, string> = { chevrolet: 'corvette' };
+
 export function findMake(name: string | undefined): Make | null {
   if (!name) return null;
-  const want = name.toLowerCase();
+  const lower = name.toLowerCase();
+  const want = MAKE_RENAMED[lower] ?? lower;
   return catalog.makes.find((m) => m.make.toLowerCase() === want) ?? null;
 }
 
