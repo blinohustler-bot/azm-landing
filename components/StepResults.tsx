@@ -3,6 +3,7 @@ import ProductCard from './ProductCard';
 import Track from './Track';
 import { CONFIG } from '@/lib/config';
 import { partLabel, type Product } from '@/lib/catalog';
+import { proofFor } from '@/lib/reviews';
 
 /* 05 — les pièces.
  *
@@ -15,6 +16,11 @@ import { partLabel, type Product } from '@/lib/catalog';
  * il reste toujours le choix Race (catless) / High Flow (catted), c'est-à-dire *légal
  * sur route ou non*, et jusqu'à 1 600 $ d'écart. Choisir à la place du client serait
  * une faute.
+ *
+ * La note d'une pièce est lue ici, côté serveur, et descend en propriété : ProductCard
+ * est 'use client' et ne doit pas importer lib/reviews — même garde que pour le
+ * catalogue. C'est aussi ce qui permet de n'envoyer au navigateur que les deux ou
+ * trois avis affichés plutôt que les 74 du fichier.
  */
 export default function StepResults({
   carName,
@@ -52,6 +58,7 @@ export default function StepResults({
             shop={shop}
             partLabel={partLabel(p)}
             priority={i === 0}
+            proof={proofFor(p.handle)}
           />
         ))}
       </div>

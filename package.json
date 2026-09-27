@@ -11,6 +11,7 @@
     "test": "node --conditions=react-server --import ./tools/alias-hook.mjs tools/lead.test.mjs",
     "ghl:check": "node tools/ghl-check.mjs",
     "catalog": "node build-index.mjs",
+    "reviews": "node build-reviews.mjs",
     "shot": "node tools/shot.mjs",
     "audit": "node tools/audit.mjs"
   },

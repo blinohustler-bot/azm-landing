@@ -13,6 +13,7 @@ type Config = {
   PIXEL: string;
   GATE_FIRST: boolean;
   UTM: string;
+  GOOGLE: { RATING: number; COUNT: number; URL: string };
 };
 
 export const CONFIG: Config = {
@@ -33,7 +34,28 @@ export const CONFIG: Config = {
      nombre de leads. */
   GATE_FIRST: false,
 
-  UTM: 'utm_source=meta&utm_medium=paid&utm_campaign=fitment_lp'
+  UTM: 'utm_source=meta&utm_medium=paid&utm_campaign=fitment_lp',
+
+  /* La fiche Google du commerce. TENUE À LA MAIN, ET C'EST VOULU.
+   *
+   * Un avis Google porte sur l'entreprise, jamais sur une pièce : il n'y a rien à
+   * rattacher à un produit ici, et rien à récolter automatiquement non plus — lire la
+   * note en direct demanderait une clé Places API sur le chemin critique d'une page
+   * payée par la pub. Deux valeurs, écrites ici, revérifiées avant chaque campagne.
+   *
+   * RATING — 4.9, lu sur la fiche Google (place ChIJkzZeE1APyUwREDBP53WmvAw) le
+   *   2026-09-27. C'est aussi ce qu'affiche azmotorsport.ca.
+   * COUNT  — 140, le chiffre qu'AZM publie sur son propre thème Shopify. NON CONFIRMÉ
+   *   indépendamment : la fiche Google ne rend pas son total sans JavaScript. Un
+   *   nombre d'avis faux dans une pub est précisément ce qui se fait signaler —
+   *   à confirmer d'un coup d'œil sur la fiche avant de dépenser.
+   *
+   * Ces avis ne sont pas ceux de reviews.json. Voir l'en-tête de lib/reviews.ts. */
+  GOOGLE: {
+    RATING: 4.9,
+    COUNT: 140,
+    URL: 'https://www.google.com/maps/place/?q=place_id:ChIJkzZeE1APyUwREDBP53WmvAw'
+  }
 };
 
 export type StepName = 'make' | 'model' | 'generation' | 'gate' | 'results' | 'missing' | 'thanks';

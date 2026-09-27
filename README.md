@@ -74,9 +74,12 @@ components/             un fichier par écran ; 'use client' seulement où il le
 lib/
   catalog.ts            le catalogue, SERVEUR UNIQUEMENT (import 'server-only')
   catalogTypes.ts       types + fonctions pures, importables côté client
-  config.ts             réglages publics de campagne
+  reviews.ts            les avis produit, SERVEUR UNIQUEMENT (même garde)
+  reviewTypes.ts        types + fonctions pures des avis, importables côté client
+  config.ts             réglages publics de campagne, dont la note Google
   ghl.ts / leadPayload.ts   client GHL et normalisation du lead
 catalog.json            360 ko, généré ; ne descend jamais dans le navigateur
+reviews.json            25 ko, généré ; ne descend jamais non plus
 ```
 
 **Une étape = une URL.** `/?make=BMW&model=m3&year=2021`. Les sept écrans étaient
@@ -229,6 +232,87 @@ Aucun jeton requis : `products.json` et `collections.json` sont publics.
 
 ---
 
+## La preuve sociale : deux sources, jamais mélangées
+
+La page affiche deux choses qui se ressemblent et qui ne viennent pas du même endroit.
+Les confondre serait une fausse indication sur l'origine d'un témoignage — interdite par
+la Loi sur la concurrence (art. 74.01) et, pour le trafic américain, par la règle de la
+FTC sur les faux avis (16 CFR 465, en vigueur depuis août 2024).
+
+| | Les avis Google | Les avis produit |
+|---|---|---|
+| Portent sur | **le commerce** | **une pièce** |
+| Source | fiche Google Business (app Reputon sur le Shopify) | app Avada Air Reviews sur le Shopify |
+| Vit dans | `CONFIG.GOOGLE`, écrit à la main | `reviews.json`, généré |
+| Affiché | pastille en tête de l'écran 01 | note + citation sur la carte produit, citations sous la grille de marques |
+| Libellé à l'écran | « Google reviews », logo G officiel | « reviews on this part », « azmotorsport.ca » |
+| Couverture | 100 % des visites | **30 fiches sur 121** |
+
+**Il n'existe pas d'avis Google sur un downpipe.** Google Business Profile n'a aucune
+notion de produit. Ce que le magasin possède au niveau de la pièce vient de son propre
+outil d'avis, et c'est ce que la carte produit montre — sous son vrai nom.
+
+### Pourquoi la carte produit doit savoir se taire
+
+Mesuré le 2026-09-27 sur les 118 écrans de résultats réellement atteignables :
+
+| | |
+|---|---|
+| Fiches du catalogue portant au moins un avis | **30 / 121** |
+| Écrans de résultats montrant au moins un avis | **45 / 118 — 38 %** |
+| Cartes produit portant une note | **62 / 201 — 31 %** |
+| Total d'avis produit récoltés | 79, dont 74 avec du texte |
+
+Autrement dit **62 % des écrans de résultats n'affichent aucun avis**, et c'est le cas
+normal, pas l'exception. D'où `Proof | null` dans `ProductCard` : quand il n'y a rien, la
+ligne de note et la citation disparaissent entièrement. Une carte qui afficherait
+« 0 avis » ou un cadre vide ferait plus de mal que l'absence de bloc.
+
+Par marque, les écrans qui montrent quelque chose : Porsche 52 %, Audi 50 %, BMW 44 %,
+McLaren 31 %, Ferrari 30 %, Mercedes-AMG 29 %, Lamborghini 13 %, Chevrolet et Toyota 0 %.
+Une campagne ciblée Chevrolet ou Toyota ne verra jamais un avis produit.
+
+---
+
+## Mettre à jour les avis
+
+```bash
+npm run reviews          # ≈ 3 min, régénère reviews.json
+```
+
+Lit les 121 fiches produit de `azmotorsport.ca` et en tire deux choses, rendues par le
+serveur Shopify et donc lisibles sans clé ni JavaScript : le bloc `aggregateRating`
+(note et nombre d'avis) et les dix premiers avis de la fiche.
+
+**Le magasin limite le débit.** Six requêtes en parallèle ramènent 61 réponses `429` sur
+121 fiches — constaté. Le script est donc séquentiel, avec 900 ms entre deux fiches et
+quatre tentatives par fiche. Il est lent et il n'a pas à être rapide : le fichier est
+régénéré à la main, comme le catalogue.
+
+Le script imprime un avertissement si une fiche répond 404 (le catalogue a dérivé du
+magasin : relancer `node build-index.mjs`) ou si une fiche n'a pas pu être jointe (le
+résultat est alors incomplet, relancer).
+
+### Le chiffre Google, lui, s'écrit à la main
+
+Dans `lib/config.ts` :
+
+```ts
+GOOGLE: { RATING: 4.9, COUNT: 140, URL: 'https://www.google.com/maps/place/?q=place_id:…' }
+```
+
+- `RATING` — **4.9**, lu sur la fiche Google le 2026-09-27. C'est aussi ce qu'affiche
+  `azmotorsport.ca`.
+- `COUNT` — **140**, le chiffre qu'AZM publie sur son propre thème Shopify. **Non
+  confirmé indépendamment** : la fiche Google ne rend pas son total sans JavaScript.
+
+Le lire en direct demanderait une clé Places API sur le chemin critique d'une page payée
+par la pub, pour une valeur qui bouge de quelques unités par mois. Deux constantes
+suffisent — à revérifier d'un coup d'œil avant chaque campagne, parce qu'un nombre d'avis
+faux dans une publicité est exactement ce qui se fait signaler.
+
+---
+
 ## Outils (`tools/`)
 
 ```bash
@@ -238,6 +322,7 @@ npm run lint           # tsc --noEmit
 npm test               # exerce /api/lead contre un faux GHL, hors ligne
 npm run ghl:check      # vérifie le jeton GHL, liste pipelines et ids
 npm run catalog        # régénère catalog.json depuis Shopify
+npm run reviews        # régénère reviews.json depuis les fiches Shopify (≈ 3 min)
 
 node tools/shot.mjs                         # capture en 390 / 820 / 1440 px
 node tools/shot.mjs "?make=BMW&model=m3"    # capture un état précis du parcours

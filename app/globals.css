@@ -174,7 +174,10 @@ body::after{
 @media(max-width:560px){
   .authority{font-size:.66rem; gap:6px; margin-bottom:18px}
   .authority i{display:none}
-  .authority span{width:100%}
+  /* Le enfant direct, pas n'importe quel span descendant : la pastille Google et les
+     étoiles en contiennent, et un width:100 % hérité leur faisait crever leur cadre
+     — le « 140 Google reviews » sortait de la boîte sur trois lignes. */
+  .authority > span{width:100%}
 }
 .undertitle{margin:26px 0 0; font-weight:500; font-size:.76rem; color:#6a7075; letter-spacing:.06em}
 
@@ -540,3 +543,107 @@ footer p{margin:0 0 6px}
 .ctx{height:min(42vh,360px)}
 .ctx img{opacity:.3; filter:grayscale(.35) contrast(1.1)}
 .ctx::after{background:linear-gradient(180deg,#00000073 0%,#000000d9 58%,#000 96%)}
+
+/* ── preuve sociale ────────────────────────────────────────────────────────
+   DEUX ORIGINES, JAMAIS MÉLANGÉES.
+
+   .gsig  — la note Google du COMMERCE, en tête de l'écran 01. Un avis Google
+            porte sur l'entreprise : il n'existe pas d'avis Google sur un
+            downpipe. Le G officiel est là pour dire que le chiffre ne vient pas
+            de nous.
+   .quote / .cardquote — les avis déposés sur azmotorsport.ca, rattachés à une
+            pièce. Le pied de chaque citation nomme sa source. Les faire passer
+            pour des avis Google serait une fausse indication d'origine (Loi sur
+            la concurrence art. 74.01 ; 16 CFR 465 côté américain).
+
+   Voir l'en-tête de lib/reviews.ts.                                          */
+
+/* Les étoiles. Deux rangées de ★ superposées, la lime coupée à la note : une
+   grille de cinq icônes pleines ou vides ne sait pas montrer 4.9 sur 5. */
+.stars{
+  position:relative; display:inline-block; flex:none; white-space:nowrap;
+  font-size:.82rem; line-height:1; letter-spacing:.05em;
+}
+.stars__track{color:#ffffff30}
+.stars__fill{
+  position:absolute; left:0; top:0; width:var(--fill); overflow:hidden; color:var(--lime);
+}
+.stars--md{font-size:1rem}
+
+/* La signature Google, dans la barre de crédibilité de l'écran 01. */
+.gsig{
+  display:inline-flex; align-items:center; gap:8px; text-decoration:none;
+  padding:6px 11px; border:1px solid var(--line); background:var(--panel);
+  transition:border-color .18s ease;
+}
+.gsig:hover{border-color:var(--line2)}
+.gsig svg{flex:none}
+/* .authority b passe tout en lime : on reprend la main sur le chiffre, qui doit
+   se lire comme une donnée et pas comme un accent. */
+.authority .gsig__rate{
+  color:var(--text); font-weight:800; letter-spacing:0; font-variant-numeric:tabular-nums;
+}
+.authority .gsig__n{
+  color:var(--muted); font-weight:600; letter-spacing:.04em;
+  font-variant-numeric:tabular-nums;
+}
+/* Sur téléphone la pastille prend la ligne entière et le mot « Google » suffit :
+   « 140 Google reviews » à côté du logo, des étoiles et du chiffre ne tient pas dans
+   390 px sans réduire le tout à une taille illisible. Le thème Shopify d'AZM fait la
+   même coupe au même endroit. */
+@media(max-width:560px){
+  .authority .gsig{gap:7px; padding:6px 10px}
+  .gsig__n-long{display:none}
+}
+@media(min-width:561px){
+  .gsig__n-short{display:none}
+}
+
+/* Le bandeau de citations, sous la grille de marques. */
+.proof{margin:clamp(30px,4vw,44px) 0 0; border-top:1px solid var(--line); padding-top:20px}
+.proof__head{
+  margin:0 0 14px; display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 14px;
+}
+.proof__src{
+  font-size:.72rem; color:#63696e; letter-spacing:.04em; font-variant-numeric:tabular-nums;
+}
+.proof__grid{display:grid; gap:12px; grid-template-columns:1fr}
+@media(min-width:760px){ .proof__grid{grid-template-columns:repeat(3,1fr)} }
+.quote{
+  margin:0; padding:15px 16px 13px; background:var(--panel); border:1px solid var(--line);
+  display:flex; flex-direction:column; gap:10px;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+}
+.quote blockquote{margin:0; font-size:.88rem; line-height:1.55; color:var(--text)}
+.quote blockquote::before{content:"\201C"}
+.quote blockquote::after{content:"\201D"}
+.quote figcaption{
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:3px 9px;
+  margin-top:auto; padding-top:2px; font-size:.69rem; color:#5f6569; letter-spacing:.05em;
+}
+.quote figcaption b{color:var(--muted); font-weight:700; letter-spacing:.02em}
+
+/* La note d'une pièce, sous son titre, sur la carte produit. */
+.rating{
+  display:flex; align-items:center; flex-wrap:wrap; gap:4px 9px; margin:-5px 0 0;
+  font-size:.77rem; color:#63696e; letter-spacing:.04em;
+}
+.rating b{
+  color:var(--text); font-weight:800; letter-spacing:0; font-variant-numeric:tabular-nums;
+}
+.rating span{font-variant-numeric:tabular-nums}
+
+/* L'avis correspondant, plus bas sur la même carte. */
+.cardquote{
+  margin:0; padding:1px 0 1px 12px; border-left:2px solid var(--line2);
+  display:flex; flex-direction:column; gap:6px;
+}
+.cardquote blockquote{margin:0; font-size:.82rem; line-height:1.55; color:var(--muted)}
+.cardquote blockquote::before{content:"\201C"}
+.cardquote blockquote::after{content:"\201D"}
+.cardquote figcaption{
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 8px;
+  font-size:.68rem; color:#5f6569; letter-spacing:.05em;
+}
+.cardquote figcaption b{color:var(--muted); font-weight:700; letter-spacing:.02em}
+.cardquote figcaption > * + *::before{content:"· "; color:var(--line2)}
