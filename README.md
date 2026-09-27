@@ -269,8 +269,8 @@ ligne de note et la citation disparaissent entièrement. Une carte qui affichera
 « 0 avis » ou un cadre vide ferait plus de mal que l'absence de bloc.
 
 Par marque, les écrans qui montrent quelque chose : Porsche 52 %, Audi 50 %, BMW 44 %,
-McLaren 31 %, Ferrari 30 %, Mercedes-AMG 29 %, Lamborghini 13 %, Chevrolet et Toyota 0 %.
-Une campagne ciblée Chevrolet ou Toyota ne verra jamais un avis produit.
+McLaren 31 %, Ferrari 30 %, Mercedes-AMG 29 %, Lamborghini 13 %, Corvette et Toyota 0 %.
+Une campagne ciblée Corvette ou Toyota ne verra jamais un avis produit.
 
 ---
 
