@@ -20,7 +20,7 @@ function help(options: string[]) {
   if (t.includes('catless') || t.includes('race')) {
     return (
       <>
-        <b>Loudest, most aggressive.</b> No catalytic converters — off-road and competition use
+        <b>Loudest, most aggressive.</b> No catalytic converters. Off-road and competition use
         only, not legal on public roads.
       </>
     );

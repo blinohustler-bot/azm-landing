@@ -37,11 +37,11 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
    pour qui regarde ; sans cette annonce, la navigation resterait muette, parce que
    changer d'étape ne recharge plus la page. */
 const STEP_LABEL: Record<StepName, string> = {
-  make: 'Step 1 of 5 — pick your make',
-  model: 'Step 2 of 5 — pick your model',
-  generation: 'Step 3 of 5 — pick your generation',
-  gate: 'Step 4 of 5 — where to send your fitment sheet',
-  results: 'Step 5 of 5 — the parts that fit',
+  make: 'Step 1 of 5: pick your make',
+  model: 'Step 2 of 5: pick your model',
+  generation: 'Step 3 of 5: pick your generation',
+  gate: 'Step 4 of 5: where to send your fitment sheet',
+  results: 'Step 5 of 5: the parts that fit',
   missing: 'Tell us about your car',
   thanks: 'Received'
 };
@@ -119,7 +119,7 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
             annonce, un lecteur d'écran ne saurait pas que l'étape a changé. */}
         <p className="srOnly" role="status" aria-live="polite">
           {STEP_LABEL[step]}
-          {car ? ` — ${car}` : ''}
+          {car ? `, ${car}` : ''}
         </p>
 
         {/* Un événement maison par écran affiché : l'entonnoir complet dans Meta, étape

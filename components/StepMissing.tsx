@@ -70,12 +70,12 @@ export default function StepMissing({
   return (
     <section className="screen wrap wrap--narrow" aria-labelledby="step-title">
       <p className="rule">
-        <b>—</b> Not in the catalog
+        <b>05</b> Not in the catalog
       </p>
       <h1 id="step-title">
         We don&rsquo;t list
         <br />
-        that one — yet.
+        that one. Yet.
       </h1>
       <p className="sub">
         Some chassis are built to order and never make the catalog. Leave the car and a number:
@@ -84,7 +84,7 @@ export default function StepMissing({
 
       <form className="form" onSubmit={submit} noValidate>
         <Field
-          id="m-car" label="Your car — year, model, engine" placeholder="2019 BMW 540i xDrive B58"
+          id="m-car" label="Your car (year, model, engine)" placeholder="2019 BMW 540i xDrive B58"
           error="Tell us the car."
           state={car} onChange={(v) => setCar({ value: v, bad: false })}
         />

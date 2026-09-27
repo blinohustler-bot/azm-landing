@@ -64,7 +64,7 @@ export default function StepResults({
       </div>
 
       <p className="callout">
-        Not sure which one you want? <a href={CONFIG.PHONE_HREF}>Call {CONFIG.PHONE}</a> — a builder
+        Not sure which one you want? <a href={CONFIG.PHONE_HREF}>Call {CONFIG.PHONE}</a>. A builder
         confirms the fit and the sound before you order.
       </p>
 
@@ -73,7 +73,7 @@ export default function StepResults({
           <b>The fitment is printed</b>
           <p>
             Every part lists the exact years and chassis codes it was built for. If your car
-            isn&rsquo;t on that line, don&rsquo;t buy — call us instead.
+            isn&rsquo;t on that line, don&rsquo;t buy. Call us instead.
           </p>
         </div>
         <div>

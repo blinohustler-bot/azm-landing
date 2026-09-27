@@ -41,7 +41,7 @@ export default function StepMake() {
           <span className="gsig__n gsig__n-short">{CONFIG.GOOGLE.COUNT} reviews</span>
         </a>
         <i />
-        <b>Official downpipe supplier — Stage 4 Tuning Canada</b>
+        <b>Official downpipe supplier for Stage 4 Tuning Canada</b>
         <i />
         <span>Canada&rsquo;s #1 choice for Euro &amp; Exotic</span>
       </p>
@@ -58,7 +58,7 @@ export default function StepMake() {
         <div className="intro__side">
           <p className="sub">
             <b>86% of parts returned online are simply the wrong fitment.</b> So we start with your
-            chassis and finish by printing the exact years the part was built for — you check it
+            chassis and finish by printing the exact years the part was built for. You check it
             yourself before you spend a dollar.
           </p>
         </div>
