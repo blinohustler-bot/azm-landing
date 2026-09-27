@@ -772,10 +772,36 @@ footer p{margin:0 0 6px}
   position:relative; isolation:isolate;
   margin-bottom:clamp(30px,4.6vw,54px);
 }
-/* ── au-dessus de 700 px : le texte se pose sur la photo ── */
+/* ── au-dessus de 700 px : deux colonnes, la photo garde la sienne ────────
+   La photo pleine largeur derrière le texte ne marchait pas, et pas par réglage : la
+   source est un portrait 2:3. Sur un écran de 1900 px, un bandeau de 470 px de haut
+   n'en montre que 16 % de la hauteur, et n'importe quelle tranche de 16 % d'un
+   portrait donne une voiture coupée. Aucune valeur d'`object-position` ne répare ça —
+   la voiture occupe une boîte de 2.1:1 dans l'image, elle ne rentre pas dans un
+   bandeau de 4:1 sans être réduite sous la hauteur disponible.
+
+   Dans une colonne d'environ 2:1, elle rentre en entier, flamme comprise. La colonne
+   déborde jusqu'au bord droit de l'écran : encadrée, la photo redeviendrait une boîte
+   posée sur du noir. */
 @media(min-width:700px){
-  .hero{min-height:clamp(360px,52vh,540px); display:flex; align-items:flex-end}
-  .hero__frame{position:absolute; inset:0; z-index:-2}
+  .hero{position:relative; min-height:clamp(360px,52vh,540px); display:flex; align-items:center}
+  /* Le texte à gauche, la photo à droite. Dans l'autre sens le titre flottait dans la
+     moitié droite sans s'aligner sur rien, alors que « Pick your make » et la grille
+     commencent au bord gauche de .wrap. C'est cet alignement vertical d'un bloc à
+     l'autre qui fait qu'une page a l'air posée plutôt qu'assemblée.
+
+     Le bloc de texte RESTE un .wrap, et la photo se pose par-dessus en absolu. C'est
+     ce qui garantit l'alignement : recalculer le bord gauche en `calc()` sur 100vw
+     donnait 20 px d'écart — le rembourrage de .wrap — et aurait de toute façon dérivé
+     dès qu'une barre de défilement apparaît, parce que 100vw la compte et pas 100 %. */
+  .hero__frame{
+    position:absolute; top:0; bottom:0; right:0; width:53%; z-index:-2;
+    margin:0;
+  }
+  .hero .hero__in{padding-block:clamp(26px,4vw,44px)}
+  /* Le texte s'arrête avant la photo. */
+  .hero__in > *{max-width:min(46%, 580px)}
+  .hero__in .gsig{max-width:none; width:fit-content}
 }
 /* ── en dessous : la photo garde son cadre, le texte passe dessous ──
    La source est un portrait 2:3. Réduite à un bandeau de 390 px on n'y voyait que le
@@ -794,17 +820,20 @@ footer p{margin:0 0 6px}
    en bandeau large elle n'en garde qu'un tiers, et un cadrage centré perdait la voiture
    ET la flamme au profit du toit de la station. 58 % descend sur l'arrière du char,
    c'est-à-dire sur l'échappement — le sujet réel de la page. */
-.hero__shot{object-fit:cover; object-position:50% 58%; z-index:-2}
+.hero__shot{object-fit:cover; object-position:50% 52%; z-index:-2}
 /* Deux dégradés, et aucun n'est décoratif : le latéral tient la lisibilité du texte à
    gauche, le vertical raccorde le bas de l'image au noir de la page sans couture.
    Le latéral s'arrête tôt et reste léger : poussé plus loin il écrasait l'avant de la
    voiture en aplat, et on perdait la photo qu'on venait de mettre. */
+/* Le dégradé ne traverse plus toute la section : il ne sert qu'à fondre les deux bords
+   de la photo dans le noir de la page, pour qu'elle n'ait pas l'air découpée aux
+   ciseaux. Il vit donc sur le cadre, pas sur le hero. */
 @media(min-width:700px){
-  .hero::after{
-    content:""; position:absolute; inset:0; z-index:-1;
+  .hero__frame::after{
+    content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
     background:
-      linear-gradient(90deg,#000000c7 0%,#0000006b 38%,#0000000d 66%,transparent 100%),
-      linear-gradient(180deg,#0000004d 0%,#00000014 30%,#0000008f 74%,var(--ink) 100%);
+      linear-gradient(90deg,var(--ink) 0%,#00000080 14%,transparent 38%),
+      linear-gradient(180deg,#00000073 0%,transparent 22%,transparent 72%,#000000ab 100%);
   }
 }
 .hero__in{
