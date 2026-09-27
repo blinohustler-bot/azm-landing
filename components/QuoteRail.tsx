@@ -79,7 +79,7 @@ export default function QuoteRail({
     const el = rail.current;
     if (!el) return;
     const card = el.querySelector<HTMLElement>('.quote');
-    const step = card ? card.offsetWidth + 12 : el.clientWidth * 0.8;
+    const step = card ? card.offsetWidth + 20 : el.clientWidth * 0.8;   // largeur + gap du rail
     /* Le défilement animé est un mouvement comme un autre : qui a demandé moins
        d'animation obtient un saut direct. */
     const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -100,7 +100,7 @@ export default function QuoteRail({
           </span>
         </p>
         {scrollable ? (
-          <span className="proof__count">Showing {quotes.length} — swipe or use the arrows</span>
+          <span className="proof__count">Showing {quotes.length} of {count}. Swipe or use the arrows.</span>
         ) : null}
       </div>
 
@@ -128,7 +128,7 @@ export default function QuoteRail({
           onScroll={measure}
           tabIndex={0}
           role="group"
-          aria-label={`Customer reviews — ${quotes.length} shown`}
+          aria-label={`Customer reviews, ${quotes.length} shown`}
         >
         {quotes.map((q, i) => (
           <figure className="quote" key={`${q.product}-${q.review.name}`}>

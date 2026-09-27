@@ -232,6 +232,63 @@ Aucun jeton requis : `products.json` et `collections.json` sont publics.
 
 ---
 
+## Les bords : une règle, pas un goût
+
+**Un bord qui dessine une boîte autour du contenu saute. Un bord qui est un filet de
+séparation, ou qui appartient à un contrôle, reste.**
+
+La page était couverte de cadres de 1 px. Chacun paraissait anodin ; ensemble ils
+donnaient à l'écran l'allure d'un gabarit — le contour que deux analyses de « AI slop »
+citent parmi les premiers signes qu'une page sort d'un générateur
+([Developers Digest](https://www.developersdigest.tech/blog/ai-design-slop-and-how-to-spot-it),
+[TeneX](https://tenex.studio/en/blog/ai-slop-ui-8-signes/)).
+
+Ce qui remplace le cadre, c'est le groupement : la proximité et le vide. Le principe
+Gestalt de proximité dit que des éléments proches sont perçus comme liés, et le
+[NN/g](https://www.nngroup.com/articles/gestalt-proximity/) note que l'écart seul, sans
+bord ni couleur, suffit à dire ce qui va ensemble — avec moins de bruit visuel qu'un
+[contour](https://www.nngroup.com/articles/common-region/). D'où l'écart du rail d'avis
+passé de 12 à 20 px : quand le cadre part, c'est le vide qui sépare.
+
+### Ce qui est parti
+
+| | Ce qui groupe à la place |
+|---|---|
+| La pastille de la note Google, au-dessus du titre | Le logo G et la proximité dans la ligne de crédibilité |
+| Le cadre des neuf tuiles de marque | Le dégradé de fond et la coupe d'angle, déjà là |
+| Le cadre des cartes produit | L'aplat `--panel` et la coupe d'angle, déjà là |
+| Le cadre des tuiles d'avis | La photo du client, qui donne son bord à la tuile |
+| Les filets verticaux de la barre de chiffres | L'écart entre les quatre postes, porté à 34 px |
+| Les filets colorés à gauche (`.callout`, `.cardquote`, `.card__tag`, `.vehicle-chip`) | L'aplat, le guillemet, la couleur du texte |
+| Le contour des flèches du rail | Un disque plein : c'est un bouton, pas une boîte |
+
+### Ce qui reste, et pourquoi
+
+- **Les filets horizontaux** (`.top`, `footer`, `.facts`, `.fitbox`, `.reassure`,
+  `.results__head`, `.proof`). Ils séparent, ils n'encadrent pas. Une règle n'est pas
+  une boîte.
+- **Les contrôles** : `.btn--ghost`, `.back`, `.opts select`. Le bord porte
+  l'affordance — on doit voir où finit la zone cliquable.
+- **Les anneaux de focus.** Non négociables.
+- **`.formError`**, qui garde son filet orange. Sur un message d'erreur la couleur du
+  bord porte la gravité ; elle ne décore pas.
+
+### Ce qui reste à trancher
+
+L'audit a trouvé d'autres motifs de la même famille, mais ils touchent des choix de
+conception antérieurs et documentés — les changer est une autre conversation :
+
+| Motif cité comme signe de page générée | Où, ici | Est-ce vraiment un défaut ? |
+|---|---|---|
+| Double « eyebrow » au-dessus du H1 | la ligne de crédibilité **et** `01 YOUR CAR · 6 SEC` | Oui : deux lignes de survol empilées. Une seule suffirait. |
+| Bandeau de statistiques | `.facts` | Non : quatre chiffres réels tirés du catalogue, pas des slogans. |
+| Numérotation décorative `01 02 03` | tuiles de marque, étapes | Mitigé : sur les étapes c'est un vrai indicateur de progression ; sur les neuf tuiles c'est de l'ornement. |
+| Cartes identiques | 9 tuiles de marque, 13 tuiles d'avis | Non : le contenu diffère à chaque tuile (logo, chiffre, photo, texte). |
+| Libellés tout en capitales | `.tech--label`, `.rule` | Mitigé : c'est la voix « atelier » de la page, mais il y en a beaucoup. |
+| Tirets cadratins | ~30 dans la copie | Oui, probablement. À arbitrer avec le client, c'est de la copie. |
+
+---
+
 ## La preuve sociale : deux sources, jamais mélangées
 
 La page affiche deux choses qui se ressemblent et qui ne viennent pas du même endroit.
