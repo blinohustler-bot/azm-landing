@@ -4,7 +4,7 @@ import Stars from './Stars';
 import QuoteRail from './QuoteRail';
 import { makeCards, partCount, modelCount } from '@/lib/catalog';
 import { featuredReviews, formatRating, PRODUCT_RATING, REVIEW_TOTALS } from '@/lib/reviews';
-import { CONFIG, HERO } from '@/lib/config';
+import { CONFIG, HERO, TOTAL_STEPS } from '@/lib/config';
 
 /* 01 — la marque.
  *
@@ -85,27 +85,22 @@ export default function StepMake() {
       </div>
 
       <div className="wrap">
-      {/* La barre de chiffres traverse toute la largeur au lieu de tenir dans la
-          colonne de droite : elle sépare le discours de la grille, et comble le vide
-          que le titre laissait sous lui. */}
-      <dl className="facts">
-        <div>
-          <dt>In the catalog</dt>
-          <dd>{partCount} parts</dd>
-        </div>
-        <div>
-          <dt>Chassis covered</dt>
-          <dd>{modelCount} models</dd>
-        </div>
-        <div>
-          <dt>Material</dt>
-          <dd>304 stainless</dd>
-        </div>
-        <div>
-          <dt>Fitment</dt>
-          <dd>Printed per part</dd>
-        </div>
-      </dl>
+      {/* LA QUESTION, JUSTE AU-DESSUS DES RÉPONSES.
+       *
+       * Le hero pleine hauteur avait repoussé la grille sous la ligne de flottaison :
+       * on arrivait sur une belle photo et on ne voyait plus qu'il y avait quelque
+       * chose à remplir. Un écran qui pose une question doit montrer ses réponses.
+       *
+       * Cette ligne fait le travail que faisait « 01 Your car · 6 sec » au-dessus du
+       * titre, mais à l'endroit où elle sert : collée aux tuiles. Et elle porte une
+       * vraie information — où on en est dans le parcours — au lieu d'un numéro
+       * décoratif. */}
+      <div className="ask">
+        <h2 className="ask__q">Pick your make</h2>
+        <p className="ask__step">
+          Step 1 of {TOTAL_STEPS}
+        </p>
+      </div>
 
       {/* Plus de numéro d'ordre sur les tuiles. Neuf marques ne sont pas une séquence :
           on ne choisit pas BMW « avant » Porsche. Un `01 02 03` posé sur du contenu qui
@@ -138,6 +133,29 @@ export default function StepMake() {
           </Link>
         ))}
       </div>
+
+      {/* La barre de chiffres est passée APRÈS la grille. Entre le titre et les tuiles
+          elle coûtait 130 px de hauteur au-dessus de la ligne de flottaison, et elle
+          n'a jamais fait cliquer personne : c'est de la réassurance, elle se lit après
+          le geste, pas avant. */}
+      <dl className="facts">
+        <div>
+          <dt>In the catalog</dt>
+          <dd>{partCount} parts</dd>
+        </div>
+        <div>
+          <dt>Chassis covered</dt>
+          <dd>{modelCount} models</dd>
+        </div>
+        <div>
+          <dt>Material</dt>
+          <dd>304 stainless</dd>
+        </div>
+        <div>
+          <dt>Fitment</dt>
+          <dd>Printed per part</dd>
+        </div>
+      </dl>
 
       {/* Les citations viennent APRÈS la grille, pas avant : l'écran a un seul travail,
           faire cliquer une marque, et rien ne doit repousser les tuiles sous la ligne

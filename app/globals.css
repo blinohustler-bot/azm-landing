@@ -774,7 +774,7 @@ footer p{margin:0 0 6px}
 }
 /* ── au-dessus de 700 px : le texte se pose sur la photo ── */
 @media(min-width:700px){
-  .hero{min-height:clamp(460px,76vh,780px); display:flex; align-items:flex-end}
+  .hero{min-height:clamp(360px,52vh,540px); display:flex; align-items:flex-end}
   .hero__frame{position:absolute; inset:0; z-index:-2}
 }
 /* ── en dessous : la photo garde son cadre, le texte passe dessous ──
@@ -782,7 +782,7 @@ footer p{margin:0 0 6px}
    toit de la station, et le titre s'assoyait sur la voiture. Le 5:4 garde le sujet. */
 @media(max-width:699px){
   .hero__frame{
-    position:relative; aspect-ratio:5/4; overflow:hidden;
+    position:relative; aspect-ratio:16/10; overflow:hidden;
     margin-bottom:clamp(18px,4vw,26px);
   }
   .hero__frame::after{
@@ -828,3 +828,53 @@ footer p{margin:0 0 6px}
   .hero__shot{object-position:52% 56%}
 }
 @media(prefers-reduced-motion:reduce){ .hero{animation:none} }
+
+/* ── la question, juste au-dessus des réponses ─────────────────────────────
+   Le hero pleine hauteur avait repoussé la grille sous la ligne de flottaison : on
+   arrivait sur une belle photo et on ne voyait plus qu'il y avait quelque chose à
+   remplir. Un écran qui pose une question doit montrer ses réponses.               */
+.ask{
+  display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+  margin:0 0 14px; padding-bottom:12px; border-bottom:1px solid var(--line);
+}
+.ask__q{
+  margin:0; font-style:italic; font-weight:900; text-transform:uppercase;
+  font-size:clamp(1.05rem,2.4vw,1.4rem); line-height:1; letter-spacing:-.025em;
+}
+.ask__step{
+  margin:0; flex:none; font-weight:600; font-size:.72rem; letter-spacing:.1em;
+  color:var(--muted); font-variant-numeric:tabular-nums;
+}
+
+/* ── retour visible au clic ────────────────────────────────────────────────
+   « Je vois même pas quand j'ai cliqué dessus. » Le survol existait, l'état enfoncé
+   ne se voyait pas, et sur mobile il n'y a pas de survol du tout : on touchait une
+   tuile et rien ne confirmait que le geste avait pris. La tuile s'enfonce, son cadre
+   s'allume en lime et le trait du bas se dessine d'un coup.                         */
+.brand-card:active{
+  transform:translateY(1px) scale(.985);
+  box-shadow:0 0 0 2px var(--lime) inset;
+}
+.brand-card:active .brand-card__name,
+.brand-card:active .brand-card__n b{color:var(--lime)}
+.brand-card:active::before{transform:scaleX(1); transition:none}
+/* Le survol soulève, mais sur un écran tactile « hover » colle après le doigt :
+   on ne l'applique qu'aux pointeurs qui survolent réellement. */
+@media(hover:none){
+  .brand-card:hover{transform:none; box-shadow:none}
+}
+.choice:active{background:var(--panel2); transform:translateY(1px)}
+
+/* ── téléphone : la grille doit percer la ligne de flottaison ──────────────
+   Mesuré au protocole DevTools à 390x740 : avec le hero d'origine, 8 % de la première
+   tuile dépassait. Autant dire qu'on arrivait sur une photo et qu'on ne voyait pas
+   qu'il y avait un choix à faire. Chaque valeur ci-dessous a été reprise jusqu'à ce
+   que la mesure passe — ce n'est pas du réglage à l'œil.                            */
+@media(max-width:699px){
+  .hero{margin-bottom:20px}
+  .hero__frame{aspect-ratio:16/9; margin-bottom:14px}
+  .hero__in{padding-block:0 0; gap:11px}
+  .hero__in .sub{font-size:.92rem; line-height:1.5}
+  .hero__in h1{max-width:none}
+  .ask{margin-bottom:11px; padding-bottom:9px}
+}
