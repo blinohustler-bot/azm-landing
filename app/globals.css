@@ -399,7 +399,16 @@ body::after{
   padding:5px 10px; letter-spacing:.02em; font-variant-numeric:tabular-nums;
 }
 .results__change{margin-left:auto; padding:11px 16px; font-size:.8rem}
-.grid{display:grid; gap:18px; grid-template-columns:1fr}
+/* LES CARTES NE S'ETIRENT PAS.
+   Forcer deux cartes a la meme hauteur oblige quelque chose a encaisser la
+   difference, et il n'y a que deux candidats : un trou dans le texte, ou des photos
+   de hauteurs differentes. Les deux ont ete essayes, les deux se voient.
+
+   Avec `align-items:start`, chaque carte fait sa propre hauteur. Les photos gardent
+   le meme ratio donc elles s'alignent, et tout ce qui suit s'aligne avec elles :
+   titre, note, bloc de fitment. Les cartes ne divergent qu'a partir du point ou leur
+   contenu differe vraiment, ce qui est la seule chose honnete a montrer. */
+.grid{display:grid; gap:18px; grid-template-columns:1fr; align-items:start}
 @media(min-width:760px){ .grid{grid-template-columns:1fr 1fr} }
 /* Une seule pièce compatible (42 % des combinaisons) : elle prend toute la largeur,
    image à gauche, choix et prix à droite — plutôt qu'une carte étroite et du vide. */
@@ -421,21 +430,14 @@ body::after{
   transition:background .2s ease;
 }
 .card:hover{background:var(--panel2)}
-/* C'EST LA PHOTO QUI ABSORBE L'ECART DE HAUTEUR, PAS LE TEXTE.
-   Deux cartes côte à côte n'ont jamais le même contenu — l'une porte trois
-   caractéristiques, un avis et deux sélecteurs, l'autre un seul sélecteur. La grille
-   les met à la même hauteur, et c'est `.card__body{flex:1}` qui encaissait la
-   différence : le prix étant collé en bas par `margin-top:auto`, la carte courte
-   affichait un grand trou entre son dernier champ et son prix. Le vide passe donc
-   dans la photo, qui grandit — et une photo plus grande vaut mieux qu'un trou. */
-.card__media{position:relative; aspect-ratio:4/3; background:#000; overflow:hidden; flex:1 1 auto; min-height:0}
+.card__media{position:relative; aspect-ratio:4/3; background:#000; overflow:hidden}
 .card__media img{width:100%; height:100%; object-fit:cover; transition:scale .6s ease}
 .card:hover .card__media img{scale:1.03}
 .card__tag{
   position:absolute; left:0; top:14px; background:var(--ink); color:var(--lime);
   padding:6px 12px; font-weight:700; font-size:.71rem; letter-spacing:.12em; text-transform:uppercase;
 }
-.card__body{padding:20px; display:flex; flex-direction:column; gap:15px; flex:0 0 auto}
+.card__body{padding:20px; display:flex; flex-direction:column; gap:15px; flex:1}
 .fitbox{border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:12px 0}
 .fitbox__head{
   margin:0 0 6px; display:flex; align-items:center; gap:7px; color:var(--lime);
