@@ -84,7 +84,6 @@ export default function ProductCard({
 
   const buyHref =
     `${shop}/cart/${current.id}:1?${CONFIG.UTM}&utm_content=${encodeURIComponent(product.handle)}`;
-  const talkHref = CONFIG.TALK || CONFIG.PHONE_HREF;
 
   return (
     <article className="card">
@@ -199,6 +198,12 @@ export default function ProductCard({
           </span>
         </div>
 
+        {/* Un seul bouton. « Ask a builder » doublait l'encadré qui suit la grille et
+            offre le même numéro, il était mort sur ordinateur — CONFIG.TALK était vide,
+            donc il retombait sur un lien tel: — et il prenait la moitié de la largeur
+            au bouton qui vend. Le canal conversation n'est pas perdu : l'encadré sous
+            la grille le propose une fois, après qu'on ait vu les options, c'est-à-dire
+            au moment où la question « laquelle ? » se pose. */}
         <div className="card__actions">
           {/* Le paiement reste entièrement chez Shopify : ce lien ouvre le panier sur
               azmotorsport.ca, aucune donnée de paiement ne passe par cette page. */}
@@ -215,9 +220,6 @@ export default function ProductCard({
             }
           >
             Buy now
-          </a>
-          <a className="btn btn--ghost" href={talkHref}>
-            Ask a builder
           </a>
         </div>
 

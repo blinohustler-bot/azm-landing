@@ -52,7 +52,6 @@ Deux endroits, et un seul est bloquant.
 |---|---|---|
 | `LEAD_ENDPOINT` | `/api/lead` — la fonction de ce dépôt | le lead n'est envoyé nulle part |
 | `PIXEL` | `854592952776027` | aucune mesure côté Meta |
-| `TALK` | **vide** — lien m.me de la Page | le bouton « parler à un builder » retombe sur le téléphone |
 | `GATE_FIRST` | `false` | voir plus bas |
 
 **Dans Vercel > Settings > Environment Variables** — les noms et le détail sont dans
@@ -524,8 +523,6 @@ paiement ne transite ni par cette page ni par la fonction.
 
 ### Ce qui reste à faire une fois en ligne
 
-- `CONFIG.TALK` est vide : le bouton « parler à un builder » compose le téléphone. Le
-  lien m.me de la Page AZM y va dès qu'il est connu.
 - `ALLOWED_ORIGINS` reste vide tant que le domaine final n'est pas fixé ; d'ici là,
   n'importe quelle origine peut poster sur `/api/lead`.
 - La limite de débit vit dans la mémoire d'un lambda : elle tient contre un script isolé,

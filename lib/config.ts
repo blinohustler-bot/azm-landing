@@ -7,7 +7,6 @@
 
 type Config = {
   LEAD_ENDPOINT: string;
-  TALK: string;
   PHONE: string;
   PHONE_HREF: string;
   PIXEL: string;
@@ -20,10 +19,12 @@ export const CONFIG: Config = {
   /* Le lead part vers notre propre fonction, qui écrit dans GHL. */
   LEAD_ENDPOINT: '/api/lead',
 
-  /* Lien de conversation (m.me de la Page). Vide → le bouton retombe sur le téléphone.
-     84 % du revenu d'AZM se facture par conversation : on ne cache pas ce canal. */
-  TALK: '',
-
+  /* Le canal conversation vit dans l'encadré sous la grille de résultats, qui donne ce
+     numéro. Il y avait en plus un bouton « Ask a builder » sur chaque carte produit,
+     réglé par un CONFIG.TALK resté vide : il retombait sur un lien tel:, mort sur
+     ordinateur, et il prenait la moitié de la largeur au bouton qui vend. Le bouton et
+     le réglage sont partis ensemble ; 84 % du revenu d'AZM se facture par conversation,
+     mais l'offrir trois fois sur le même écran ne la vendait pas mieux. */
   PHONE: '581-745-8680',      // publié sur azmotorsport.ca
   PHONE_HREF: 'tel:+15817458680',
 
