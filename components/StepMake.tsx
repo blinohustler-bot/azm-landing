@@ -76,10 +76,24 @@ export default function StepMake() {
             driving?
           </h1>
 
+          {/* CE QU'ON PROMET, PAS CE QU'ON EVITE.
+           *
+           * L'accroche ouvrait sur « 86 % des pièces retournées en ligne sont un
+           * mauvais fitment ». Le chiffre est vrai et c'est la raison d'être du
+           * sélecteur, mais c'est une perte, pas un gain : on faisait penser au
+           * retour avant même d'avoir donné envie de la pièce.
+           *
+           * Le mécanisme ne bouge pas — on montre toujours les seules pièces
+           * construites pour le châssis, millésimes imprimés. C'est le cadrage qui
+           * change : le désir d'abord (le son, c'est ce qu'on achète), le moyen
+           * ensuite, la matière pour finir. « In stock » ferme sur un signal d'achat.
+           *
+           * Le chiffre n'est pas perdu : il porte le bloc « The fitment is printed »
+           * de l'écran de résultats, où il rassure au lieu d'inquiéter. */}
           <p className="sub">
-            <b>86% of parts returned online are simply the wrong fitment.</b> So we start with your
-            chassis and finish by printing the exact years the part was built for. You check it
-            yourself before you spend a dollar.
+            <b>The sound it should have come with.</b> Pick your chassis and see only the
+            downpipes and exhaust systems built for it, with the exact years printed on every
+            part. 304 stainless, in stock.
           </p>
         </div>
       </div>
