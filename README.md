@@ -15,6 +15,19 @@ npm run dev          # http://localhost:3000
 
 ---
 
+## Le contrat visuel
+
+**`DESIGN.md` avant de toucher au style.** Palette, typographie, rôle de la
+photographie, et la liste des motifs interdits parce qu'ils font qu'une page se lit
+comme générée. Tout y est relevé sur le vrai magasin, pas choisi par goût.
+
+Le point qu'on ré-oublie à chaque fois : le magasin d'AZM est **blanc avec une chrome
+noire et des photos sombres**, pas un aplat noir. Le noir vient d'une image, jamais
+d'un `background`. La landing, elle, est un aplat noir d'un bout à l'autre : c'est
+l'écart le plus important entre ce qu'elle est et ce que la marque est.
+
+---
+
 ## Pourquoi cette page existe
 
 | Fait | Chiffre |
