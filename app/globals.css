@@ -816,7 +816,7 @@ footer p{margin:0 0 6px}
    toit de la station, et le titre s'assoyait sur la voiture. Le 5:4 garde le sujet. */
 @media(max-width:699px){
   .hero__frame{
-    position:relative; aspect-ratio:16/10; overflow:hidden;
+    position:relative; aspect-ratio:2/1; overflow:hidden;
     margin-bottom:clamp(18px,4vw,26px);
   }
   .hero__frame::after{
@@ -909,9 +909,26 @@ footer p{margin:0 0 6px}
    que la mesure passe — ce n'est pas du réglage à l'œil.                            */
 @media(max-width:699px){
   .hero{margin-bottom:20px}
-  .hero__frame{aspect-ratio:16/9; margin-bottom:14px}
+  .hero__frame{aspect-ratio:2/1; margin-bottom:12px}
   .hero__in{padding-block:0 0; gap:11px}
   .hero__in .sub{font-size:.92rem; line-height:1.5}
   .hero__in h1{max-width:none}
   .ask{margin-bottom:11px; padding-bottom:9px}
+}
+
+/* ── téléphone : remonter le formulaire sous la photo ──────────────────────
+   La pastille Google passe SUR la photo au lieu d'occuper une ligne au-dessus du
+   titre. Elle sort du flux, et les 51 px qu'elle prenait remontent d'autant la
+   question et les tuiles — c'est-à-dire la seule chose que l'écran demande de faire.
+
+   Le calcul est exact et pas approximatif : le cadre est pleine largeur et porte un
+   ratio de 2:1, donc sa hauteur vaut 50vw. Sur téléphone il n'y a pas de barre de
+   défilement permanente qui ferait diverger 100vw de la largeur réelle. */
+@media(max-width:699px){
+  .hero .gsig{
+    position:absolute; z-index:2; left:20px; top:calc(50vw - 54px);
+    padding:6px 11px; background:#000000ad; border:1px solid #ffffff2b;
+    backdrop-filter:blur(6px);
+  }
+  .hero__in{padding-top:0}
 }
