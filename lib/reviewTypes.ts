@@ -26,6 +26,14 @@ export type ProductReviews = {
   reviews: Review[];
 };
 
+/* Un avis prêt pour le rail de l'écran 01 : l'avis, et la pièce dont il parle.
+   Ici et pas dans lib/reviews.ts parce que QuoteRail est 'use client'. */
+export type FeaturedReview = {
+  review: Review;
+  product: string;
+  make: string;
+};
+
 export type ReviewIndex = {
   generated: string;
   shop: string;
@@ -49,6 +57,19 @@ export const starFill = (rating: number) => Math.max(0, Math.min(100, (rating / 
 
 /* « 4.9 », pas « 4.90 » ni « 5 » — un point décimal exactement, comme sur la fiche. */
 export const formatRating = (rating: number) => rating.toFixed(1);
+
+/* Quelle part du texte est en capitales. Sert à départager deux envois du même avis :
+   « SPEECHLESS THE CAR IS LITERALLY A ROCKET » et sa version en minuscules existent
+   toutes les deux, postées par la même personne sur deux pièces. Le rail prend la
+   plus calme — choisir entre deux envois réels est légitime, réécrire le texte d'un
+   client ne le serait pas, et on ne le fait nulle part.
+   En dessous de 12 lettres le ratio ne veut rien dire (« OK », « WOW ») : on renvoie 0
+   pour ne pas écarter un avis court sur une statistique de rien. */
+export function shoutRatio(text: string): number {
+  const letters = text.replace(/[^A-Za-z]/g, '');
+  if (letters.length < 12) return 0;
+  return (letters.match(/[A-Z]/g) ?? []).length / letters.length;
+}
 
 /* Un avis assez long pour prouver quelque chose. « 🔥🔥 » et « Excellent » comptent
    dans la note mais ne convainquent personne, et occupent la même place à l'écran

@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import Stars from './Stars';
+import QuoteRail from './QuoteRail';
 import { makeCards, partCount, modelCount } from '@/lib/catalog';
-import { featuredReviews, formatMonth, formatRating, REVIEW_TOTALS } from '@/lib/reviews';
+import { featuredReviews, formatRating, REVIEW_TOTALS } from '@/lib/reviews';
 import { CONFIG } from '@/lib/config';
 
 /* 01 — la marque.
@@ -21,7 +22,7 @@ import { CONFIG } from '@/lib/config';
  */
 export default function StepMake() {
   const cards = makeCards();
-  const quotes = featuredReviews(3);
+  const quotes = featuredReviews();
 
   return (
     <section className="screen wrap" aria-labelledby="step-title">
@@ -122,27 +123,10 @@ export default function StepMake() {
           Aucun de ces avis ne porte l'indicateur `verified` dans la source — on écrit
           donc « customer reviews », jamais « verified buyers ». */}
       {quotes.length ? (
-        <div className="proof">
-          <p className="proof__head">
-            <span className="tech--label">After the install</span>
-            <span className="proof__src">
-              {REVIEW_TOTALS.reviews} customer reviews on azmotorsport.ca
-            </span>
-          </p>
-          <div className="proof__grid">
-            {quotes.map((q) => (
-              <figure className="quote" key={`${q.product}-${q.review.name}`}>
-                <Stars rating={q.review.rate} />
-                <blockquote>{q.review.text}</blockquote>
-                <figcaption>
-                  <b>{q.review.name}</b>
-                  <span>{q.product}</span>
-                  {q.review.date ? <time dateTime={q.review.date}>{formatMonth(q.review.date)}</time> : null}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
-        </div>
+        <QuoteRail
+          quotes={quotes}
+          label={`${REVIEW_TOTALS.reviews} customer reviews on azmotorsport.ca`}
+        />
       ) : null}
 
       <p className="undertitle">Built by car enthusiasts, for car enthusiasts.</p>

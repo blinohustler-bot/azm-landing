@@ -78,11 +78,7 @@ function parsePage(html) {
     let arr = null;
     try { arr = JSON.parse(txt); } catch { /* bloc tronqué : on garde juste l'agrégat */ }
     if (Array.isArray(arr)) {
-      /* Le même avis apparaît parfois deux fois sur une fiche — « B » a posté le sien
-         en majuscules puis en minuscules, Air Reviews a gardé les deux. On compare le
-         texte insensible à la casse et à la ponctuation, et on garde le premier. */
-      const seen = new Set();
-      out.reviews = arr
+      const mapped = arr
         .filter((r) => r && r.status !== 'disapproved' && Number(r.rate) > 0)
         .map((r) => ({
           name: displayName(r.firstName ?? r.first_name, r.lastName ?? r.last_name),
@@ -91,13 +87,34 @@ function parsePage(html) {
           date: String(r.createdAt || '').slice(0, 10),
           country: r.countryCode || '',
           verified: Boolean(r.verified)
-        }))
-        .filter((r) => {
-          const key = r.text.toLowerCase().replace(/[^a-z0-9]+/g, '');
-          if (!key || seen.has(key)) return !key;      // un avis sans texte reste compté
-          seen.add(key);
-          return true;
-        });
+        }));
+
+      /* Garde-fou contre le même avis publié deux fois sur UNE fiche. Sur les données
+         du 2026-09-27 il n'enlève rien — les doublons réels d'AZM sont d'une fiche à
+         l'autre, quand le client a pris les downpipes ET l'échappement, et ce
+         script-là travaille fiche par fiche. Ce cas-là se règle dans lib/reviews.ts,
+         qui voit le fichier entier.
+         *
+         * Lequel garder quand ça arrive : celui qui CRIE le moins, même règle qu'en
+         * aval. Choisir entre deux envois réels de la même personne est légitime ;
+         * réécrire le texte d'un client ne le serait pas, et on ne le fait nulle part. */
+      const shout = (s) => {
+        const letters = s.replace(/[^A-Za-z]/g, '');
+        if (letters.length < 12) return 0;
+        return (letters.match(/[A-Z]/g) || []).length / letters.length;
+      };
+      const best = new Map();
+      out.reviews = [];
+      for (const r of mapped) {
+        const key = r.text.toLowerCase().replace(/[^a-z0-9]+/g, '');
+        if (!key) { out.reviews.push(r); continue; }   // un avis sans texte reste compté
+        const seen = best.get(key);
+        if (!seen) { best.set(key, r); out.reviews.push(r); continue; }
+        if (shout(r.text) < shout(seen.text)) {
+          out.reviews[out.reviews.indexOf(seen)] = r;
+          best.set(key, r);
+        }
+      }
     }
   }
 

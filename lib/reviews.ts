@@ -24,11 +24,11 @@ import 'server-only';
 import raw from '@/reviews.json';
 import catalog from '@/catalog.json';
 
-export type { Review, ProductReviews, ReviewIndex, Proof } from './reviewTypes';
-export { starFill, formatRating, formatMonth, isQuotable, trimQuote } from './reviewTypes';
+export type { Review, ProductReviews, ReviewIndex, Proof, FeaturedReview } from './reviewTypes';
+export { starFill, formatRating, formatMonth, isQuotable, trimQuote, shoutRatio } from './reviewTypes';
 
-import type { Proof, Review, ReviewIndex } from './reviewTypes';
-import { isQuotable } from './reviewTypes';
+import type { FeaturedReview, Proof, Review, ReviewIndex } from './reviewTypes';
+import { isQuotable, shoutRatio } from './reviewTypes';
 
 const index = raw as unknown as ReviewIndex;
 
@@ -60,13 +60,6 @@ export function proofFor(handle: string): Proof {
 
 /* ── pour l'écran d'accueil ──────────────────────────────────────────────── */
 
-export type FeaturedReview = {
-  review: Review;
-  /* La pièce dont parle l'avis : c'est ce qui le rend vérifiable plutôt que décoratif. */
-  product: string;
-  make: string;
-};
-
 type RawProduct = { handle: string; title: string; make: string };
 const byHandle = new Map<string, RawProduct>(
   Object.values((catalog as { products: Record<string, RawProduct> }).products)
@@ -89,12 +82,17 @@ const byHandle = new Map<string, RawProduct>(
  * résultat. Personne ne vérifie la date d'un avis sur une page d'atterrissage ; tout
  * le monde en lit le texte.
  *
- * Un avis par pièce, un par personne, une marque par citation : trois témoignages du
- * même client ou de la même marque se lisent comme un montage, même quand ils sont
- * vrais — et le visiteur est justement en train de chercher SA marque dans la grille
- * juste au-dessus.
+ * Un avis par pièce, un par personne, et au plus `maxPerMake` par marque : plusieurs
+ * témoignages du même client ou du même char se lisent comme un montage, même quand
+ * ils sont vrais — et le visiteur est justement en train de chercher SA marque dans
+ * la grille juste au-dessus, donc le rail doit lui en montrer plusieurs.
+ *
+ * `max` ne mord presque jamais : c'est le plafond par marque qui fait le tri. Sur les
+ * 41 avis éligibles, deux par marque donnent 13 tuiles réparties sur les 7 marques qui
+ * ont des avis, la plus courte faisant 95 caractères. Assez pour qu'un rail ait un
+ * sens, assez peu pour qu'aucune tuile ne soit du remplissage.
  */
-export function featuredReviews(n = 3): FeaturedReview[] {
+export function featuredReviews(max = 24, maxPerMake = 2): FeaturedReview[] {
   const pool: FeaturedReview[] = [];
 
   for (const [handle, p] of Object.entries(index.products)) {
@@ -107,27 +105,39 @@ export function featuredReviews(n = 3): FeaturedReview[] {
     }
   }
 
-  pool.sort((a, b) => b.review.text.length - a.review.text.length
-    || b.review.date.localeCompare(a.review.date));
+  /* Le même avis est parfois rattaché à deux fiches — le client a pris les downpipes
+     ET l'échappement, et Air Reviews recopie son texte sur chacune. Sans ce
+     regroupement, le rail montrerait deux fois le même témoignage.
+     *
+     * Le regroupement est ici et pas dans build-reviews.mjs parce que la récolte
+     * travaille fiche par fiche et ne voit pas les doublons d'une fiche à l'autre.
+     * Entre deux copies on garde la moins criarde : « SPEECHLESS THE CAR IS LITERALLY
+     * A ROCKET » ouvrait le rail et hurlait entre deux phrases normales, alors que la
+     * même personne avait poste la même chose en minuscules sur l'autre piece. */
+  const byText = new Map<string, FeaturedReview>();
+  for (const f of pool) {
+    const key = f.review.text.toLowerCase().replace(/[^a-z0-9]+/g, '');
+    const kept = byText.get(key);
+    if (!kept || shoutRatio(f.review.text) < shoutRatio(kept.review.text)) byText.set(key, f);
+  }
+
+  const unique = [...byText.values()].sort((a, b) =>
+    b.review.text.length - a.review.text.length
+    || b.review.date.localeCompare(a.review.date)
+    || a.product.localeCompare(b.product));   // dernier recours : rendu stable
 
   const out: FeaturedReview[] = [];
   const seenProduct = new Set<string>();
   const seenName = new Set<string>();
-  const seenMake = new Set<string>();
-  const seenText = new Set<string>();
-  for (const f of pool) {
-    /* Le même avis peut être rattaché à deux fiches (downpipes + échappement du même
-       client) : Air Reviews le recopie sur chacune. Sans ce filtre, l'écran 01
-       afficherait deux fois le même témoignage. */
-    const text = f.review.text.toLowerCase().replace(/[^a-z0-9]+/g, '');
+  const perMake = new Map<string, number>();
+  for (const f of unique) {
     if (seenProduct.has(f.product) || seenName.has(f.review.name)
-      || seenMake.has(f.make) || seenText.has(text)) continue;
+      || (perMake.get(f.make) ?? 0) >= maxPerMake) continue;
     seenProduct.add(f.product);
     seenName.add(f.review.name);
-    seenMake.add(f.make);
-    seenText.add(text);
+    perMake.set(f.make, (perMake.get(f.make) ?? 0) + 1);
     out.push(f);
-    if (out.length === n) break;
+    if (out.length === max) break;
   }
   return out;
 }

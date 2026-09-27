@@ -244,7 +244,7 @@ FTC sur les faux avis (16 CFR 465, en vigueur depuis août 2024).
 | Portent sur | **le commerce** | **une pièce** |
 | Source | fiche Google Business (app Reputon sur le Shopify) | app Avada Air Reviews sur le Shopify |
 | Vit dans | `CONFIG.GOOGLE`, écrit à la main | `reviews.json`, généré |
-| Affiché | pastille en tête de l'écran 01 | note + citation sur la carte produit, citations sous la grille de marques |
+| Affiché | pastille en tête de l'écran 01 | note + citation sur la carte produit, rail de citations sous la grille de marques |
 | Libellé à l'écran | « Google reviews », logo G officiel | « reviews on this part », « azmotorsport.ca » |
 | Couverture | 100 % des visites | **30 fiches sur 121** |
 
@@ -271,6 +271,29 @@ ligne de note et la citation disparaissent entièrement. Une carte qui affichera
 Par marque, les écrans qui montrent quelque chose : Porsche 52 %, Audi 50 %, BMW 44 %,
 McLaren 31 %, Ferrari 30 %, Mercedes-AMG 29 %, Lamborghini 13 %, Corvette et Toyota 0 %.
 Une campagne ciblée Corvette ou Toyota ne verra jamais un avis produit.
+
+### Le rail de l'écran 01 ne tourne pas tout seul
+
+`components/QuoteRail.tsx` affiche 13 citations au lieu de 3 — `featuredReviews()`
+prend tout ce qui passe le filtre, au plus deux par marque, une par personne, une par
+pièce. Sur les 41 avis éligibles (60 à 240 caractères, 4 étoiles et plus), ça donne 13
+tuiles réparties sur les 7 marques qui ont des avis, la plus courte faisant 95
+caractères.
+
+**Aucune rotation automatique, et c'est le point.** Ce qu'on reproche aux carrousels —
+la lecture coupée en pleine phrase, le contenu qui échappe à qui lit lentement — vient
+de la rotation, pas du défilement. La page porte déjà un bloc `prefers-reduced-motion`
+qu'une rotation contredirait.
+
+Le défilement est du CSS (`scroll-snap`) : il marche au doigt, à la molette horizontale
+et au clavier avant que `QuoteRail.tsx` soit chargé. Les flèches ne sont qu'un ajout
+pour la souris, qui n'a pas de geste horizontal — sans JavaScript on perd deux boutons,
+pas l'accès aux avis. Le rail porte `tabindex=0` : sans lui, ce qui dépasse à droite
+serait inatteignable au clavier (WCAG 2.1.1).
+
+La tuile suivante dépasse volontairement du cadre — 78 % de largeur sur téléphone, 3,15
+par vue au-delà. C'est ce qui dit qu'il y en a d'autres ; une rangée qui a l'air pleine
+se lit comme une rangée pleine, flèches ou pas.
 
 ---
 

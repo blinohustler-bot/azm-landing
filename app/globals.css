@@ -602,13 +602,43 @@ footer p{margin:0 0 6px}
 /* Le bandeau de citations, sous la grille de marques. */
 .proof{margin:clamp(30px,4vw,44px) 0 0; border-top:1px solid var(--line); padding-top:20px}
 .proof__head{
-  margin:0 0 14px; display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 14px;
+  margin:0 0 14px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px;
 }
 .proof__src{
   font-size:.72rem; color:#63696e; letter-spacing:.04em; font-variant-numeric:tabular-nums;
 }
-.proof__grid{display:grid; gap:12px; grid-template-columns:1fr}
-@media(min-width:760px){ .proof__grid{grid-template-columns:repeat(3,1fr)} }
+
+/* Le rail. Le défilement est du CSS : il marche au doigt, à la molette horizontale et
+   au clavier sans que QuoteRail.tsx soit chargé. Les flèches ne font que l'automatiser
+   pour la souris, qui n'a pas de geste horizontal.
+
+   Les tuiles ne tombent JAMAIS pile dans la largeur — 78 % sur téléphone, 3,15 par vue
+   au-delà. Ce bout de tuile qui dépasse est la seule chose qui dise qu'il y en a
+   d'autres ; une rangée qui a l'air pleine se lit comme une rangée pleine, flèches ou
+   pas. */
+.rail{
+  display:flex; gap:12px; overflow-x:auto; overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;
+  /* La barre native est masquée : sur fond noir elle coupe le bas des tuiles, et
+     l'affordance est portée par la tuile qui dépasse et par les flèches. */
+  scrollbar-width:none; -ms-overflow-style:none;
+}
+.rail::-webkit-scrollbar{display:none}
+.rail:focus-visible{outline:2px solid var(--lime); outline-offset:3px}
+.rail > .quote{flex:0 0 78%; scroll-snap-align:start}
+@media(min-width:560px){ .rail > .quote{flex-basis:calc((100% - 24px) / 2.15)} }
+@media(min-width:760px){ .rail > .quote{flex-basis:calc((100% - 36px) / 3.15)} }
+
+.rail__nav{display:inline-flex; gap:6px; margin-left:auto}
+.rail__nav button{
+  width:30px; height:30px; padding:0; display:grid; place-items:center; cursor:pointer;
+  background:var(--panel); border:1px solid var(--line); color:var(--muted);
+  transition:border-color .18s ease, color .18s ease, opacity .18s ease;
+}
+.rail__nav button:hover:not(:disabled){border-color:var(--line2); color:var(--text)}
+.rail__nav button:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
+.rail__nav button:disabled{opacity:.3; cursor:default}
+
 .quote{
   margin:0; padding:15px 16px 13px; background:var(--panel); border:1px solid var(--line);
   display:flex; flex-direction:column; gap:10px;
