@@ -641,15 +641,48 @@ footer p{margin:0 0 6px}
 @media(min-width:560px){ .rail > .quote{flex-basis:calc((100% - 24px) / 2.15)} }
 @media(min-width:760px){ .rail > .quote{flex-basis:calc((100% - 36px) / 3.15)} }
 
-.rail__nav{display:inline-flex; gap:6px; margin-left:auto; margin-bottom:2px}
-.rail__nav button{
-  width:30px; height:30px; padding:0; display:grid; place-items:center; cursor:pointer;
-  background:var(--panel); border:1px solid var(--line); color:var(--muted);
-  transition:border-color .18s ease, color .18s ease, opacity .18s ease;
+/* Les flèches sont SUR les bords du rail. Rangées dans l'en-tête, elles étaient loin
+   de ce qu'elles déplacent et ne disaient pas que la rangée bouge — et la tuile qui
+   dépasse, seule, ne le disait pas non plus. Posées à cheval sur le bord, le geste
+   est lisible sans rien expliquer. */
+.rail__wrap{position:relative}
+.rail__arrow{
+  position:absolute; top:50%; translate:0 -50%; z-index:2;
+  width:46px; height:46px; padding:0; display:grid; place-items:center; cursor:pointer;
+  /* Posée sur une photo sombre, une pastille discrète disparaît : fond opaque, bord
+     franc et ombre portée pour qu'elle se détache de n'importe quelle photo client. */
+  background:#000000ef; border:1px solid #ffffff4d; color:#fff;
+  box-shadow:0 2px 16px #000000b3;
+  transition:opacity .2s ease, background .18s ease, border-color .18s ease, color .18s ease;
 }
-.rail__nav button:hover:not(:disabled){border-color:var(--line2); color:var(--text)}
-.rail__nav button:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
-.rail__nav button:disabled{opacity:.3; cursor:default}
+.rail__arrow:hover{background:var(--ink); border-color:var(--lime); color:var(--lime)}
+.rail__arrow:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
+/* Aux extrémités la flèche s'efface au lieu de griser : une flèche morte posée sur une
+   photo est du bruit, et sa disparition indique le sens qu'il reste à parcourir. */
+.rail__arrow:disabled{opacity:0; pointer-events:none}
+.rail__arrow--prev{left:-14px}
+.rail__arrow--next{right:-14px}
+/* Sous 560 px la marge de .wrap ne fait que 20 px : une flèche débordante sortirait de
+   l'écran. Elle rentre, et rétrécit pour ne pas manger la photo. */
+@media(max-width:560px){
+  .rail__arrow{width:34px; height:34px}
+  .rail__arrow--prev{left:4px}
+  .rail__arrow--next{right:4px}
+}
+
+/* La barre reprend l'idiome de la barre d'étapes en haut de page. Elle dit ce qu'une
+   flèche ne dit pas : combien il reste. */
+.rail__progress{margin-top:12px; height:2px; background:#ffffff14; overflow:hidden}
+.rail__progress i{
+  display:block; height:100%; background:var(--lime);
+  transition:margin-left .14s linear, width .14s linear;
+}
+@media(prefers-reduced-motion:reduce){ .rail__progress i{transition:none} }
+
+.proof__count{
+  margin-left:auto; margin-bottom:2px; font-size:.7rem; color:#5f6569;
+  letter-spacing:.05em; font-variant-numeric:tabular-nums;
+}
 
 /* La tuile. Treize pavés de texte gris de même taille, c'est ce que le bloc était :
    du bon contenu — un gars qui nomme son M3 Comp, son stage 2, ses 780 chevaux — qui

@@ -312,9 +312,25 @@ pour la souris, qui n'a pas de geste horizontal — sans JavaScript on perd deux
 pas l'accès aux avis. Le rail porte `tabindex=0` : sans lui, ce qui dépasse à droite
 serait inatteignable au clavier (WCAG 2.1.1).
 
-La tuile suivante dépasse volontairement du cadre — 78 % de largeur sur téléphone, 3,15
-par vue au-delà. C'est ce qui dit qu'il y en a d'autres ; une rangée qui a l'air pleine
-se lit comme une rangée pleine, flèches ou pas.
+### Trois signaux, parce qu'un seul ne suffisait pas
+
+La tuile qui dépasse ne suffit pas à dire qu'on peut faire glisser. Les flèches
+rangées dans l'en-tête ne le disaient pas non plus : elles étaient loin de ce qu'elles
+déplacent. Trois signaux se complètent, et chacun fait un travail que les autres ne
+font pas :
+
+| Signal | Ce qu'il dit |
+|---|---|
+| La tuile suivante qui dépasse (78 % de largeur sur téléphone, 3,15 par vue au-delà) | « il y en a d'autres » |
+| Les flèches **sur les bords du rail**, à cheval sur ce qu'elles déplacent | « ça bouge, et voilà comment » |
+| La barre lime sous le rail, qui reprend l'idiome de la barre d'étapes | « voilà où tu en es, et combien il reste » |
+
+Aux extrémités la flèche **s'efface** au lieu de griser : une flèche morte posée sur
+une photo est du bruit, et sa disparition indique le sens qu'il reste à parcourir. Un
+libellé discret (« Showing 13 — swipe or use the arrows ») ferme la porte au doute.
+
+Sous 560 px la marge de `.wrap` ne fait que 20 px : la flèche rentre dans le cadre au
+lieu de déborder, et rétrécit pour ne pas manger la photo.
 
 ---
 

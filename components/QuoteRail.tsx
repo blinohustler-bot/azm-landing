@@ -44,8 +44,12 @@ export default function QuoteRail({
   const [atEnd, setAtEnd] = useState(false);
   /* Estimation du serveur : au-delà de trois tuiles ça dépasse forcément, même sur le
      plus large des écrans visés. La mesure réelle corrige après le montage — partir de
-     `false` ferait apparaître les flèches après coup et décalerait l'en-tête. */
+     `false` ferait apparaître les commandes après coup. */
   const [scrollable, setScrollable] = useState(quotes.length > 3);
+  /* La part visible du rail et où elle se trouve, en pourcentage de la largeur totale.
+     C'est ce que dessine la barre sous le rail : elle dit à la fois qu'il y a plus à
+     voir et combien il en reste — ce qu'une flèche seule ne dit pas. */
+  const [bar, setBar] = useState({ width: 100, left: 0 });
 
   const measure = useCallback(() => {
     const el = rail.current;
@@ -54,6 +58,10 @@ export default function QuoteRail({
     setScrollable(max > 2);
     setAtStart(el.scrollLeft <= 2);
     setAtEnd(el.scrollLeft >= max - 2);
+    setBar({
+      width: (el.clientWidth / el.scrollWidth) * 100,
+      left: (el.scrollLeft / el.scrollWidth) * 100
+    });
   }, []);
 
   useEffect(() => {
@@ -92,27 +100,36 @@ export default function QuoteRail({
           </span>
         </p>
         {scrollable ? (
-          <span className="rail__nav">
-            <button type="button" onClick={() => nudge(-1)} disabled={atStart} aria-label="Previous reviews">
-              <Chevron dir="left" />
-            </button>
-            <button type="button" onClick={() => nudge(1)} disabled={atEnd} aria-label="Next reviews">
-              <Chevron dir="right" />
-            </button>
-          </span>
+          <span className="proof__count">Showing {quotes.length} — swipe or use the arrows</span>
         ) : null}
       </div>
 
-      {/* tabIndex sur une zone défilante : sans lui, ce qui dépasse à droite est
-          inatteignable au clavier. C'est le WCAG 2.1.1, pas une finition. */}
-      <div
-        className="rail"
-        ref={rail}
-        onScroll={measure}
-        tabIndex={0}
-        role="group"
-        aria-label={`Customer reviews — ${quotes.length} shown`}
-      >
+      {/* Les flèches sont SUR les bords du rail, pas rangées dans l'en-tête.
+          Au-dessus, elles étaient loin du contenu et ne disaient pas que la rangée
+          bouge ; la tuile qui dépasse, toute seule, ne le disait pas non plus. Là où
+          elles chevauchent ce qu'elles déplacent, le geste est évident.
+          Aux extrémités elles s'effacent au lieu de griser : une flèche morte posée
+          sur une photo est du bruit, et sa disparition indique le sens restant. */}
+      <div className="rail__wrap">
+        {scrollable ? (
+          <button
+            type="button" className="rail__arrow rail__arrow--prev"
+            onClick={() => nudge(-1)} disabled={atStart} aria-label="Previous reviews"
+          >
+            <Chevron dir="left" />
+          </button>
+        ) : null}
+
+        {/* tabIndex sur une zone défilante : sans lui, ce qui dépasse à droite est
+            inatteignable au clavier. C'est le WCAG 2.1.1, pas une finition. */}
+        <div
+          className="rail"
+          ref={rail}
+          onScroll={measure}
+          tabIndex={0}
+          role="group"
+          aria-label={`Customer reviews — ${quotes.length} shown`}
+        >
         {quotes.map((q, i) => (
           <figure className="quote" key={`${q.product}-${q.review.name}`}>
             {q.review.image ? (
@@ -143,15 +160,34 @@ export default function QuoteRail({
             </div>
           </figure>
         ))}
+        </div>
+
+        {scrollable ? (
+          <button
+            type="button" className="rail__arrow rail__arrow--next"
+            onClick={() => nudge(1)} disabled={atEnd} aria-label="Next reviews"
+          >
+            <Chevron dir="right" />
+          </button>
+        ) : null}
       </div>
+
+      {/* La barre reprend l'idiome de la barre d'étapes en haut de page. Elle dit ce
+          qu'une flèche ne dit pas : combien il reste. Purement indicative — la vraie
+          commande est le rail lui-même, déjà atteignable au doigt et au clavier. */}
+      {scrollable ? (
+        <div className="rail__progress" aria-hidden="true">
+          <i style={{ width: `${bar.width}%`, marginLeft: `${bar.left}%` }} />
+        </div>
+      ) : null}
     </div>
   );
 }
 
 function Chevron({ dir }: { dir: 'left' | 'right' }) {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d={dir === 'left' ? 'M15 18 9 12l6-6' : 'M9 18l6-6-6-6'} />
     </svg>
   );
