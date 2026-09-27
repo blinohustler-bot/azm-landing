@@ -61,6 +61,17 @@ function displayName(first, last) {
   return l ? `${f} ${l[0].toUpperCase()}.` : f;
 }
 
+/* La première photo jointe, ou ''. On ne garde que les URL Firebase Storage de l'app :
+   ce sont les seules à être servies publiquement et à durer, et next.config.ts n'a
+   déclaré que cet hôte-là dans remotePatterns — une URL venue d'ailleurs ferait une
+   image morte en production plutôt qu'une erreur de build. */
+function firstImage(images) {
+  if (!Array.isArray(images)) return '';
+  const url = images.find((u) => typeof u === 'string'
+    && u.startsWith('https://firebasestorage.googleapis.com/'));
+  return url ? url.replace(/&amp;/g, '&') : '';
+}
+
 function parsePage(html) {
   const out = { rating: null, count: 0, reviews: [] };
 
@@ -86,7 +97,14 @@ function parsePage(html) {
           text: String(r.content || '').replace(/\s+/g, ' ').trim(),
           date: String(r.createdAt || '').slice(0, 10),
           country: r.countryCode || '',
-          verified: Boolean(r.verified)
+          verified: Boolean(r.verified),
+          /* La photo que le client a jointe — son char, pas un visuel de catalogue.
+             Sur cette clientèle c'est la preuve la plus forte qu'on ait, et les 20
+             avis de l'échantillon en portent tous une. On n'en garde qu'une : la
+             tuile n'a de place que pour ça, et une galerie par avis ferait du poids
+             pour rien sur une page payée à l'impression.
+             Les URL Firebase arrivent avec leurs entités HTML échappées par Liquid. */
+          image: firstImage(r.images)
         }));
 
       /* Garde-fou contre le même avis publié deux fois sur UNE fiche. Sur les données

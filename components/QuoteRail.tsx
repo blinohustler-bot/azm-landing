@@ -1,32 +1,43 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import Stars from './Stars';
-import { formatMonth, type FeaturedReview } from '@/lib/reviewTypes';
+import { formatMonth, formatRating, type FeaturedReview } from '@/lib/reviewTypes';
 
 /* Le rail d'avis de l'écran 01.
  *
- * PAS D'AUTO-DÉFILEMENT, ET C'EST LE POINT PRINCIPAL. Ce qu'on reproche aux
- * carrousels — la lecture interrompue au milieu d'une phrase, le contenu qui échappe
- * à qui lit lentement, l'impossibilité de revenir — vient de la rotation automatique,
- * pas du défilement. Le rail bouge quand la personne le décide, jamais tout seul. La
- * page porte déjà un bloc `prefers-reduced-motion` : une rotation automatique le
- * contredirait de toute façon.
+ * CE QUI LE FAIT PARLER, C'EST LA PHOTO. Le bloc a d'abord été treize pavés de texte
+ * gris de même taille : le contenu était bon — un gars qui nomme son M3 Comp, son
+ * stage 2, ses 780 chevaux — et il se lisait comme des conditions d'utilisation.
+ * Chaque avis déposé sur le magasin porte une photo prise par le client, de SON char.
+ * Sur cette clientèle-là c'est la pièce la plus convaincante du dossier, et elle
+ * dormait dans la source. La phrase dit qu'on a livré ; la photo montre sur quoi.
  *
- * Le défilement est du CSS (`scroll-snap`), pas du JavaScript : au doigt, à la molette
- * horizontale et au clavier, ça marche avant que ce fichier soit chargé. Les flèches
- * sont un ajout pour la souris, qui n'a pas de geste horizontal naturel — si le JS ne
- * s'exécute jamais, on perd deux boutons, pas l'accès aux avis.
+ * L'en-tête porte maintenant la note, en gros. « 79 customer reviews » en gris de
+ * 11 px sous un intertitre, c'était chuchoter le meilleur argument de la section.
+ *
+ * PAS D'AUTO-DÉFILEMENT. Ce qu'on reproche aux carrousels — la lecture coupée en
+ * pleine phrase, le contenu qui échappe à qui lit lentement, l'impossibilité de
+ * revenir — vient de la rotation, pas du défilement. La page porte déjà un bloc
+ * `prefers-reduced-motion` qu'une rotation contredirait.
+ *
+ * Le défilement est du CSS (`scroll-snap`) : au doigt, à la molette horizontale et au
+ * clavier, ça marche avant que ce fichier soit chargé. Les flèches sont un ajout pour
+ * la souris, qui n'a pas de geste horizontal — si le JS ne s'exécute jamais, on perd
+ * deux boutons, pas l'accès aux avis.
  *
  * La tuile suivante dépasse volontairement du cadre. C'est ce qui dit qu'il y en a
  * d'autres ; des flèches seules, sur une rangée qui semble pleine, ne le disent pas.
  */
 export default function QuoteRail({
   quotes,
-  label
+  rating,
+  count
 }: {
   quotes: FeaturedReview[];
-  label: string;
+  rating: number;
+  count: number;
 }) {
   const rail = useRef<HTMLDivElement>(null);
   const [atStart, setAtStart] = useState(true);
@@ -69,9 +80,17 @@ export default function QuoteRail({
 
   return (
     <div className="proof">
-      <p className="proof__head">
-        <span className="tech--label">After the install</span>
-        <span className="proof__src">{label}</span>
+      <div className="proof__head">
+        <p className="proof__lead">
+          <span className="tech--label">After the install</span>
+          <span className="proof__score">
+            <Stars rating={rating} size="md" decorative />
+            <b>{formatRating(rating)}</b>
+            <span>
+              {count} customer {count === 1 ? 'review' : 'reviews'} on azmotorsport.ca
+            </span>
+          </span>
+        </p>
         {scrollable ? (
           <span className="rail__nav">
             <button type="button" onClick={() => nudge(-1)} disabled={atStart} aria-label="Previous reviews">
@@ -82,7 +101,7 @@ export default function QuoteRail({
             </button>
           </span>
         ) : null}
-      </p>
+      </div>
 
       {/* tabIndex sur une zone défilante : sans lui, ce qui dépasse à droite est
           inatteignable au clavier. C'est le WCAG 2.1.1, pas une finition. */}
@@ -94,15 +113,34 @@ export default function QuoteRail({
         role="group"
         aria-label={`Customer reviews — ${quotes.length} shown`}
       >
-        {quotes.map((q) => (
+        {quotes.map((q, i) => (
           <figure className="quote" key={`${q.product}-${q.review.name}`}>
-            <Stars rating={q.review.rate} />
-            <blockquote>{q.review.text}</blockquote>
-            <figcaption>
-              <b>{q.review.name}</b>
-              <span>{q.product}</span>
-              {q.review.date ? <time dateTime={q.review.date}>{formatMonth(q.review.date)}</time> : null}
-            </figcaption>
+            {q.review.image ? (
+              <div className="quote__shot">
+                <Image
+                  src={q.review.image}
+                  /* Le texte alternatif décrit la photo, il ne répète pas l'avis :
+                     le lecteur d'écran lit la citation juste en dessous. */
+                  alt={`${q.make} owned by ${q.review.name}`}
+                  fill
+                  sizes="(min-width:760px) 30vw, 80vw"
+                  quality={72}
+                  /* Les trois premières sont les seules visibles sans défiler ; et
+                     elles sont de toute façon sous la grille de marques, donc aucune
+                     n'est prioritaire au chargement. */
+                  loading={i < 3 ? 'eager' : 'lazy'}
+                />
+              </div>
+            ) : null}
+            <div className="quote__body">
+              <Stars rating={q.review.rate} />
+              <blockquote>{q.review.text}</blockquote>
+              <figcaption>
+                <b>{q.review.name}</b>
+                <span>{q.product}</span>
+                {q.review.date ? <time dateTime={q.review.date}>{formatMonth(q.review.date)}</time> : null}
+              </figcaption>
+            </div>
           </figure>
         ))}
       </div>

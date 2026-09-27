@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Stars from './Stars';
 import QuoteRail from './QuoteRail';
 import { makeCards, partCount, modelCount } from '@/lib/catalog';
-import { featuredReviews, formatRating, REVIEW_TOTALS } from '@/lib/reviews';
+import { featuredReviews, formatRating, PRODUCT_RATING, REVIEW_TOTALS } from '@/lib/reviews';
 import { CONFIG } from '@/lib/config';
 
 /* 01 — la marque.
@@ -123,10 +123,7 @@ export default function StepMake() {
           Aucun de ces avis ne porte l'indicateur `verified` dans la source — on écrit
           donc « customer reviews », jamais « verified buyers ». */}
       {quotes.length ? (
-        <QuoteRail
-          quotes={quotes}
-          label={`${REVIEW_TOTALS.reviews} customer reviews on azmotorsport.ca`}
-        />
+        <QuoteRail quotes={quotes} rating={PRODUCT_RATING} count={REVIEW_TOTALS.reviews} />
       ) : null}
 
       <p className="undertitle">Built by car enthusiasts, for car enthusiasts.</p>

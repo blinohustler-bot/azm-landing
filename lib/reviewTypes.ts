@@ -17,6 +17,10 @@ export type Review = {
   date: string;
   country: string;
   verified: boolean;
+  /* La photo jointe par le client — son char. Vide quand il n'en a pas mis.
+     C'est la preuve la plus forte du lot sur cette clientèle : une phrase dit qu'on
+     a livré, une photo montre sur quoi. */
+  image: string;
 };
 
 export type ProductReviews = {

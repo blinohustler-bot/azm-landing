@@ -40,6 +40,25 @@ export const REVIEWS_GENERATED = index.generated;
    est vrai, et jamais un pourcentage de couverture, qui serait un aveu. */
 export const REVIEW_TOTALS = index.totals;
 
+/* La moyenne des avis produit, pondérée par le nombre d'avis de chaque pièce.
+ *
+ * Pondérée et pas moyenne des moyennes : les downpipes S58 portent 15 avis et le
+ * catback R8 en porte 1 : les compter à égalité donnerait un chiffre que personne ne
+ * peut retrouver en additionnant les fiches.
+ *
+ * Ce 4.93 n'est PAS la note Google (CONFIG.GOOGLE.RATING). Deux populations
+ * différentes, deux libellés différents à l'écran. Voir l'en-tête du fichier. */
+export const PRODUCT_RATING = (() => {
+  let weighted = 0;
+  let n = 0;
+  for (const p of Object.values(index.products)) {
+    if (p.rating == null || !p.count) continue;
+    weighted += p.rating * p.count;
+    n += p.count;
+  }
+  return n ? weighted / n : 0;
+})();
+
 /* ── par produit ─────────────────────────────────────────────────────────── */
 
 /* L'avis à montrer sur une carte : le plus long des avis présentables, parce que
@@ -121,8 +140,13 @@ export function featuredReviews(max = 24, maxPerMake = 2): FeaturedReview[] {
     if (!kept || shoutRatio(f.review.text) < shoutRatio(kept.review.text)) byText.set(key, f);
   }
 
+  /* Les avis avec photo passent devant. Une tuile qui montre le char du client vaut
+     plus que trois lignes de texte, et les regrouper en tête évite une rangée en
+     dents de scie où une tuile sur deux aurait une image. Celles qui n'en ont pas
+     finissent le rail plutôt que de le trouer. */
   const unique = [...byText.values()].sort((a, b) =>
-    b.review.text.length - a.review.text.length
+    Number(Boolean(b.review.image)) - Number(Boolean(a.review.image))
+    || b.review.text.length - a.review.text.length
     || b.review.date.localeCompare(a.review.date)
     || a.product.localeCompare(b.product));   // dernier recours : rendu stable
 
@@ -138,6 +162,16 @@ export function featuredReviews(max = 24, maxPerMake = 2): FeaturedReview[] {
     perMake.set(f.make, (perMake.get(f.make) ?? 0) + 1);
     out.push(f);
     if (out.length === max) break;
+  }
+
+  /* Deux tuiles de la même marque se retrouvaient côte à côte en tête du rail — deux
+     BMW pour ouvrir, alors que le visiteur vient de regarder une grille de neuf
+     marques. On écarte les voisines de même marque sans retoucher l'ordre de qualité :
+     la tuile en conflit recule d'une place, pas plus. */
+  for (let i = 1; i < out.length; i++) {
+    if (out[i].make !== out[i - 1].make) continue;
+    const swap = out.findIndex((f, j) => j > i && f.make !== out[i - 1].make && f.make !== out[i].make);
+    if (swap > -1) [out[i], out[swap]] = [out[swap], out[i]];
   }
   return out;
 }

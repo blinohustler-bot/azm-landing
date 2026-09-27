@@ -272,6 +272,27 @@ Par marque, les écrans qui montrent quelque chose : Porsche 52 %, Audi 50 %, BM
 McLaren 31 %, Ferrari 30 %, Mercedes-AMG 29 %, Lamborghini 13 %, Corvette et Toyota 0 %.
 Une campagne ciblée Corvette ou Toyota ne verra jamais un avis produit.
 
+### Ce qui fait parler le rail, c'est la photo
+
+Chaque avis déposé sur le magasin porte une photo prise par le client, de **son** char —
+67 des 74 avis citables en ont une, soit 91 %. Elles dormaient dans la source : la
+première version du bloc était treize pavés de texte gris de même taille, du bon
+contenu qui se lisait comme des conditions d'utilisation. La phrase dit qu'on a livré,
+la photo montre sur quoi.
+
+Elles passent par `next/image` comme les photos produit : ce sont des photos de
+téléphone en pleine résolution (121 ko pour la première, affichée à 345 px). C'est
+aussi ce qui évite de toucher à la CSP — l'image est servie depuis `/_next/image`, sur
+notre propre origine, et `img-src 'self'` la couvre déjà. Seul
+`images.remotePatterns` de `next.config.ts` gagne l'hôte `firebasestorage`.
+
+Les avis avec photo passent devant dans le tri, pour ne pas faire une rangée en dents
+de scie, et deux tuiles de la même marque ne se retrouvent jamais côte à côte — le
+visiteur vient de regarder une grille de neuf marques, le rail doit montrer sa variété
+tout de suite. L'en-tête porte la note (4.9 sur 79 avis, moyenne pondérée par le nombre
+d'avis de chaque pièce) en gros : en gris de 11 px, c'était chuchoter le meilleur
+argument de la section.
+
 ### Le rail de l'écran 01 ne tourne pas tout seul
 
 `components/QuoteRail.tsx` affiche 13 citations au lieu de 3 — `featuredReviews()`
