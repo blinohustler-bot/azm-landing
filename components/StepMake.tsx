@@ -85,15 +85,20 @@ export default function StepMake() {
            *
            * Le mécanisme ne bouge pas — on montre toujours les seules pièces
            * construites pour le châssis, millésimes imprimés. C'est le cadrage qui
-           * change : le désir d'abord (le son, c'est ce qu'on achète), le moyen
-           * ensuite, la matière pour finir. « In stock » ferme sur un signal d'achat.
+           * change : le désir d'abord (le son, c'est ce qu'on achète), puis la
+           * demande, puis ce qu'on en fait.
+           *
+           * AUCUNE MENTION DE STOCK ICI. Le stock bouge, et cette page est servie
+           * depuis un catalog.json régénéré à la main : une promesse de disponibilité
+           * dans l'accroche serait périmée sans que personne ne s'en aperçoive. La
+           * disponibilité se dit sur la carte produit, où elle vient de la donnée.
            *
            * Le chiffre n'est pas perdu : il porte le bloc « The fitment is printed »
            * de l'écran de résultats, où il rassure au lieu d'inquiéter. */}
           <p className="sub">
-            <b>The sound it should have come with.</b> Pick your chassis and see only the
-            downpipes and exhaust systems built for it, with the exact years printed on every
-            part. 304 stainless, in stock.
+            <b>The sound it should have come with.</b> Tell us what you drive. We point you to
+            the downpipes and exhaust systems built for your exact chassis, with the years they
+            fit printed on every part.
           </p>
         </div>
       </div>
