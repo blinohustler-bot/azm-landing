@@ -1,6 +1,5 @@
 import { cookies } from 'next/headers';
 import { Header, Progress } from '@/components/Chrome';
-import ContextImage from '@/components/ContextImage';
 import StepMake from '@/components/StepMake';
 import StepModel, { type ModelChoice } from '@/components/StepModel';
 import StepGeneration from '@/components/StepGeneration';
@@ -101,11 +100,12 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
 
   const car = carName(make?.make ?? null, model, gen);
 
-  /* Le fond contextuel n'a de sens qu'entre le choix de la marque et les résultats :
-     après, la photo produit prend le relais. */
-  const context = make && (step === 'model' || step === 'generation' || step === 'gate')
-    ? make.image
-    : null;
+  /* Le fond contextuel photographique est parti. C'était une vraie séance photo d'AZM
+     posée à 16 % d'opacité derrière les écrans 02 à 04 : elle ne se lisait pas comme
+     une photo, elle salissait le haut de la page, et elle disait moins que le bandeau
+     VehicleContext qui porte le logo de la marque juste en dessous. Une photo sert de
+     contenu ou elle ne sert pas — voir DESIGN.md. La GT3 est maintenant le hero de
+     l'écran 01, en pleine taille, là où elle vaut quelque chose. */
 
   return (
     <>
@@ -113,8 +113,6 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
       <Progress step={step} />
 
       <main>
-        <ContextImage src={context} />
-
         {/* Le changement d'écran n'est plus un rechargement de page : sans cette
             annonce, un lecteur d'écran ne saurait pas que l'étape a changé. */}
         <p className="srOnly" role="status" aria-live="polite">

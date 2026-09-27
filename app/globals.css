@@ -283,9 +283,6 @@ body::after{
 @media(max-width:400px){ .brands{gap:8px} .brand-card{min-height:134px} }
 
 /* le char choisi reste visible en fond de l'écran suivant */
-.ctx{position:absolute; inset:0 0 auto; height:min(48vh,420px); z-index:-1; overflow:hidden}
-.ctx img{width:100%; height:100%; object-fit:cover; opacity:.16; filter:grayscale(.2)}
-.ctx::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg,#000000a6,#000 88%)}
 
 /* ── grille de choix ─────────────────────────────────────────────────────
    Les cellules se touchaient : gap de 1px sur un fond clair, le vide entre elles
@@ -546,12 +543,6 @@ footer p{margin:0 0 6px}
   .choice:hover::after{translate:0 -50%}
 }
 
-/* Le fond contextuel était réglé à 16 % d'opacité sous un dégradé qui devenait
-   opaque à 88 % : autant dire invisible. Il sert à quelque chose ou il ne sert à
-   rien — on le remonte, et on garde le dégradé pour que le texte reste lisible. */
-.ctx{height:min(42vh,360px)}
-.ctx img{opacity:.3; filter:grayscale(.35) contrast(1.1)}
-.ctx::after{background:linear-gradient(180deg,#00000073 0%,#000000d9 58%,#000 96%)}
 
 /* ── preuve sociale ────────────────────────────────────────────────────────
    DEUX ORIGINES, JAMAIS MÉLANGÉES.
@@ -758,3 +749,82 @@ footer p{margin:0 0 6px}
 }
 .cardquote figcaption b{color:var(--muted); font-weight:700; letter-spacing:.02em}
 .cardquote figcaption > * + *::before{content:"· "; color:var(--line2)}
+
+/* ── le hero photographique de l'écran 01 ──────────────────────────────────
+   L'écran ouvrait sur un aplat noir avec un titre posé dessus. C'est le fond que
+   produit n'importe quel générateur, et c'est ce qui faisait dire que la page
+   « avait l'air faite par une IA » : pas la couleur, le VIDE.
+
+   Le noir vient maintenant d'une photographie d'AZM — une GT3 qui crache une flamme
+   dans une station-service. Le dégradé n'est pas une décoration : il tient la
+   lisibilité du texte par-dessus, et il raccorde le bas de l'image au reste de la page
+   sans couture. La photo garde sa matière en haut, là où il n'y a pas de texte.
+
+   La grille de marques, elle, reste sur fond sombre : quatre des neuf logos sont des
+   silhouettes blanches (Ferrari et Porsche entièrement), elles disparaîtraient sur
+   clair. C'est une contrainte des actifs, pas un choix.                        */
+/* L'écran 01 colle le hero sous l'en-tête : le rembourrage haut de <main> laissait une
+   bande noire entre les deux, et une photo pleine largeur qui commence 40 px plus bas
+   n'est plus une photo pleine largeur. */
+.screen--hero{padding-top:0; margin-top:calc(-1 * clamp(26px,4.5vw,52px))}
+
+.hero{
+  position:relative; isolation:isolate;
+  margin-bottom:clamp(30px,4.6vw,54px);
+}
+/* ── au-dessus de 700 px : le texte se pose sur la photo ── */
+@media(min-width:700px){
+  .hero{min-height:clamp(460px,76vh,780px); display:flex; align-items:flex-end}
+  .hero__frame{position:absolute; inset:0; z-index:-2}
+}
+/* ── en dessous : la photo garde son cadre, le texte passe dessous ──
+   La source est un portrait 2:3. Réduite à un bandeau de 390 px on n'y voyait que le
+   toit de la station, et le titre s'assoyait sur la voiture. Le 5:4 garde le sujet. */
+@media(max-width:699px){
+  .hero__frame{
+    position:relative; aspect-ratio:5/4; overflow:hidden;
+    margin-bottom:clamp(18px,4vw,26px);
+  }
+  .hero__frame::after{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(180deg,transparent 52%,#000000ab 82%,var(--ink) 100%);
+  }
+}
+/* Le cadrage vise la bande qui porte le sujet. La source est un portrait 2:3 ; coupée
+   en bandeau large elle n'en garde qu'un tiers, et un cadrage centré perdait la voiture
+   ET la flamme au profit du toit de la station. 58 % descend sur l'arrière du char,
+   c'est-à-dire sur l'échappement — le sujet réel de la page. */
+.hero__shot{object-fit:cover; object-position:50% 58%; z-index:-2}
+/* Deux dégradés, et aucun n'est décoratif : le latéral tient la lisibilité du texte à
+   gauche, le vertical raccorde le bas de l'image au noir de la page sans couture.
+   Le latéral s'arrête tôt et reste léger : poussé plus loin il écrasait l'avant de la
+   voiture en aplat, et on perdait la photo qu'on venait de mettre. */
+@media(min-width:700px){
+  .hero::after{
+    content:""; position:absolute; inset:0; z-index:-1;
+    background:
+      linear-gradient(90deg,#000000c7 0%,#0000006b 38%,#0000000d 66%,transparent 100%),
+      linear-gradient(180deg,#0000004d 0%,#00000014 30%,#0000008f 74%,var(--ink) 100%);
+  }
+}
+.hero__in{
+  width:min(1120px,100%); margin-inline:auto; padding-inline:20px;
+  padding-block:clamp(30px,5vw,54px) clamp(26px,4vw,44px);
+  display:flex; flex-direction:column; align-items:flex-start; gap:clamp(14px,2vw,20px);
+}
+.hero__in h1{max-width:14ch}
+.hero__in .sub{margin:0; max-width:54ch; color:#c9ced2}
+.hero__in .sub b{color:#fff}
+/* Sur la photo, la pastille Google se détache d'un fond qui bouge : elle reprend un
+   filet, le seul du lot, parce qu'ici il sépare vraiment de l'image. */
+.hero .gsig{
+  padding:7px 12px; background:#000000a6; border:1px solid #ffffff2b;
+  backdrop-filter:blur(6px); border-bottom-color:#ffffff2b;
+}
+.hero .gsig:hover{border-color:#ffffff59; background:#000000cc}
+.hero .gsig__n{color:#c9ced2}
+@media(max-width:560px){
+
+  .hero__shot{object-position:52% 56%}
+}
+@media(prefers-reduced-motion:reduce){ .hero{animation:none} }

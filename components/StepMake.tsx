@@ -1,9 +1,10 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import Stars from './Stars';
 import QuoteRail from './QuoteRail';
 import { makeCards, partCount, modelCount } from '@/lib/catalog';
 import { featuredReviews, formatRating, PRODUCT_RATING, REVIEW_TOTALS } from '@/lib/reviews';
-import { CONFIG } from '@/lib/config';
+import { CONFIG, HERO } from '@/lib/config';
 
 /* 01 — la marque.
  *
@@ -25,37 +26,56 @@ export default function StepMake() {
   const quotes = featuredReviews();
 
   return (
-    <section className="screen wrap" aria-labelledby="step-title">
-      {/* La note Google ouvre la page parce que c'est la seule preuve qui vaut avant
-          que le visiteur ait dit quoi que ce soit sur sa voiture : elle couvre 100 %
-          des arrivées, là où un avis produit n'en couvre que 38 %. */}
-      <p className="authority">
-        <a className="gsig" href={CONFIG.GOOGLE.URL} target="_blank" rel="noopener noreferrer">
-          <GoogleG />
-          <Stars rating={CONFIG.GOOGLE.RATING} decorative />
-          <b className="gsig__rate">{formatRating(CONFIG.GOOGLE.RATING)}</b>
-          {/* Les deux libellés partent dans le HTML et le CSS en cache un : la coupe
-              dépend de la largeur, pas d'une mesure JavaScript, donc rien ne saute
-              après l'hydratation sur l'élément le plus haut de la page. */}
-          <span className="gsig__n gsig__n-long">{CONFIG.GOOGLE.COUNT} Google reviews</span>
-          <span className="gsig__n gsig__n-short">{CONFIG.GOOGLE.COUNT} reviews</span>
-        </a>
-        <i />
-        <b>Official downpipe supplier for Stage 4 Tuning Canada</b>
-        <i />
-        <span>Canada&rsquo;s #1 choice for Euro &amp; Exotic</span>
-      </p>
-      <p className="rule">
-        <b>01</b> Your car <span>· 6 sec</span>
-      </p>
+    <section className="screen screen--hero" aria-labelledby="step-title">
+      {/* LE NOIR VIENT D'UNE PHOTO, PAS D'UN APLAT.
+       *
+       * L'écran ouvrait sur un vide noir avec un titre posé dessus — le fond que
+       * n'importe quelle page produit par défaut. Il ouvre maintenant sur une vraie
+       * photo d'AZM : une GT3 qui crache une flamme bleue dans une station-service.
+       * C'est leur photo, c'est leur pièce qui fait ça, et aucune autre page au monde
+       * ne l'a. Elle dormait à 16 % d'opacité derrière les écrans suivants.
+       *
+       * Une seule ligne de crédibilité au-dessus du titre. Il y en avait deux empilées
+       * — la ligne Google et « 01 Your car · 6 sec » —, et deux libellés à la file
+       * au-dessus d'un grand titre sont un motif de gabarit. Le numéro d'étape est
+       * déjà porté par la barre de progression, en haut de la page. */}
+      <div className="hero">
+        {/* La photo vit dans son propre cadre, et pas en fond de la section, parce que
+            les deux mises en page dont on a besoin ne sont pas la même. Large, le texte
+            se pose DESSUS : il y a de la place dans la zone sombre à gauche. Étroit,
+            la superposition ne marche plus — la source est un portrait 2:3, un bandeau
+            de 390 px de large montre surtout le toit de la station, et le titre
+            s'assoyait sur la voiture. Le cadre passe alors au-dessus du texte, les deux
+            se lisent, et personne ne perd. */}
+        <div className="hero__frame">
+          <Image
+            className="hero__shot"
+            src={HERO.SRC}
+            alt={HERO.ALT}
+            fill
+            sizes="100vw"
+            priority
+            quality={72}
+          />
+        </div>
+        <div className="hero__in wrap">
+          <a className="gsig" href={CONFIG.GOOGLE.URL} target="_blank" rel="noopener noreferrer">
+            <GoogleG />
+            <Stars rating={CONFIG.GOOGLE.RATING} decorative />
+            <b className="gsig__rate">{formatRating(CONFIG.GOOGLE.RATING)}</b>
+            {/* Les deux libellés partent dans le HTML et le CSS en cache un : la coupe
+                dépend de la largeur, pas d'une mesure JavaScript, donc rien ne saute
+                après l'hydratation sur l'élément le plus haut de la page. */}
+            <span className="gsig__n gsig__n-long">{CONFIG.GOOGLE.COUNT} Google reviews</span>
+            <span className="gsig__n gsig__n-short">{CONFIG.GOOGLE.COUNT} reviews</span>
+          </a>
 
-      <div className="intro">
-        <h1 id="step-title">
-          What are you
-          <br />
-          driving?
-        </h1>
-        <div className="intro__side">
+          <h1 id="step-title">
+            What are you
+            <br />
+            driving?
+          </h1>
+
           <p className="sub">
             <b>86% of parts returned online are simply the wrong fitment.</b> So we start with your
             chassis and finish by printing the exact years the part was built for. You check it
@@ -64,6 +84,7 @@ export default function StepMake() {
         </div>
       </div>
 
+      <div className="wrap">
       {/* La barre de chiffres traverse toute la largeur au lieu de tenir dans la
           colonne de droite : elle sépare le discours de la grille, et comble le vide
           que le titre laissait sous lui. */}
@@ -86,8 +107,13 @@ export default function StepMake() {
         </div>
       </dl>
 
+      {/* Plus de numéro d'ordre sur les tuiles. Neuf marques ne sont pas une séquence :
+          on ne choisit pas BMW « avant » Porsche. Un `01 02 03` posé sur du contenu qui
+          n'est pas une suite est de l'ornement, et c'est un des motifs qui font qu'une
+          page se lit comme produite en série. Le nombre de pièces, lui, reste : c'est
+          la donnée qui classe réellement les tuiles. */}
       <div className="brands">
-        {cards.map((m, i) => (
+        {cards.map((m) => (
           <Link
             key={m.slug}
             className="brand-card"
@@ -95,9 +121,6 @@ export default function StepMake() {
             href={`/?make=${encodeURIComponent(m.make)}`}
             scroll={false}
           >
-            <span className="brand-card__idx" aria-hidden="true">
-              {String(i + 1).padStart(2, '0')}
-            </span>
             <span className="brand-card__label">
               {/* Logo officiel, fond retiré et viewBox recadré. next/image n'apporte
                   rien sur un SVG — il ne le redimensionne pas — et lui ferait perdre
@@ -127,6 +150,7 @@ export default function StepMake() {
       ) : null}
 
       <p className="undertitle">Built by car enthusiasts, for car enthusiasts.</p>
+      </div>
     </section>
   );
 }

@@ -58,6 +58,24 @@ export const CONFIG: Config = {
   }
 };
 
+/* La photo qui ouvre la page.
+ *
+ * Une GT3 992 qui crache une flamme bleue dans une station-service, la nuit. C'est une
+ * photo d'AZM, c'est leur pièce qui produit cette flamme, et aucune autre page ne l'a.
+ * Elle servait de fond à 16 % d'opacité derrière les écrans 02 à 04 : une vraie photo
+ * réduite à une texture.
+ *
+ * Elle est ici et pas en dur dans le composant parce que c'est un réglage de campagne :
+ * une pub ciblée BMW mériterait la photo BMW. Les neuf collections d'AZM sont dans
+ * catalog.json, champ `image` de chaque marque.
+ *
+ * L'hôte cdn.shopify.com est déjà déclaré dans next.config.ts > images.remotePatterns.
+ */
+export const HERO = {
+  SRC: 'https://cdn.shopify.com/s/files/1/0794/1983/4643/collections/7U4A0572.jpg',
+  ALT: 'A Porsche 911 GT3 shooting flame from an AZ Motorsport exhaust at a gas station at night'
+} as const;
+
 export type StepName = 'make' | 'model' | 'generation' | 'gate' | 'results' | 'missing' | 'thanks';
 
 /* La barre de progression et le numéro d'étape lisent la même table : une étape

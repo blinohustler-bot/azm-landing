@@ -50,7 +50,23 @@ skill `frontend-design` d'Anthropic liste en deuxième position — *« a near-b
 background with a single bright acid-green accent »*.
 
 **La règle qui en découle : le noir doit être porté par une image, pas par un aplat.**
-Une section noire sans photographie doit être justifiée ; par défaut elle est claire.
+
+### Mais la page reste sombre, et ce n'est pas de la paresse
+
+En appliquant cette règle j'ai buté sur une contrainte d'actifs, relevée dans
+`public/assets/brands/` : **quatre des neuf logos sont des silhouettes blanches.**
+Ferrari (`fill="#fff"` partout) et Porsche (`fill="#ffffff"` unique) disparaîtraient
+purement et simplement sur un fond clair ; McLaren, Audi et Corvette y perdraient une
+partie de leur dessin. Les remettre en couleur voudrait dire redessiner des logos de
+constructeurs, ce qui est aussi une question d'usage de marque.
+
+**La grille de marques reste donc sur fond sombre.** Ce qui a changé, c'est que le
+sombre n'est plus un vide : l'écran 01 ouvre sur une vraie photo d'AZM, et le reste de
+la page descend de cette photo. C'est la règle appliquée dans les limites des actifs,
+pas abandonnée.
+
+Si un jour les neuf logos existent en version foncée, la grille peut passer sur clair
+et la page suivra le rythme du magasin. C'est le seul verrou.
 
 ---
 
