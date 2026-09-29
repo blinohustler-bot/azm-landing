@@ -53,11 +53,7 @@ export function landingUrl(): string {
     return window.location.href;
   }
 }
-/* Definie dans lib/config.ts, qui n'est pas un module client : un composant serveur
-   qui l'importerait d'ici recevrait une reference de module et pas la chaine.
-   Reexportee pour les appelants deja cote client. */
-import { LEAD_COOKIE } from './config';
-export { LEAD_COOKIE };
+export const LEAD_COOKIE = 'azm_lead';
 
 /* Marque « ce visiteur est dans GHL ».
  *

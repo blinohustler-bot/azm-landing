@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { Header, Progress } from '@/components/Chrome';
+import ContextImage from '@/components/ContextImage';
 import StepMake from '@/components/StepMake';
 import StepModel, { type ModelChoice } from '@/components/StepModel';
 import StepGeneration from '@/components/StepGeneration';
@@ -9,7 +10,8 @@ import StepMissing from '@/components/StepMissing';
 import StepThanks from '@/components/StepThanks';
 import LeadRetry from '@/components/LeadRetry';
 import Track from '@/components/Track';
-import { CONFIG, LEAD_COOKIE, type StepName } from '@/lib/config';
+import { CONFIG, type StepName } from '@/lib/config';
+import { LEAD_COOKIE } from '@/lib/sendLead';
 import {
   SHOP, findMake, findModel, findGeneration, partsFor, carName, generationLabel
 } from '@/lib/catalog';
@@ -35,11 +37,11 @@ const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
    pour qui regarde ; sans cette annonce, la navigation resterait muette, parce que
    changer d'étape ne recharge plus la page. */
 const STEP_LABEL: Record<StepName, string> = {
-  make: 'Step 1 of 5: pick your make',
-  model: 'Step 2 of 5: pick your model',
-  generation: 'Step 3 of 5: pick your generation',
-  gate: 'Step 4 of 5: where to send your fitment sheet',
-  results: 'Step 5 of 5: the parts that fit',
+  make: 'Step 1 of 5 — pick your make',
+  model: 'Step 2 of 5 — pick your model',
+  generation: 'Step 3 of 5 — pick your generation',
+  gate: 'Step 4 of 5 — where to send your fitment sheet',
+  results: 'Step 5 of 5 — the parts that fit',
   missing: 'Tell us about your car',
   thanks: 'Received'
 };
@@ -99,12 +101,11 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
 
   const car = carName(make?.make ?? null, model, gen);
 
-  /* Le fond contextuel photographique est parti. C'était une vraie séance photo d'AZM
-     posée à 16 % d'opacité derrière les écrans 02 à 04 : elle ne se lisait pas comme
-     une photo, elle salissait le haut de la page, et elle disait moins que le bandeau
-     VehicleContext qui porte le logo de la marque juste en dessous. Une photo sert de
-     contenu ou elle ne sert pas — voir DESIGN.md. La GT3 est maintenant le hero de
-     l'écran 01, en pleine taille, là où elle vaut quelque chose. */
+  /* Le fond contextuel n'a de sens qu'entre le choix de la marque et les résultats :
+     après, la photo produit prend le relais. */
+  const context = make && (step === 'model' || step === 'generation' || step === 'gate')
+    ? make.image
+    : null;
 
   return (
     <>
@@ -112,11 +113,13 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
       <Progress step={step} />
 
       <main>
+        <ContextImage src={context} />
+
         {/* Le changement d'écran n'est plus un rechargement de page : sans cette
             annonce, un lecteur d'écran ne saurait pas que l'étape a changé. */}
         <p className="srOnly" role="status" aria-live="polite">
           {STEP_LABEL[step]}
-          {car ? `, ${car}` : ''}
+          {car ? ` — ${car}` : ''}
         </p>
 
         {/* Un événement maison par écran affiché : l'entonnoir complet dans Meta, étape

@@ -32,7 +32,7 @@ export default function StepGeneration({
       <h1 id="step-title">Which {model.label}?</h1>
       <p className="sub">
         Your car was built in more than one shape, and they don&rsquo;t share a single part. Pick the
-        years that match yours. The chassis code is on your registration.
+        years that match yours — the chassis code is on your registration.
       </p>
 
       <div className="choices choices--tight">

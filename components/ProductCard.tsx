@@ -1,16 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Image from 'next/image';
-import Stars from './Stars';
 import { CONFIG } from '@/lib/config';
 import { track } from '@/lib/track';
 /* catalogTypes, jamais catalog : ce fichier est 'use client', et lib/catalog importe
-   catalog.json — 360 ko qui partiraient dans le bundle du navigateur. La même règle
-   vaut pour reviewTypes / reviews : la note arrive en propriété depuis StepResults,
-   déjà réduite à la pièce affichée. */
+   catalog.json — 360 ko qui partiraient dans le bundle du navigateur. */
 import { fitmentLines, money, type Product } from '@/lib/catalogTypes';
-import { formatMonth, formatRating, trimQuote, type Proof } from '@/lib/reviewTypes';
 
 /* Le choix catless / catted n'est pas une option technique : c'est la question du son
    et de la légalité, celle qui bloque vraiment l'achat. On l'explique sous le
@@ -20,7 +16,7 @@ function help(options: string[]) {
   if (t.includes('catless') || t.includes('race')) {
     return (
       <>
-        <b>Loudest, most aggressive.</b> No catalytic converters. Off-road and competition use
+        <b>Loudest, most aggressive.</b> No catalytic converters — off-road and competition use
         only, not legal on public roads.
       </>
     );
@@ -40,31 +36,12 @@ export default function ProductCard({
   product,
   shop,
   partLabel,
-  priority,
-  proof,
-  pickable = false,
-  picked = false,
-  onPick,
-  onVariant
+  priority
 }: {
   product: Product;
   shop: string;
   partLabel: string;
   priority: boolean;
-  /* Vrai seulement quand l'écran montre plusieurs pièces. Sur 42 % des écrans il n'y
-     en a qu'une, et proposer de « l'ajouter à la commande » n'aurait aucun sens. */
-  pickable?: boolean;
-  picked?: boolean;
-  onPick?: (productId: number) => void;
-  /* La variante change sous les sélecteurs : le panier combiné doit suivre ce
-     choix-là, pas la variante par défaut. */
-  onVariant?: (productId: number, chosen: { variantId: number; price: number }) => void;
-  /* La note de CETTE pièce, ou null. Null est le cas courant : 30 fiches notées sur
-     121, et 69 % des cartes affichées n'auront rien à montrer (mesuré le 2026-09-27
-     sur les 118 écrans de résultats atteignables). Tout ce qui suit doit donc
-     disparaître entièrement plutôt que laisser un gabarit vide — une carte avec
-     « 0 avis » est pire qu'une carte sans ligne d'avis. */
-  proof: Proof;
 }) {
   /* On garde l'index d'origine de chaque option.
      L'ancienne page filtrait « Title » puis indexait v.options avec la position dans
@@ -90,20 +67,13 @@ export default function ProductCard({
     );
   }, [chosen, opts, product.variants]);
 
-  /* On annonce la variante courante au parent, qui construit le panier combiné.
-     L'effet ne se déclenche que sur un vrai changement d'identifiant ou de prix ;
-     le parent ignore de son côté une annonce identique, ce qui coupe la boucle. */
-  useEffect(() => {
-    if (!onVariant || !current) return;
-    onVariant(product.id, { variantId: current.id, price: current.price });
-  }, [onVariant, product.id, current]);
-
   const tip = help(current?.options ?? []);
   const img = product.images[0];
   const fits = fitmentLines(product);
 
   const buyHref =
     `${shop}/cart/${current.id}:1?${CONFIG.UTM}&utm_content=${encodeURIComponent(product.handle)}`;
+  const talkHref = CONFIG.TALK || CONFIG.PHONE_HREF;
 
   return (
     <article className="card">
@@ -126,20 +96,6 @@ export default function ProductCard({
       <div className="card__body">
         <h3>{product.title}</h3>
 
-        {/* La note de la pièce, juste sous son nom — la place où tout acheteur en
-            ligne la cherche. Elle vient des avis déposés sur azmotorsport.ca, pas de
-            Google : un avis Google porte sur le commerce et ne connaît aucun produit.
-            Le libellé le dit, et c'est une obligation, pas une précaution de style. */}
-        {proof ? (
-          <p className="rating">
-            <Stars rating={proof.rating} decorative />
-            <b>{formatRating(proof.rating)}</b>
-            <span>
-              {proof.count} {proof.count === 1 ? 'review' : 'reviews'} on this part
-            </span>
-          </p>
-        ) : null}
-
         {/* Le bloc de fitment attaque le frein n°1 du créneau : 86 % des retours de
             pièces en ligne sont un mauvais fitment. On l'imprime, on ne le cache pas. */}
         {fits.length ? (
@@ -161,23 +117,6 @@ export default function ProductCard({
               <li key={f}>{f}</li>
             ))}
           </ul>
-        ) : null}
-
-        {/* L'avis se place après les caractéristiques et avant le sélecteur : le
-            sélecteur, le prix et le bouton forment le bloc de décision, et rien ne
-            doit s'intercaler dedans. Coupé à 180 caractères — le plus long avis
-            récolté en fait 360, de quoi déformer la carte. */}
-        {proof?.quote ? (
-          <figure className="cardquote">
-            <blockquote>{trimQuote(proof.quote.text)}</blockquote>
-            <figcaption>
-              <b>{proof.quote.name}</b>
-              {proof.quote.date ? (
-                <time dateTime={proof.quote.date}>{formatMonth(proof.quote.date)}</time>
-              ) : null}
-              <span>azmotorsport.ca</span>
-            </figcaption>
-          </figure>
         ) : null}
 
         {opts.length ? (
@@ -218,12 +157,6 @@ export default function ProductCard({
           </span>
         </div>
 
-        {/* Un seul bouton. « Ask a builder » doublait l'encadré qui suit la grille et
-            offre le même numéro, il était mort sur ordinateur — CONFIG.TALK était vide,
-            donc il retombait sur un lien tel: — et il prenait la moitié de la largeur
-            au bouton qui vend. Le canal conversation n'est pas perdu : l'encadré sous
-            la grille le propose une fois, après qu'on ait vu les options, c'est-à-dire
-            au moment où la question « laquelle ? » se pose. */}
         <div className="card__actions">
           {/* Le paiement reste entièrement chez Shopify : ce lien ouvre le panier sur
               azmotorsport.ca, aucune donnée de paiement ne passe par cette page. */}
@@ -241,24 +174,10 @@ export default function ProductCard({
           >
             Buy now
           </a>
+          <a className="btn btn--ghost" href={talkHref}>
+            Ask a builder
+          </a>
         </div>
-
-        {/* La case n'apparaît que sur un écran à plusieurs pièces. Elle sert à
-            construire une commande : Shopify remplace le panier à chaque lien
-            /cart/<variante>:1, donc sans elle un client qui veut les downpipes ET
-            l'échappement ne peut pas les commander ensemble. C'est une vraie case à
-            cocher, pas un bouton déguisé : un lecteur d'écran doit l'annoncer comme
-            telle, et son état doit se lire sans la couleur. */}
-        {pickable ? (
-          <label className="pick">
-            <input
-              type="checkbox"
-              checked={picked}
-              onChange={() => onPick?.(product.id)}
-            />
-            <span>{picked ? 'In your order' : 'Add to order'}</span>
-          </label>
-        ) : null}
 
         {/* La mention off-road n'apparaît que si aucune option ne l'explique déjà :
             l'aide sous le sélecteur dit la même chose, en plus clair. */}

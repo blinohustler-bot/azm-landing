@@ -22,19 +22,9 @@ const nextConfig: NextConfig = {
 
   /* Les photos produit viennent du CDN Shopify. next/image les sert en AVIF/WebP à la
      taille réellement affichée : la page en chargeait jusqu'ici huit en pleine
-     résolution derrière un simple ?width=900.
-     *
-     * firebasestorage : les photos jointes aux avis, déposées par les clients depuis
-     * l'app du magasin. Elles arrivent en pleine résolution de téléphone — celle du
-     * premier avis fait 121 ko pour une vignette affichée à 345 px — donc elles
-     * passent par next/image comme les autres. C'est aussi ce qui évite de toucher à
-     * la CSP : l'image est servie depuis /_next/image, sur notre propre origine, et
-     * `img-src 'self'` la couvre déjà. */
+     résolution derrière un simple ?width=900. */
   images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'cdn.shopify.com' },
-      { protocol: 'https', hostname: 'firebasestorage.googleapis.com' }
-    ],
+    remotePatterns: [{ protocol: 'https', hostname: 'cdn.shopify.com' }],
     formats: ['image/avif', 'image/webp'],
     /* Next 16 refuse par un 400 toute qualité non déclarée ici — y compris celles
        passées en prop. 75 est la valeur par défaut, 72 celle des photos produit, 55

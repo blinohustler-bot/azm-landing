@@ -13,7 +13,7 @@ export default function StepThanks({ car }: { car: string | null }) {
       </h1>
       <p className="sub">
         {car
-          ? `A builder comes back to you about the ${car}: whether we can build it, and what it runs.`
+          ? `A builder comes back to you about the ${car} — whether we can build it, and what it runs.`
           : "A builder comes back to you with what fits and what it costs. If you'd rather not wait, the shop is open."}
       </p>
       <p style={{ marginTop: 28 }}>

@@ -17,9 +17,9 @@ const archivo = Archivo({
 });
 
 export const metadata: Metadata = {
-  title: 'AZ Motorsport | Find the exact parts that fit your car',
+  title: 'AZ Motorsport — Find the exact parts that fit your car',
   description:
-    'Pick your make, model and generation. We show the exact AZ Motorsport downpipes and exhaust built for your chassis. Real prices, real stock, printed fitment.',
+    'Pick your make, model and generation. We show the exact AZ Motorsport downpipes and exhaust built for your chassis — real prices, real stock, printed fitment.',
   /* Page de campagne : elle vit derrière une pub, pas dans les résultats de recherche. */
   robots: { index: false, follow: false },
   icons: { icon: '/assets/azm-mark.png' }
