@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import ProductCard from './ProductCard';
+import PartPicker from './PartPicker';
 import Track from './Track';
 import { CONFIG } from '@/lib/config';
 import { partLabel, type Product } from '@/lib/catalog';
@@ -50,18 +50,18 @@ export default function StepResults({
         </Link>
       </div>
 
-      <div className={`grid${n === 1 ? ' grid--one' : ''}`}>
-        {parts.map((p, i) => (
-          <ProductCard
-            key={p.id}
-            product={p}
-            shop={shop}
-            partLabel={partLabel(p)}
-            priority={i === 0}
-            proof={proofFor(p.handle)}
-          />
-        ))}
-      </div>
+      {/* La grille et le récapitulatif de commande vivent dans PartPicker, qui est
+          client : la sélection et la variante courante de chaque carte doivent être
+          connues au même endroit pour construire un seul lien panier. Ce qui vient du
+          serveur (libellé de pièce, avis) descend en propriété, comme avant. */}
+      <PartPicker
+        shop={shop}
+        parts={parts.map((p) => ({
+          product: p,
+          partLabel: partLabel(p),
+          proof: proofFor(p.handle)
+        }))}
+      />
 
       <p className="callout">
         Not sure which one you want? <a href={CONFIG.PHONE_HREF}>Call {CONFIG.PHONE}</a>. A builder

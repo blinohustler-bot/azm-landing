@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Stars from './Stars';
 import { CONFIG } from '@/lib/config';
@@ -41,12 +41,24 @@ export default function ProductCard({
   shop,
   partLabel,
   priority,
-  proof
+  proof,
+  pickable = false,
+  picked = false,
+  onPick,
+  onVariant
 }: {
   product: Product;
   shop: string;
   partLabel: string;
   priority: boolean;
+  /* Vrai seulement quand l'écran montre plusieurs pièces. Sur 42 % des écrans il n'y
+     en a qu'une, et proposer de « l'ajouter à la commande » n'aurait aucun sens. */
+  pickable?: boolean;
+  picked?: boolean;
+  onPick?: (productId: number) => void;
+  /* La variante change sous les sélecteurs : le panier combiné doit suivre ce
+     choix-là, pas la variante par défaut. */
+  onVariant?: (productId: number, chosen: { variantId: number; price: number }) => void;
   /* La note de CETTE pièce, ou null. Null est le cas courant : 30 fiches notées sur
      121, et 69 % des cartes affichées n'auront rien à montrer (mesuré le 2026-09-27
      sur les 118 écrans de résultats atteignables). Tout ce qui suit doit donc
@@ -77,6 +89,14 @@ export default function ProductCard({
       product.variants[0]
     );
   }, [chosen, opts, product.variants]);
+
+  /* On annonce la variante courante au parent, qui construit le panier combiné.
+     L'effet ne se déclenche que sur un vrai changement d'identifiant ou de prix ;
+     le parent ignore de son côté une annonce identique, ce qui coupe la boucle. */
+  useEffect(() => {
+    if (!onVariant || !current) return;
+    onVariant(product.id, { variantId: current.id, price: current.price });
+  }, [onVariant, product.id, current]);
 
   const tip = help(current?.options ?? []);
   const img = product.images[0];
@@ -222,6 +242,23 @@ export default function ProductCard({
             Buy now
           </a>
         </div>
+
+        {/* La case n'apparaît que sur un écran à plusieurs pièces. Elle sert à
+            construire une commande : Shopify remplace le panier à chaque lien
+            /cart/<variante>:1, donc sans elle un client qui veut les downpipes ET
+            l'échappement ne peut pas les commander ensemble. C'est une vraie case à
+            cocher, pas un bouton déguisé : un lecteur d'écran doit l'annoncer comme
+            telle, et son état doit se lire sans la couleur. */}
+        {pickable ? (
+          <label className="pick">
+            <input
+              type="checkbox"
+              checked={picked}
+              onChange={() => onPick?.(product.id)}
+            />
+            <span>{picked ? 'In your order' : 'Add to order'}</span>
+          </label>
+        ) : null}
 
         {/* La mention off-road n'apparaît que si aucune option ne l'explique déjà :
             l'aide sous le sélecteur dit la même chose, en plus clair. */}

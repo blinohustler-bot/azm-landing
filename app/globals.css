@@ -940,3 +940,64 @@ footer p{margin:0 0 6px}
 @media(max-width:699px){
   .hero .gsig{padding-block:9px}
 }
+
+/* ── construire une commande de plusieurs pièces ───────────────────────────
+   Le lien panier de Shopify REMPLACE le panier : sans ces deux blocs, un client qui
+   veut les downpipes ET l'échappement ne peut pas les commander ensemble. Vérifié en
+   cliquant — après le second « Buy now », le premier article avait disparu. 58 % des
+   écrans affichent deux pièces ou plus, et l'écart médian entre une pièce et toutes
+   les pièces de l'écran est de 2 789 $.                                             */
+.pick{
+  display:flex; align-items:center; gap:10px; cursor:pointer;
+  margin-top:2px; padding:10px 0; min-height:44px;
+  font-weight:600; font-size:.82rem; color:var(--muted);
+  transition:color .16s ease;
+}
+.pick:hover{color:var(--text)}
+/* Une vraie case, pas un bouton déguisé : le lecteur d'écran doit l'annoncer comme
+   une case, et son état doit se lire sans la couleur. D'où la coche dessinée. */
+.pick input{
+  appearance:none; flex:none; width:20px; height:20px; margin:0; cursor:pointer;
+  background:var(--ink); border:1px solid var(--line2); border-radius:2px;
+  display:grid; place-content:center;
+  transition:background .16s ease, border-color .16s ease;
+}
+.pick input::after{
+  content:""; width:10px; height:6px; margin-top:-2px;
+  border-left:2px solid var(--ink); border-bottom:2px solid var(--ink);
+  rotate:-45deg; opacity:0; transition:opacity .12s ease;
+}
+.pick input:checked{background:var(--lime); border-color:var(--lime)}
+.pick input:checked::after{opacity:1}
+.pick input:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
+.pick:has(input:checked){color:var(--text)}
+
+/* Le récapitulatif. Il colle en bas de l'écran tant qu'on a des pièces cochées :
+   la grille est plus haute qu'un écran de téléphone, et un bouton de commande qu'il
+   faut aller rechercher en bas de page n'est pas un bouton de commande. */
+.bundle{
+  position:sticky; bottom:0; z-index:15;
+  display:flex; align-items:center; gap:clamp(14px,2.4vw,24px); flex-wrap:wrap;
+  margin-top:18px; padding:14px clamp(14px,2.2vw,20px);
+  background:#0c0d0ef2; backdrop-filter:blur(10px);
+  box-shadow:0 -10px 30px -18px #000, 0 0 0 1px #ffffff14;
+  animation:bundleIn .22s var(--ease) both;
+}
+@keyframes bundleIn{from{opacity:0; translate:0 8px} to{opacity:1; translate:0 0}}
+@media(prefers-reduced-motion:reduce){ .bundle{animation:none} }
+.bundle__sum{
+  margin:0; display:flex; align-items:baseline; gap:9px; flex:1; min-width:0;
+  font-variant-numeric:tabular-nums;
+}
+.bundle__sum b{font-weight:800; font-size:1.3rem; letter-spacing:-.02em; color:var(--lime)}
+.bundle__sum span{font-size:.8rem; color:var(--muted); letter-spacing:.03em}
+.bundle__sum em{
+  font-style:normal; font-weight:700; font-size:1.3rem; letter-spacing:-.02em;
+  margin-left:auto; padding-left:12px;
+}
+.bundle .btn{flex:none; padding:15px 24px}
+@media(max-width:560px){
+  .bundle{gap:10px; padding:12px 14px}
+  .bundle__sum{flex:1 0 100%}
+  .bundle .btn{flex:1 0 100%; text-align:center}
+}
