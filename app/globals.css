@@ -85,7 +85,9 @@ h3{margin:0; font-weight:800; font-size:1rem; line-height:1.25; letter-spacing:-
   display:inline-flex; align-items:center; gap:8px; text-decoration:none;
   font-weight:600; font-size:.84rem; letter-spacing:.01em; white-space:nowrap;
   font-variant-numeric:tabular-nums;
-  padding:8px 0; border-bottom:1px solid transparent;
+  /* 44 px de haut : c'est un lien d'appel, et sur telephone c'est une cible
+     au pouce. WCAG 2.2 n'en demande que 24, les regles de plateforme 44. */
+  min-height:44px; padding:10px 0; border-bottom:1px solid transparent;
   transition:color .18s ease, border-color .18s ease;
 }
 .phone:hover{border-bottom-color:var(--lime); color:var(--lime)}
@@ -680,7 +682,7 @@ footer p{margin:0 0 6px}
 /* Sous 560 px la marge de .wrap ne fait que 20 px : une flèche débordante sortirait de
    l'écran. Elle rentre, et rétrécit pour ne pas manger la photo. */
 @media(max-width:560px){
-  .rail__arrow{width:34px; height:34px}
+  .rail__arrow{width:44px; height:44px}
   .rail__arrow--prev{left:4px}
   .rail__arrow--next{right:4px}
 }
@@ -931,4 +933,10 @@ footer p{margin:0 0 6px}
     backdrop-filter:blur(6px);
   }
   .hero__in{padding-top:0}
+}
+
+/* La pastille Google fait 38 px de haut : trois pixels de rembourrage de plus et
+   elle atteint les 44 recommandes pour une cible au pouce. */
+@media(max-width:699px){
+  .hero .gsig{padding-block:9px}
 }

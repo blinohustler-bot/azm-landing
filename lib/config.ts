@@ -77,6 +77,23 @@ export const HERO = {
   ALT: 'A Porsche 911 GT3 shooting flame from an AZ Motorsport exhaust at a gas station at night'
 } as const;
 
+/* Le cookie « ce visiteur a déjà laissé ses coordonnées ».
+ *
+ * IL VIT ICI, ET PAS DANS lib/sendLead.ts, POUR UNE RAISON QUI A COÛTÉ CHER.
+ *
+ * sendLead.ts porte `'use client'`. Quand un composant SERVEUR importe une valeur
+ * d'un module client, Next ne lui donne pas la valeur : il lui donne une référence
+ * de module. `app/page.tsx` faisait donc `cookies().get(LEAD_COOKIE)` avec un objet
+ * en guise de nom, ne trouvait jamais rien, et `known` valait toujours false.
+ *
+ * Résultat : le cookie était bien écrit après un envoi confirmé, mais jamais relu.
+ * Un client qui revenait revoyait le formulaire à chaque fois. Le chemin « visiteur
+ * connu » n'avait jamais fonctionné. Trouvé par le test de bout en bout, pas à l'œil.
+ *
+ * config.ts n'a pas de `'use client'` : les deux côtés en lisent la vraie valeur.
+ */
+export const LEAD_COOKIE = 'azm_lead';
+
 export type StepName = 'make' | 'model' | 'generation' | 'gate' | 'results' | 'missing' | 'thanks';
 
 /* La barre de progression et le numéro d'étape lisent la même table : une étape

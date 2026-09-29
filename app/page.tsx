@@ -9,8 +9,7 @@ import StepMissing from '@/components/StepMissing';
 import StepThanks from '@/components/StepThanks';
 import LeadRetry from '@/components/LeadRetry';
 import Track from '@/components/Track';
-import { CONFIG, type StepName } from '@/lib/config';
-import { LEAD_COOKIE } from '@/lib/sendLead';
+import { CONFIG, LEAD_COOKIE, type StepName } from '@/lib/config';
 import {
   SHOP, findMake, findModel, findGeneration, partsFor, carName, generationLabel
 } from '@/lib/catalog';

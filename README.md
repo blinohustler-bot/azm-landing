@@ -452,6 +452,7 @@ npm test               # exerce /api/lead contre un faux GHL, hors ligne
 npm run ghl:check      # vérifie le jeton GHL, liste pipelines et ids
 npm run catalog        # régénère catalog.json depuis Shopify
 npm run reviews        # régénère reviews.json depuis les fiches Shopify (≈ 3 min)
+npm run e2e            # clique tout le parcours, souris ET tactile (npm start d'abord)
 
 node tools/shot.mjs                         # capture en 390 / 820 / 1440 px
 node tools/shot.mjs "?make=BMW&model=m3"    # capture un état précis du parcours
