@@ -617,6 +617,7 @@ footer p{margin:0 0 6px}
 
 /* Le bandeau de citations, sous la grille de marques. */
 .proof{margin:clamp(30px,4vw,44px) 0 0; border-top:1px solid var(--line); padding-top:20px}
+.reviewsFooter{padding-bottom:clamp(40px,6vw,72px)}
 /* L'en-tête porte la note, en gros. « 79 customer reviews » en gris de 11 px sous un
    intertitre, c'était chuchoter le meilleur argument de la section. */
 .proof__head{

@@ -1,9 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import Stars from './Stars';
-import QuoteRail from './QuoteRail';
 import { makeCards, partCount, modelCount } from '@/lib/catalog';
-import { featuredReviews, formatRating, PRODUCT_RATING, REVIEW_TOTALS } from '@/lib/reviews';
+import { formatRating } from '@/lib/reviews';
 import { CONFIG, HERO, TOTAL_STEPS } from '@/lib/config';
 
 /* 01 — la marque.
@@ -23,7 +22,6 @@ import { CONFIG, HERO, TOTAL_STEPS } from '@/lib/config';
  */
 export default function StepMake() {
   const cards = makeCards();
-  const quotes = featuredReviews();
 
   return (
     <section className="screen screen--hero" aria-labelledby="step-title">
@@ -175,16 +173,6 @@ export default function StepMake() {
           <dd>Printed per part</dd>
         </div>
       </dl>
-
-      {/* Les citations viennent APRÈS la grille, pas avant : l'écran a un seul travail,
-          faire cliquer une marque, et rien ne doit repousser les tuiles sous la ligne
-          de flottaison. Elles attrapent celui qui a hésité et fait défiler.
-
-          Aucun de ces avis ne porte l'indicateur `verified` dans la source — on écrit
-          donc « customer reviews », jamais « verified buyers ». */}
-      {quotes.length ? (
-        <QuoteRail quotes={quotes} rating={PRODUCT_RATING} count={REVIEW_TOTALS.reviews} />
-      ) : null}
 
       <p className="undertitle">Built by car enthusiasts, for car enthusiasts.</p>
       </div>

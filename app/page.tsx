@@ -9,6 +9,7 @@ import StepMissing from '@/components/StepMissing';
 import StepThanks from '@/components/StepThanks';
 import LeadRetry from '@/components/LeadRetry';
 import Track from '@/components/Track';
+import ReviewsFooter from '@/components/ReviewsFooter';
 import { CONFIG, LEAD_COOKIE, type StepName } from '@/lib/config';
 import {
   SHOP, findMake, findModel, findGeneration, partsFor, carName, generationLabel
@@ -192,6 +193,9 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
         ) : null}
 
         {step === 'thanks' ? <StepThanks car={qs.car ?? null} /> : null}
+
+        {/* Les avis ferment chaque écran, pas seulement le premier. */}
+        <ReviewsFooter />
       </main>
     </>
   );
