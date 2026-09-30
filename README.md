@@ -15,6 +15,19 @@ npm run dev          # http://localhost:3000
 
 ---
 
+## Le contrat visuel
+
+**`DESIGN.md` avant de toucher au style.** Palette, typographie, rôle de la
+photographie, et la liste des motifs interdits parce qu'ils font qu'une page se lit
+comme générée. Tout y est relevé sur le vrai magasin, pas choisi par goût.
+
+Le point qu'on ré-oublie à chaque fois : le magasin d'AZM est **blanc avec une chrome
+noire et des photos sombres**, pas un aplat noir. Le noir vient d'une image, jamais
+d'un `background`. La landing, elle, est un aplat noir d'un bout à l'autre : c'est
+l'écart le plus important entre ce qu'elle est et ce que la marque est.
+
+---
+
 ## Pourquoi cette page existe
 
 | Fait | Chiffre |
@@ -39,7 +52,6 @@ Deux endroits, et un seul est bloquant.
 |---|---|---|
 | `LEAD_ENDPOINT` | `/api/lead` — la fonction de ce dépôt | le lead n'est envoyé nulle part |
 | `PIXEL` | `854592952776027` | aucune mesure côté Meta |
-| `TALK` | **vide** — lien m.me de la Page | le bouton « parler à un builder » retombe sur le téléphone |
 | `GATE_FIRST` | `false` | voir plus bas |
 
 **Dans Vercel > Settings > Environment Variables** — les noms et le détail sont dans
@@ -74,9 +86,12 @@ components/             un fichier par écran ; 'use client' seulement où il le
 lib/
   catalog.ts            le catalogue, SERVEUR UNIQUEMENT (import 'server-only')
   catalogTypes.ts       types + fonctions pures, importables côté client
-  config.ts             réglages publics de campagne
+  reviews.ts            les avis produit, SERVEUR UNIQUEMENT (même garde)
+  reviewTypes.ts        types + fonctions pures des avis, importables côté client
+  config.ts             réglages publics de campagne, dont la note Google
   ghl.ts / leadPayload.ts   client GHL et normalisation du lead
 catalog.json            360 ko, généré ; ne descend jamais dans le navigateur
+reviews.json            25 ko, généré ; ne descend jamais non plus
 ```
 
 **Une étape = une URL.** `/?make=BMW&model=m3&year=2021`. Les sept écrans étaient
@@ -229,6 +244,204 @@ Aucun jeton requis : `products.json` et `collections.json` sont publics.
 
 ---
 
+## Les bords : une règle, pas un goût
+
+**Un bord qui dessine une boîte autour du contenu saute. Un bord qui est un filet de
+séparation, ou qui appartient à un contrôle, reste.**
+
+La page était couverte de cadres de 1 px. Chacun paraissait anodin ; ensemble ils
+donnaient à l'écran l'allure d'un gabarit — le contour que deux analyses de « AI slop »
+citent parmi les premiers signes qu'une page sort d'un générateur
+([Developers Digest](https://www.developersdigest.tech/blog/ai-design-slop-and-how-to-spot-it),
+[TeneX](https://tenex.studio/en/blog/ai-slop-ui-8-signes/)).
+
+Ce qui remplace le cadre, c'est le groupement : la proximité et le vide. Le principe
+Gestalt de proximité dit que des éléments proches sont perçus comme liés, et le
+[NN/g](https://www.nngroup.com/articles/gestalt-proximity/) note que l'écart seul, sans
+bord ni couleur, suffit à dire ce qui va ensemble — avec moins de bruit visuel qu'un
+[contour](https://www.nngroup.com/articles/common-region/). D'où l'écart du rail d'avis
+passé de 12 à 20 px : quand le cadre part, c'est le vide qui sépare.
+
+### Ce qui est parti
+
+| | Ce qui groupe à la place |
+|---|---|
+| La pastille de la note Google, au-dessus du titre | Le logo G et la proximité dans la ligne de crédibilité |
+| Le cadre des neuf tuiles de marque | Le dégradé de fond et la coupe d'angle, déjà là |
+| Le cadre des cartes produit | L'aplat `--panel` et la coupe d'angle, déjà là |
+| Le cadre des tuiles d'avis | La photo du client, qui donne son bord à la tuile |
+| Les filets verticaux de la barre de chiffres | L'écart entre les quatre postes, porté à 34 px |
+| Les filets colorés à gauche (`.callout`, `.cardquote`, `.card__tag`, `.vehicle-chip`) | L'aplat, le guillemet, la couleur du texte |
+| Le contour des flèches du rail | Un disque plein : c'est un bouton, pas une boîte |
+
+### Ce qui reste, et pourquoi
+
+- **Les filets horizontaux** (`.top`, `footer`, `.facts`, `.fitbox`, `.reassure`,
+  `.results__head`, `.proof`). Ils séparent, ils n'encadrent pas. Une règle n'est pas
+  une boîte.
+- **Les contrôles** : `.btn--ghost`, `.back`, `.opts select`. Le bord porte
+  l'affordance — on doit voir où finit la zone cliquable.
+- **Les anneaux de focus.** Non négociables.
+- **`.formError`**, qui garde son filet orange. Sur un message d'erreur la couleur du
+  bord porte la gravité ; elle ne décore pas.
+
+### Ce qui reste à trancher
+
+L'audit a trouvé d'autres motifs de la même famille, mais ils touchent des choix de
+conception antérieurs et documentés — les changer est une autre conversation :
+
+| Motif cité comme signe de page générée | Où, ici | Est-ce vraiment un défaut ? |
+|---|---|---|
+| Double « eyebrow » au-dessus du H1 | la ligne de crédibilité **et** `01 YOUR CAR · 6 SEC` | Oui : deux lignes de survol empilées. Une seule suffirait. |
+| Bandeau de statistiques | `.facts` | Non : quatre chiffres réels tirés du catalogue, pas des slogans. |
+| Numérotation décorative `01 02 03` | tuiles de marque, étapes | Mitigé : sur les étapes c'est un vrai indicateur de progression ; sur les neuf tuiles c'est de l'ornement. |
+| Cartes identiques | 9 tuiles de marque, 13 tuiles d'avis | Non : le contenu diffère à chaque tuile (logo, chiffre, photo, texte). |
+| Libellés tout en capitales | `.tech--label`, `.rule` | Mitigé : c'est la voix « atelier » de la page, mais il y en a beaucoup. |
+| Tirets cadratins | ~30 dans la copie | Oui, probablement. À arbitrer avec le client, c'est de la copie. |
+
+---
+
+## La preuve sociale : deux sources, jamais mélangées
+
+La page affiche deux choses qui se ressemblent et qui ne viennent pas du même endroit.
+Les confondre serait une fausse indication sur l'origine d'un témoignage — interdite par
+la Loi sur la concurrence (art. 74.01) et, pour le trafic américain, par la règle de la
+FTC sur les faux avis (16 CFR 465, en vigueur depuis août 2024).
+
+| | Les avis Google | Les avis produit |
+|---|---|---|
+| Portent sur | **le commerce** | **une pièce** |
+| Source | fiche Google Business (app Reputon sur le Shopify) | app Avada Air Reviews sur le Shopify |
+| Vit dans | `CONFIG.GOOGLE`, écrit à la main | `reviews.json`, généré |
+| Affiché | pastille en tête de l'écran 01 | note + citation sur la carte produit, rail de citations sous la grille de marques |
+| Libellé à l'écran | « Google reviews », logo G officiel | « reviews on this part », « azmotorsport.ca » |
+| Couverture | 100 % des visites | **30 fiches sur 121** |
+
+**Il n'existe pas d'avis Google sur un downpipe.** Google Business Profile n'a aucune
+notion de produit. Ce que le magasin possède au niveau de la pièce vient de son propre
+outil d'avis, et c'est ce que la carte produit montre — sous son vrai nom.
+
+### Pourquoi la carte produit doit savoir se taire
+
+Mesuré le 2026-09-27 sur les 118 écrans de résultats réellement atteignables :
+
+| | |
+|---|---|
+| Fiches du catalogue portant au moins un avis | **30 / 121** |
+| Écrans de résultats montrant au moins un avis | **45 / 118 — 38 %** |
+| Cartes produit portant une note | **62 / 201 — 31 %** |
+| Total d'avis produit récoltés | 79, dont 74 avec du texte |
+
+Autrement dit **62 % des écrans de résultats n'affichent aucun avis**, et c'est le cas
+normal, pas l'exception. D'où `Proof | null` dans `ProductCard` : quand il n'y a rien, la
+ligne de note et la citation disparaissent entièrement. Une carte qui afficherait
+« 0 avis » ou un cadre vide ferait plus de mal que l'absence de bloc.
+
+Par marque, les écrans qui montrent quelque chose : Porsche 52 %, Audi 50 %, BMW 44 %,
+McLaren 31 %, Ferrari 30 %, Mercedes-AMG 29 %, Lamborghini 13 %, Corvette et Toyota 0 %.
+Une campagne ciblée Corvette ou Toyota ne verra jamais un avis produit.
+
+### Ce qui fait parler le rail, c'est la photo
+
+Chaque avis déposé sur le magasin porte une photo prise par le client, de **son** char —
+67 des 74 avis citables en ont une, soit 91 %. Elles dormaient dans la source : la
+première version du bloc était treize pavés de texte gris de même taille, du bon
+contenu qui se lisait comme des conditions d'utilisation. La phrase dit qu'on a livré,
+la photo montre sur quoi.
+
+Elles passent par `next/image` comme les photos produit : ce sont des photos de
+téléphone en pleine résolution (121 ko pour la première, affichée à 345 px). C'est
+aussi ce qui évite de toucher à la CSP — l'image est servie depuis `/_next/image`, sur
+notre propre origine, et `img-src 'self'` la couvre déjà. Seul
+`images.remotePatterns` de `next.config.ts` gagne l'hôte `firebasestorage`.
+
+Les avis avec photo passent devant dans le tri, pour ne pas faire une rangée en dents
+de scie, et deux tuiles de la même marque ne se retrouvent jamais côte à côte — le
+visiteur vient de regarder une grille de neuf marques, le rail doit montrer sa variété
+tout de suite. L'en-tête porte la note (4.9 sur 79 avis, moyenne pondérée par le nombre
+d'avis de chaque pièce) en gros : en gris de 11 px, c'était chuchoter le meilleur
+argument de la section.
+
+### Le rail de l'écran 01 ne tourne pas tout seul
+
+`components/QuoteRail.tsx` affiche 13 citations au lieu de 3 — `featuredReviews()`
+prend tout ce qui passe le filtre, au plus deux par marque, une par personne, une par
+pièce. Sur les 41 avis éligibles (60 à 240 caractères, 4 étoiles et plus), ça donne 13
+tuiles réparties sur les 7 marques qui ont des avis, la plus courte faisant 95
+caractères.
+
+**Aucune rotation automatique, et c'est le point.** Ce qu'on reproche aux carrousels —
+la lecture coupée en pleine phrase, le contenu qui échappe à qui lit lentement — vient
+de la rotation, pas du défilement. La page porte déjà un bloc `prefers-reduced-motion`
+qu'une rotation contredirait.
+
+Le défilement est du CSS (`scroll-snap`) : il marche au doigt, à la molette horizontale
+et au clavier avant que `QuoteRail.tsx` soit chargé. Les flèches ne sont qu'un ajout
+pour la souris, qui n'a pas de geste horizontal — sans JavaScript on perd deux boutons,
+pas l'accès aux avis. Le rail porte `tabindex=0` : sans lui, ce qui dépasse à droite
+serait inatteignable au clavier (WCAG 2.1.1).
+
+### Trois signaux, parce qu'un seul ne suffisait pas
+
+La tuile qui dépasse ne suffit pas à dire qu'on peut faire glisser. Les flèches
+rangées dans l'en-tête ne le disaient pas non plus : elles étaient loin de ce qu'elles
+déplacent. Trois signaux se complètent, et chacun fait un travail que les autres ne
+font pas :
+
+| Signal | Ce qu'il dit |
+|---|---|
+| La tuile suivante qui dépasse (78 % de largeur sur téléphone, 3,15 par vue au-delà) | « il y en a d'autres » |
+| Les flèches **sur les bords du rail**, à cheval sur ce qu'elles déplacent | « ça bouge, et voilà comment » |
+| La barre lime sous le rail, qui reprend l'idiome de la barre d'étapes | « voilà où tu en es, et combien il reste » |
+
+Aux extrémités la flèche **s'efface** au lieu de griser : une flèche morte posée sur
+une photo est du bruit, et sa disparition indique le sens qu'il reste à parcourir. Un
+libellé discret (« Showing 13 — swipe or use the arrows ») ferme la porte au doute.
+
+Sous 560 px la marge de `.wrap` ne fait que 20 px : la flèche rentre dans le cadre au
+lieu de déborder, et rétrécit pour ne pas manger la photo.
+
+---
+
+## Mettre à jour les avis
+
+```bash
+npm run reviews          # ≈ 3 min, régénère reviews.json
+```
+
+Lit les 121 fiches produit de `azmotorsport.ca` et en tire deux choses, rendues par le
+serveur Shopify et donc lisibles sans clé ni JavaScript : le bloc `aggregateRating`
+(note et nombre d'avis) et les dix premiers avis de la fiche.
+
+**Le magasin limite le débit.** Six requêtes en parallèle ramènent 61 réponses `429` sur
+121 fiches — constaté. Le script est donc séquentiel, avec 900 ms entre deux fiches et
+quatre tentatives par fiche. Il est lent et il n'a pas à être rapide : le fichier est
+régénéré à la main, comme le catalogue.
+
+Le script imprime un avertissement si une fiche répond 404 (le catalogue a dérivé du
+magasin : relancer `node build-index.mjs`) ou si une fiche n'a pas pu être jointe (le
+résultat est alors incomplet, relancer).
+
+### Le chiffre Google, lui, s'écrit à la main
+
+Dans `lib/config.ts` :
+
+```ts
+GOOGLE: { RATING: 4.9, COUNT: 140, URL: 'https://www.google.com/maps/place/?q=place_id:…' }
+```
+
+- `RATING` — **4.9**, lu sur la fiche Google le 2026-09-27. C'est aussi ce qu'affiche
+  `azmotorsport.ca`.
+- `COUNT` — **140**, le chiffre qu'AZM publie sur son propre thème Shopify. **Non
+  confirmé indépendamment** : la fiche Google ne rend pas son total sans JavaScript.
+
+Le lire en direct demanderait une clé Places API sur le chemin critique d'une page payée
+par la pub, pour une valeur qui bouge de quelques unités par mois. Deux constantes
+suffisent — à revérifier d'un coup d'œil avant chaque campagne, parce qu'un nombre d'avis
+faux dans une publicité est exactement ce qui se fait signaler.
+
+---
+
 ## Outils (`tools/`)
 
 ```bash
@@ -238,6 +451,8 @@ npm run lint           # tsc --noEmit
 npm test               # exerce /api/lead contre un faux GHL, hors ligne
 npm run ghl:check      # vérifie le jeton GHL, liste pipelines et ids
 npm run catalog        # régénère catalog.json depuis Shopify
+npm run reviews        # régénère reviews.json depuis les fiches Shopify (≈ 3 min)
+npm run e2e            # clique tout le parcours, souris ET tactile (npm start d'abord)
 
 node tools/shot.mjs                         # capture en 390 / 820 / 1440 px
 node tools/shot.mjs "?make=BMW&model=m3"    # capture un état précis du parcours
@@ -309,8 +524,6 @@ paiement ne transite ni par cette page ni par la fonction.
 
 ### Ce qui reste à faire une fois en ligne
 
-- `CONFIG.TALK` est vide : le bouton « parler à un builder » compose le téléphone. Le
-  lien m.me de la Page AZM y va dès qu'il est connu.
 - `ALLOWED_ORIGINS` reste vide tant que le domaine final n'est pas fixé ; d'ici là,
   n'importe quelle origine peut poster sur `/api/lead`.
 - La limite de débit vit dans la mémoire d'un lambda : elle tient contre un script isolé,

@@ -85,7 +85,9 @@ h3{margin:0; font-weight:800; font-size:1rem; line-height:1.25; letter-spacing:-
   display:inline-flex; align-items:center; gap:8px; text-decoration:none;
   font-weight:600; font-size:.84rem; letter-spacing:.01em; white-space:nowrap;
   font-variant-numeric:tabular-nums;
-  padding:8px 0; border-bottom:1px solid transparent;
+  /* 44 px de haut : c'est un lien d'appel, et sur telephone c'est une cible
+     au pouce. WCAG 2.2 n'en demande que 24, les regles de plateforme 44. */
+  min-height:44px; padding:10px 0; border-bottom:1px solid transparent;
   transition:color .18s ease, border-color .18s ease;
 }
 .phone:hover{border-bottom-color:var(--lime); color:var(--lime)}
@@ -142,11 +144,12 @@ body::after{
 .facts div{
   padding:14px 18px 15px 0; position:relative;
 }
+/* Les filets verticaux entre les postes sont partis : quatre colonnes espacées se
+   lisent déjà comme quatre postes, et les traits en faisaient une grille de tableur.
+   Les deux filets horizontaux restent — ils séparent la barre du reste de la page,
+   ils n'encadrent rien. */
 @media(min-width:720px){
-  .facts div + div{padding-left:22px}
-  .facts div + div::before{
-    content:""; position:absolute; left:0; top:12px; bottom:12px; width:1px; background:var(--line);
-  }
+  .facts div + div{padding-left:34px}
 }
 .facts dt{
   font-weight:600; font-size:.62rem; letter-spacing:.11em; text-transform:uppercase;
@@ -159,10 +162,7 @@ body::after{
 /* Sur téléphone, deux par rangée, et le filet passe à l'horizontale. */
 @media(max-width:719px){
   .facts div:nth-child(n+3){border-top:1px solid var(--line)}
-  .facts div:nth-child(even){padding-left:18px}
-  .facts div:nth-child(even)::before{
-    content:""; position:absolute; left:0; top:12px; bottom:12px; width:1px; background:var(--line);
-  }
+  .facts div:nth-child(even){padding-left:24px}
 }
 
 .authority{
@@ -174,7 +174,10 @@ body::after{
 @media(max-width:560px){
   .authority{font-size:.66rem; gap:6px; margin-bottom:18px}
   .authority i{display:none}
-  .authority span{width:100%}
+  /* Le enfant direct, pas n'importe quel span descendant : la pastille Google et les
+     étoiles en contiennent, et un width:100 % hérité leur faisait crever leur cadre
+     — le « 140 Google reviews » sortait de la boîte sur trois lignes. */
+  .authority > span{width:100%}
 }
 .undertitle{margin:26px 0 0; font-weight:500; font-size:.76rem; color:#6a7075; letter-spacing:.06em}
 
@@ -198,17 +201,21 @@ body::after{
 }
 @media(min-width:680px){ .brands{grid-template-columns:repeat(3,1fr); gap:12px} }
 
+/* Le dégradé et la coupe d'angle donnent déjà sa forme à la tuile. Le liseré en plus
+   faisait neuf boîtes cernées identiques — le motif qu'on reconnaît au premier coup
+   d'œil sur une page générée. C'est le fond et l'écart qui groupent, maintenant. */
 .brand-card{
   position:relative; overflow:hidden; cursor:pointer; padding:0; display:flex;
-  border:1px solid var(--line); text-align:left;
+  text-align:left;
   background:linear-gradient(162deg,#17191b 0%,var(--panel) 52%,#070808 100%);
   clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
-  transition:border-color .2s ease, transform .22s var(--ease), box-shadow .22s ease;
+  transition:transform .22s var(--ease), box-shadow .22s ease, background .22s ease;
   min-height:clamp(150px,20vw,186px);
 }
 .brand-card:hover{
-  border-color:var(--line2); transform:translateY(-3px);
-  box-shadow:0 12px 30px -16px #000, 0 0 0 1px #ffffff10 inset;
+  transform:translateY(-3px);
+  background:linear-gradient(162deg,#1e2124 0%,var(--panel2) 52%,#0a0b0b 100%);
+  box-shadow:0 12px 30px -16px #000;
 }
 .brand-card:active{transform:translateY(-1px)}
 .brand-card::before{
@@ -278,9 +285,6 @@ body::after{
 @media(max-width:400px){ .brands{gap:8px} .brand-card{min-height:134px} }
 
 /* le char choisi reste visible en fond de l'écran suivant */
-.ctx{position:absolute; inset:0 0 auto; height:min(48vh,420px); z-index:-1; overflow:hidden}
-.ctx img{width:100%; height:100%; object-fit:cover; opacity:.16; filter:grayscale(.2)}
-.ctx::after{content:""; position:absolute; inset:0; background:linear-gradient(180deg,#000000a6,#000 88%)}
 
 /* ── grille de choix ─────────────────────────────────────────────────────
    Les cellules se touchaient : gap de 1px sur un fond clair, le vide entre elles
@@ -381,9 +385,11 @@ body::after{
   margin:0; padding:12px 14px; border-left:2px solid var(--orange); background:#f94c1014;
   font-size:.86rem; color:var(--text);
 }
+/* Le filet lime est parti ici aussi. .formError garde le sien : sur un message
+   d'erreur la couleur du bord porte la gravité, elle ne décore pas. */
 .vehicle-chip{
   display:inline-flex; align-items:center; gap:10px; margin-top:20px; padding:10px 14px;
-  border-left:2px solid var(--lime); background:var(--panel);
+  background:var(--panel);
   font-weight:600; font-size:.82rem; letter-spacing:.02em; font-variant-numeric:tabular-nums;
 }
 .vehicle-chip b{color:var(--lime); font-weight:700}
@@ -395,7 +401,16 @@ body::after{
   padding:5px 10px; letter-spacing:.02em; font-variant-numeric:tabular-nums;
 }
 .results__change{margin-left:auto; padding:11px 16px; font-size:.8rem}
-.grid{display:grid; gap:18px; grid-template-columns:1fr}
+/* LES CARTES NE S'ETIRENT PAS.
+   Forcer deux cartes a la meme hauteur oblige quelque chose a encaisser la
+   difference, et il n'y a que deux candidats : un trou dans le texte, ou des photos
+   de hauteurs differentes. Les deux ont ete essayes, les deux se voient.
+
+   Avec `align-items:start`, chaque carte fait sa propre hauteur. Les photos gardent
+   le meme ratio donc elles s'alignent, et tout ce qui suit s'aligne avec elles :
+   titre, note, bloc de fitment. Les cartes ne divergent qu'a partir du point ou leur
+   contenu differe vraiment, ce qui est la seule chose honnete a montrer. */
+.grid{display:grid; gap:18px; grid-template-columns:1fr; align-items:start}
 @media(min-width:760px){ .grid{grid-template-columns:1fr 1fr} }
 /* Une seule pièce compatible (42 % des combinaisons) : elle prend toute la largeur,
    image à gauche, choix et prix à droite — plutôt qu'une carte étroite et du vide. */
@@ -405,21 +420,24 @@ body::after{
   .grid--one .card__media{flex:0 0 46%; aspect-ratio:auto; min-height:400px}
   .grid--one .card__body{flex:1; padding:28px; gap:18px; justify-content:center}
   .grid--one .card h3{font-size:1.3rem}
-  .grid--one .card__actions{grid-template-columns:1.2fr 1fr; max-width:460px}
+  .grid--one .card__actions{max-width:300px}
   .grid--one .price b{font-size:2.2rem}
 }
+/* L'aplat et la coupe d'angle délimitent déjà la carte : le liseré par-dessus ne
+   séparait rien de plus, il ajoutait juste le contour qu'on retrouve sur toutes les
+   pages sorties d'un gabarit. */
 .card{
-  background:var(--panel); border:1px solid var(--line); display:flex; flex-direction:column;
+  background:var(--panel); display:flex; flex-direction:column;
   clip-path:polygon(0 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%);
-  transition:border-color .2s ease;
+  transition:background .2s ease;
 }
-.card:hover{border-color:var(--line2)}
+.card:hover{background:var(--panel2)}
 .card__media{position:relative; aspect-ratio:4/3; background:#000; overflow:hidden}
 .card__media img{width:100%; height:100%; object-fit:cover; transition:scale .6s ease}
 .card:hover .card__media img{scale:1.03}
 .card__tag{
-  position:absolute; left:0; top:14px; background:var(--ink); border-left:2px solid var(--lime);
-  padding:6px 12px; font-weight:600; font-size:.71rem; letter-spacing:.12em; text-transform:uppercase;
+  position:absolute; left:0; top:14px; background:var(--ink); color:var(--lime);
+  padding:6px 12px; font-weight:700; font-size:.71rem; letter-spacing:.12em; text-transform:uppercase;
 }
 .card__body{padding:20px; display:flex; flex-direction:column; gap:15px; flex:1}
 .fitbox{border-top:1px solid var(--line); border-bottom:1px solid var(--line); padding:12px 0}
@@ -450,11 +468,12 @@ body::after{
 .stock{font-weight:600; font-size:.73rem; letter-spacing:.1em; margin-left:auto; text-transform:uppercase}
 .stock--in{color:var(--lime)} .stock--out{color:var(--orange)}
 .card__actions{display:grid; gap:10px; grid-template-columns:1fr}
-@media(min-width:520px){ .card__actions{grid-template-columns:1.5fr 1fr} }
 .note{margin:0; font-size:.71rem; color:#6a7075; line-height:1.5; letter-spacing:.02em}
 
+/* Même raison que .cardquote : le filet lime à gauche partait. L'aplat suffit à
+   grouper, et c'est le lien lime qui doit attirer l'œil, pas le cadre. */
 .callout{
-  margin:30px 0 0; padding:18px 20px; border-left:2px solid var(--lime); background:var(--panel);
+  margin:30px 0 0; padding:18px 20px; background:var(--panel);
   font-size:.94rem; color:var(--muted);
 }
 .callout a{color:var(--lime); font-weight:700; text-decoration:none; border-bottom:1px solid #cefe0155}
@@ -534,9 +553,451 @@ footer p{margin:0 0 6px}
   .choice:hover::after{translate:0 -50%}
 }
 
-/* Le fond contextuel était réglé à 16 % d'opacité sous un dégradé qui devenait
-   opaque à 88 % : autant dire invisible. Il sert à quelque chose ou il ne sert à
-   rien — on le remonte, et on garde le dégradé pour que le texte reste lisible. */
-.ctx{height:min(42vh,360px)}
-.ctx img{opacity:.3; filter:grayscale(.35) contrast(1.1)}
-.ctx::after{background:linear-gradient(180deg,#00000073 0%,#000000d9 58%,#000 96%)}
+
+/* ── preuve sociale ────────────────────────────────────────────────────────
+   DEUX ORIGINES, JAMAIS MÉLANGÉES.
+
+   .gsig  — la note Google du COMMERCE, en tête de l'écran 01. Un avis Google
+            porte sur l'entreprise : il n'existe pas d'avis Google sur un
+            downpipe. Le G officiel est là pour dire que le chiffre ne vient pas
+            de nous.
+   .quote / .cardquote — les avis déposés sur azmotorsport.ca, rattachés à une
+            pièce. Le pied de chaque citation nomme sa source. Les faire passer
+            pour des avis Google serait une fausse indication d'origine (Loi sur
+            la concurrence art. 74.01 ; 16 CFR 465 côté américain).
+
+   Voir l'en-tête de lib/reviews.ts.                                          */
+
+/* Les étoiles. Deux rangées de ★ superposées, la lime coupée à la note : une
+   grille de cinq icônes pleines ou vides ne sait pas montrer 4.9 sur 5. */
+.stars{
+  position:relative; display:inline-block; flex:none; white-space:nowrap;
+  font-size:.82rem; line-height:1; letter-spacing:.05em;
+}
+.stars__track{color:#ffffff30}
+.stars__fill{
+  position:absolute; left:0; top:0; width:var(--fill); overflow:hidden; color:var(--lime);
+}
+.stars--md{font-size:1rem}
+
+/* La signature Google, dans la barre de crédibilité de l'écran 01.
+   SANS PASTILLE. C'était un petit cadre arrondi posé juste au-dessus du titre :
+   littéralement le motif que deux analyses de « AI slop » nomment en premier — le
+   badge au-dessus du H1, ou le même label en pilule. Le contenu est le même, il tient
+   par la proximité et par le logo, pas par un liseré. Le soulignement n'apparaît qu'au
+   survol, parce que c'est un lien et que ça doit se voir. */
+.gsig{
+  display:inline-flex; align-items:center; gap:8px; text-decoration:none;
+  border-bottom:1px solid transparent; padding-bottom:2px;
+  transition:border-color .18s ease;
+}
+.gsig:hover{border-bottom-color:var(--line2)}
+.gsig:focus-visible{outline:2px solid var(--lime); outline-offset:3px}
+.gsig svg{flex:none}
+/* .authority b passe tout en lime : on reprend la main sur le chiffre, qui doit
+   se lire comme une donnée et pas comme un accent. */
+.authority .gsig__rate{
+  color:var(--text); font-weight:800; letter-spacing:0; font-variant-numeric:tabular-nums;
+}
+.authority .gsig__n{
+  color:var(--muted); font-weight:600; letter-spacing:.04em;
+  font-variant-numeric:tabular-nums;
+}
+/* Sur téléphone la pastille prend la ligne entière et le mot « Google » suffit :
+   « 140 Google reviews » à côté du logo, des étoiles et du chiffre ne tient pas dans
+   390 px sans réduire le tout à une taille illisible. Le thème Shopify d'AZM fait la
+   même coupe au même endroit. */
+@media(max-width:560px){
+  .authority .gsig{gap:7px}
+  .gsig__n-long{display:none}
+}
+@media(min-width:561px){
+  .gsig__n-short{display:none}
+}
+
+/* Le bandeau de citations, sous la grille de marques. */
+.proof{margin:clamp(30px,4vw,44px) 0 0; border-top:1px solid var(--line); padding-top:20px}
+/* L'en-tête porte la note, en gros. « 79 customer reviews » en gris de 11 px sous un
+   intertitre, c'était chuchoter le meilleur argument de la section. */
+.proof__head{
+  margin:0 0 16px; display:flex; flex-wrap:wrap; align-items:flex-end; gap:12px 18px;
+}
+.proof__lead{margin:0; display:flex; flex-direction:column; gap:9px}
+.proof__score{display:flex; align-items:center; flex-wrap:wrap; gap:6px 11px}
+.proof__score b{
+  font-weight:800; font-size:1.5rem; letter-spacing:-.02em; line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.proof__score > span{
+  font-size:.78rem; color:var(--muted); letter-spacing:.03em;
+  font-variant-numeric:tabular-nums;
+}
+.proof__src{
+  font-size:.72rem; color:#63696e; letter-spacing:.04em; font-variant-numeric:tabular-nums;
+}
+
+/* Le rail. Le défilement est du CSS : il marche au doigt, à la molette horizontale et
+   au clavier sans que QuoteRail.tsx soit chargé. Les flèches ne font que l'automatiser
+   pour la souris, qui n'a pas de geste horizontal.
+
+   Les tuiles ne tombent JAMAIS pile dans la largeur — 78 % sur téléphone, 3,15 par vue
+   au-delà. Ce bout de tuile qui dépasse est la seule chose qui dise qu'il y en a
+   d'autres ; une rangée qui a l'air pleine se lit comme une rangée pleine, flèches ou
+   pas. */
+.rail{
+  display:flex; gap:20px; overflow-x:auto; overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;
+  /* La barre native est masquée : sur fond noir elle coupe le bas des tuiles, et
+     l'affordance est portée par la tuile qui dépasse et par les flèches. */
+  scrollbar-width:none; -ms-overflow-style:none;
+}
+.rail::-webkit-scrollbar{display:none}
+.rail:focus-visible{outline:2px solid var(--lime); outline-offset:3px}
+.rail > .quote{flex:0 0 78%; scroll-snap-align:start}
+@media(min-width:560px){ .rail > .quote{flex-basis:calc((100% - 40px) / 2.15)} }
+@media(min-width:760px){ .rail > .quote{flex-basis:calc((100% - 60px) / 3.15)} }
+
+/* Les flèches sont SUR les bords du rail. Rangées dans l'en-tête, elles étaient loin
+   de ce qu'elles déplacent et ne disaient pas que la rangée bouge — et la tuile qui
+   dépasse, seule, ne le disait pas non plus. Posées à cheval sur le bord, le geste
+   est lisible sans rien expliquer. */
+.rail__wrap{position:relative}
+.rail__arrow{
+  position:absolute; top:50%; translate:0 -50%; z-index:2;
+  width:46px; height:46px; padding:0; display:grid; place-items:center; cursor:pointer;
+  /* Un disque plein plutôt qu'un carré cerné : c'est un bouton, pas une boîte. Posée
+     sur une photo sombre, une pastille discrète disparaît, d'où le fond opaque et
+     l'ombre — le contraste vient de là, plus d'un liseré. */
+  background:#000000f2; border:0; border-radius:50%; color:#fff;
+  box-shadow:0 2px 18px #000000c4;
+  transition:opacity .2s ease, background .18s ease, color .18s ease, scale .18s var(--ease);
+}
+.rail__arrow:hover{background:var(--ink); color:var(--lime); scale:1.06}
+.rail__arrow:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
+/* Aux extrémités la flèche s'efface au lieu de griser : une flèche morte posée sur une
+   photo est du bruit, et sa disparition indique le sens qu'il reste à parcourir. */
+.rail__arrow:disabled{opacity:0; pointer-events:none}
+.rail__arrow--prev{left:-14px}
+.rail__arrow--next{right:-14px}
+/* Sous 560 px la marge de .wrap ne fait que 20 px : une flèche débordante sortirait de
+   l'écran. Elle rentre, et rétrécit pour ne pas manger la photo. */
+@media(max-width:560px){
+  .rail__arrow{width:44px; height:44px}
+  .rail__arrow--prev{left:4px}
+  .rail__arrow--next{right:4px}
+}
+
+/* La barre reprend l'idiome de la barre d'étapes en haut de page. Elle dit ce qu'une
+   flèche ne dit pas : combien il reste. */
+.rail__progress{margin-top:12px; height:2px; background:#ffffff14; overflow:hidden}
+.rail__progress i{
+  display:block; height:100%; background:var(--lime);
+  transition:margin-left .14s linear, width .14s linear;
+}
+@media(prefers-reduced-motion:reduce){ .rail__progress i{transition:none} }
+
+.proof__count{
+  margin-left:auto; margin-bottom:2px; font-size:.7rem; color:#5f6569;
+  letter-spacing:.05em; font-variant-numeric:tabular-nums;
+}
+
+/* La tuile. Treize pavés de texte gris de même taille, c'est ce que le bloc était :
+   du bon contenu — un gars qui nomme son M3 Comp, son stage 2, ses 780 chevaux — qui
+   se lisait comme des conditions d'utilisation. La photo du client passe devant, le
+   texte prend du corps, et le nom du char cesse d'être une note de bas de page. */
+/* Pas de cadre, pas de fond. La photo tient le bloc : c'est elle qui donne son bord
+   à la tuile, et l'écart entre deux tuiles fait le reste du travail de groupement.
+   Un liseré par-dessus une photo et un aplat ne délimitait rien que la photo ne
+   délimitait déjà — c'est le trait qu'on retrouve sur toutes les pages sorties d'un
+   gabarit. L'écart passe donc de 12 à 20 px : sans cadre, c'est le vide qui sépare. */
+.quote{
+  margin:0; display:flex; flex-direction:column; overflow:hidden;
+}
+/* Photo du client : son char, pas un visuel de catalogue. Ratio fixe pour que treize
+   photos de téléphone, cadrées chacune à sa façon, donnent une rangée régulière. */
+.quote__shot{position:relative; aspect-ratio:16/10; background:#000; flex:none}
+.quote__shot img{width:100%; height:100%; object-fit:cover}
+/* Le texte s'aligne sur le bord de la photo, il n'est plus en retrait dans une boîte. */
+.quote__body{padding:13px 0 0; display:flex; flex-direction:column; gap:9px; flex:1}
+.quote blockquote{margin:0; font-size:.92rem; line-height:1.5; color:var(--text)}
+.quote blockquote::before{content:"\201C"}
+.quote blockquote::after{content:"\201D"}
+.quote figcaption{
+  display:flex; flex-direction:column; gap:3px;
+  margin-top:auto; padding-top:4px; font-size:.72rem; color:#5f6569; letter-spacing:.03em;
+}
+.quote figcaption b{
+  color:var(--text); font-weight:700; font-size:.78rem; letter-spacing:.01em;
+}
+/* Le char et la date sur la même ligne : c'est l'ancrage de l'avis, pas du remplissage. */
+.quote figcaption > span{color:var(--muted)}
+.quote figcaption time{color:#5f6569; font-variant-numeric:tabular-nums}
+
+/* La note d'une pièce, sous son titre, sur la carte produit. */
+.rating{
+  display:flex; align-items:center; flex-wrap:wrap; gap:4px 9px; margin:-5px 0 0;
+  font-size:.77rem; color:#63696e; letter-spacing:.04em;
+}
+.rating b{
+  color:var(--text); font-weight:800; letter-spacing:0; font-variant-numeric:tabular-nums;
+}
+.rating span{font-variant-numeric:tabular-nums}
+
+/* L'avis correspondant, plus bas sur la même carte. */
+/* Le filet vertical coloré à gauche d'un encadré est, avec le tiret cadratin, le
+   motif le plus cité comme signature d'une page générée. Il ne portait aucun sens
+   ici : le guillemet ouvre déjà la citation, et l'écart la sépare du reste. */
+.cardquote{
+  margin:0; padding:0; display:flex; flex-direction:column; gap:6px;
+}
+.cardquote blockquote{margin:0; font-size:.82rem; line-height:1.55; color:var(--muted)}
+.cardquote blockquote::before{content:"\201C"}
+.cardquote blockquote::after{content:"\201D"}
+.cardquote figcaption{
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 8px;
+  font-size:.68rem; color:#5f6569; letter-spacing:.05em;
+}
+.cardquote figcaption b{color:var(--muted); font-weight:700; letter-spacing:.02em}
+.cardquote figcaption > * + *::before{content:"· "; color:var(--line2)}
+
+/* ── le hero photographique de l'écran 01 ──────────────────────────────────
+   L'écran ouvrait sur un aplat noir avec un titre posé dessus. C'est le fond que
+   produit n'importe quel générateur, et c'est ce qui faisait dire que la page
+   « avait l'air faite par une IA » : pas la couleur, le VIDE.
+
+   Le noir vient maintenant d'une photographie d'AZM — une GT3 qui crache une flamme
+   dans une station-service. Le dégradé n'est pas une décoration : il tient la
+   lisibilité du texte par-dessus, et il raccorde le bas de l'image au reste de la page
+   sans couture. La photo garde sa matière en haut, là où il n'y a pas de texte.
+
+   La grille de marques, elle, reste sur fond sombre : quatre des neuf logos sont des
+   silhouettes blanches (Ferrari et Porsche entièrement), elles disparaîtraient sur
+   clair. C'est une contrainte des actifs, pas un choix.                        */
+/* L'écran 01 colle le hero sous l'en-tête : le rembourrage haut de <main> laissait une
+   bande noire entre les deux, et une photo pleine largeur qui commence 40 px plus bas
+   n'est plus une photo pleine largeur. */
+.screen--hero{padding-top:0; margin-top:calc(-1 * clamp(26px,4.5vw,52px))}
+
+.hero{
+  position:relative; isolation:isolate;
+  margin-bottom:clamp(30px,4.6vw,54px);
+}
+/* ── au-dessus de 700 px : deux colonnes, la photo garde la sienne ────────
+   La photo pleine largeur derrière le texte ne marchait pas, et pas par réglage : la
+   source est un portrait 2:3. Sur un écran de 1900 px, un bandeau de 470 px de haut
+   n'en montre que 16 % de la hauteur, et n'importe quelle tranche de 16 % d'un
+   portrait donne une voiture coupée. Aucune valeur d'`object-position` ne répare ça —
+   la voiture occupe une boîte de 2.1:1 dans l'image, elle ne rentre pas dans un
+   bandeau de 4:1 sans être réduite sous la hauteur disponible.
+
+   Dans une colonne d'environ 2:1, elle rentre en entier, flamme comprise. La colonne
+   déborde jusqu'au bord droit de l'écran : encadrée, la photo redeviendrait une boîte
+   posée sur du noir. */
+@media(min-width:700px){
+  .hero{position:relative; min-height:clamp(360px,52vh,540px); display:flex; align-items:center}
+  /* Le texte à gauche, la photo à droite. Dans l'autre sens le titre flottait dans la
+     moitié droite sans s'aligner sur rien, alors que « Pick your make » et la grille
+     commencent au bord gauche de .wrap. C'est cet alignement vertical d'un bloc à
+     l'autre qui fait qu'une page a l'air posée plutôt qu'assemblée.
+
+     Le bloc de texte RESTE un .wrap, et la photo se pose par-dessus en absolu. C'est
+     ce qui garantit l'alignement : recalculer le bord gauche en `calc()` sur 100vw
+     donnait 20 px d'écart — le rembourrage de .wrap — et aurait de toute façon dérivé
+     dès qu'une barre de défilement apparaît, parce que 100vw la compte et pas 100 %. */
+  .hero__frame{
+    position:absolute; top:0; bottom:0; right:0; width:53%; z-index:-2;
+    margin:0;
+  }
+  .hero .hero__in{padding-block:clamp(26px,4vw,44px)}
+  /* Le texte s'arrête avant la photo. */
+  .hero__in > *{max-width:min(46%, 580px)}
+  .hero__in .gsig{max-width:none; width:fit-content}
+}
+/* ── en dessous : la photo garde son cadre, le texte passe dessous ──
+   La source est un portrait 2:3. Réduite à un bandeau de 390 px on n'y voyait que le
+   toit de la station, et le titre s'assoyait sur la voiture. Le 5:4 garde le sujet. */
+@media(max-width:699px){
+  .hero__frame{
+    position:relative; aspect-ratio:2/1; overflow:hidden;
+    margin-bottom:clamp(18px,4vw,26px);
+  }
+  .hero__frame::after{
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(180deg,transparent 52%,#000000ab 82%,var(--ink) 100%);
+  }
+}
+/* Le cadrage vise la bande qui porte le sujet. La source est un portrait 2:3 ; coupée
+   en bandeau large elle n'en garde qu'un tiers, et un cadrage centré perdait la voiture
+   ET la flamme au profit du toit de la station. 58 % descend sur l'arrière du char,
+   c'est-à-dire sur l'échappement — le sujet réel de la page. */
+.hero__shot{object-fit:cover; object-position:50% 52%; z-index:-2}
+/* Deux dégradés, et aucun n'est décoratif : le latéral tient la lisibilité du texte à
+   gauche, le vertical raccorde le bas de l'image au noir de la page sans couture.
+   Le latéral s'arrête tôt et reste léger : poussé plus loin il écrasait l'avant de la
+   voiture en aplat, et on perdait la photo qu'on venait de mettre. */
+/* Le dégradé ne traverse plus toute la section : il ne sert qu'à fondre les deux bords
+   de la photo dans le noir de la page, pour qu'elle n'ait pas l'air découpée aux
+   ciseaux. Il vit donc sur le cadre, pas sur le hero. */
+@media(min-width:700px){
+  .hero__frame::after{
+    content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:
+      linear-gradient(90deg,var(--ink) 0%,#00000080 14%,transparent 38%),
+      linear-gradient(180deg,#00000073 0%,transparent 22%,transparent 72%,#000000ab 100%);
+  }
+}
+.hero__in{
+  width:min(1120px,100%); margin-inline:auto; padding-inline:20px;
+  padding-block:clamp(30px,5vw,54px) clamp(26px,4vw,44px);
+  display:flex; flex-direction:column; align-items:flex-start; gap:clamp(14px,2vw,20px);
+}
+.hero__in h1{max-width:14ch}
+.hero__in .sub{margin:0; max-width:54ch; color:#c9ced2}
+.hero__in .sub b{color:#fff}
+/* Sur la photo, la pastille Google se détache d'un fond qui bouge : elle reprend un
+   filet, le seul du lot, parce qu'ici il sépare vraiment de l'image. */
+.hero .gsig{
+  padding:7px 12px; background:#000000a6; border:1px solid #ffffff2b;
+  backdrop-filter:blur(6px); border-bottom-color:#ffffff2b;
+}
+.hero .gsig:hover{border-color:#ffffff59; background:#000000cc}
+.hero .gsig__n{color:#c9ced2}
+@media(max-width:560px){
+
+  .hero__shot{object-position:52% 56%}
+}
+@media(prefers-reduced-motion:reduce){ .hero{animation:none} }
+
+/* ── la question, juste au-dessus des réponses ─────────────────────────────
+   Le hero pleine hauteur avait repoussé la grille sous la ligne de flottaison : on
+   arrivait sur une belle photo et on ne voyait plus qu'il y avait quelque chose à
+   remplir. Un écran qui pose une question doit montrer ses réponses.               */
+.ask{
+  display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+  margin:0 0 14px; padding-bottom:12px; border-bottom:1px solid var(--line);
+}
+.ask__q{
+  margin:0; font-style:italic; font-weight:900; text-transform:uppercase;
+  font-size:clamp(1.05rem,2.4vw,1.4rem); line-height:1; letter-spacing:-.025em;
+}
+.ask__step{
+  margin:0; flex:none; font-weight:600; font-size:.72rem; letter-spacing:.1em;
+  color:var(--muted); font-variant-numeric:tabular-nums;
+}
+
+/* ── retour visible au clic ────────────────────────────────────────────────
+   « Je vois même pas quand j'ai cliqué dessus. » Le survol existait, l'état enfoncé
+   ne se voyait pas, et sur mobile il n'y a pas de survol du tout : on touchait une
+   tuile et rien ne confirmait que le geste avait pris. La tuile s'enfonce, son cadre
+   s'allume en lime et le trait du bas se dessine d'un coup.                         */
+.brand-card:active{
+  transform:translateY(1px) scale(.985);
+  box-shadow:0 0 0 2px var(--lime) inset;
+}
+.brand-card:active .brand-card__name,
+.brand-card:active .brand-card__n b{color:var(--lime)}
+.brand-card:active::before{transform:scaleX(1); transition:none}
+/* Le survol soulève, mais sur un écran tactile « hover » colle après le doigt :
+   on ne l'applique qu'aux pointeurs qui survolent réellement. */
+@media(hover:none){
+  .brand-card:hover{transform:none; box-shadow:none}
+}
+.choice:active{background:var(--panel2); transform:translateY(1px)}
+
+/* ── téléphone : la grille doit percer la ligne de flottaison ──────────────
+   Mesuré au protocole DevTools à 390x740 : avec le hero d'origine, 8 % de la première
+   tuile dépassait. Autant dire qu'on arrivait sur une photo et qu'on ne voyait pas
+   qu'il y avait un choix à faire. Chaque valeur ci-dessous a été reprise jusqu'à ce
+   que la mesure passe — ce n'est pas du réglage à l'œil.                            */
+@media(max-width:699px){
+  .hero{margin-bottom:20px}
+  .hero__frame{aspect-ratio:2/1; margin-bottom:12px}
+  .hero__in{padding-block:0 0; gap:11px}
+  .hero__in .sub{font-size:.92rem; line-height:1.5}
+  .hero__in h1{max-width:none}
+  .ask{margin-bottom:11px; padding-bottom:9px}
+}
+
+/* ── téléphone : remonter le formulaire sous la photo ──────────────────────
+   La pastille Google passe SUR la photo au lieu d'occuper une ligne au-dessus du
+   titre. Elle sort du flux, et les 51 px qu'elle prenait remontent d'autant la
+   question et les tuiles — c'est-à-dire la seule chose que l'écran demande de faire.
+
+   Le calcul est exact et pas approximatif : le cadre est pleine largeur et porte un
+   ratio de 2:1, donc sa hauteur vaut 50vw. Sur téléphone il n'y a pas de barre de
+   défilement permanente qui ferait diverger 100vw de la largeur réelle. */
+@media(max-width:699px){
+  .hero .gsig{
+    position:absolute; z-index:2; left:20px; top:calc(50vw - 54px);
+    padding:6px 11px; background:#000000ad; border:1px solid #ffffff2b;
+    backdrop-filter:blur(6px);
+  }
+  .hero__in{padding-top:0}
+}
+
+/* La pastille Google fait 38 px de haut : trois pixels de rembourrage de plus et
+   elle atteint les 44 recommandes pour une cible au pouce. */
+@media(max-width:699px){
+  .hero .gsig{padding-block:9px}
+}
+
+/* ── construire une commande de plusieurs pièces ───────────────────────────
+   Le lien panier de Shopify REMPLACE le panier : sans ces deux blocs, un client qui
+   veut les downpipes ET l'échappement ne peut pas les commander ensemble. Vérifié en
+   cliquant — après le second « Buy now », le premier article avait disparu. 58 % des
+   écrans affichent deux pièces ou plus, et l'écart médian entre une pièce et toutes
+   les pièces de l'écran est de 2 789 $.                                             */
+.pick{
+  display:flex; align-items:center; gap:10px; cursor:pointer;
+  margin-top:2px; padding:10px 0; min-height:44px;
+  font-weight:600; font-size:.82rem; color:var(--muted);
+  transition:color .16s ease;
+}
+.pick:hover{color:var(--text)}
+/* Une vraie case, pas un bouton déguisé : le lecteur d'écran doit l'annoncer comme
+   une case, et son état doit se lire sans la couleur. D'où la coche dessinée. */
+.pick input{
+  appearance:none; flex:none; width:20px; height:20px; margin:0; cursor:pointer;
+  background:var(--ink); border:1px solid var(--line2); border-radius:2px;
+  display:grid; place-content:center;
+  transition:background .16s ease, border-color .16s ease;
+}
+.pick input::after{
+  content:""; width:10px; height:6px; margin-top:-2px;
+  border-left:2px solid var(--ink); border-bottom:2px solid var(--ink);
+  rotate:-45deg; opacity:0; transition:opacity .12s ease;
+}
+.pick input:checked{background:var(--lime); border-color:var(--lime)}
+.pick input:checked::after{opacity:1}
+.pick input:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
+.pick:has(input:checked){color:var(--text)}
+
+/* Le récapitulatif. Il colle en bas de l'écran tant qu'on a des pièces cochées :
+   la grille est plus haute qu'un écran de téléphone, et un bouton de commande qu'il
+   faut aller rechercher en bas de page n'est pas un bouton de commande. */
+.bundle{
+  position:sticky; bottom:0; z-index:15;
+  display:flex; align-items:center; gap:clamp(14px,2.4vw,24px); flex-wrap:wrap;
+  margin-top:18px; padding:14px clamp(14px,2.2vw,20px);
+  background:#0c0d0ef2; backdrop-filter:blur(10px);
+  box-shadow:0 -10px 30px -18px #000, 0 0 0 1px #ffffff14;
+  animation:bundleIn .22s var(--ease) both;
+}
+@keyframes bundleIn{from{opacity:0; translate:0 8px} to{opacity:1; translate:0 0}}
+@media(prefers-reduced-motion:reduce){ .bundle{animation:none} }
+.bundle__sum{
+  margin:0; display:flex; align-items:baseline; gap:9px; flex:1; min-width:0;
+  font-variant-numeric:tabular-nums;
+}
+.bundle__sum b{font-weight:800; font-size:1.3rem; letter-spacing:-.02em; color:var(--lime)}
+.bundle__sum span{font-size:.8rem; color:var(--muted); letter-spacing:.03em}
+.bundle__sum em{
+  font-style:normal; font-weight:700; font-size:1.3rem; letter-spacing:-.02em;
+  margin-left:auto; padding-left:12px;
+}
+.bundle .btn{flex:none; padding:15px 24px}
+@media(max-width:560px){
+  .bundle{gap:10px; padding:12px 14px}
+  .bundle__sum{flex:1 0 100%}
+  .bundle .btn{flex:1 0 100%; text-align:center}
+}

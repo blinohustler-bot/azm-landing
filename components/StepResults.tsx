@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import ProductCard from './ProductCard';
+import PartPicker from './PartPicker';
 import Track from './Track';
 import { CONFIG } from '@/lib/config';
 import { partLabel, type Product } from '@/lib/catalog';
+import { proofFor } from '@/lib/reviews';
 
 /* 05 — les pièces.
  *
@@ -15,6 +16,11 @@ import { partLabel, type Product } from '@/lib/catalog';
  * il reste toujours le choix Race (catless) / High Flow (catted), c'est-à-dire *légal
  * sur route ou non*, et jusqu'à 1 600 $ d'écart. Choisir à la place du client serait
  * une faute.
+ *
+ * La note d'une pièce est lue ici, côté serveur, et descend en propriété : ProductCard
+ * est 'use client' et ne doit pas importer lib/reviews — même garde que pour le
+ * catalogue. C'est aussi ce qui permet de n'envoyer au navigateur que les deux ou
+ * trois avis affichés plutôt que les 74 du fichier.
  */
 export default function StepResults({
   carName,
@@ -44,20 +50,21 @@ export default function StepResults({
         </Link>
       </div>
 
-      <div className={`grid${n === 1 ? ' grid--one' : ''}`}>
-        {parts.map((p, i) => (
-          <ProductCard
-            key={p.id}
-            product={p}
-            shop={shop}
-            partLabel={partLabel(p)}
-            priority={i === 0}
-          />
-        ))}
-      </div>
+      {/* La grille et le récapitulatif de commande vivent dans PartPicker, qui est
+          client : la sélection et la variante courante de chaque carte doivent être
+          connues au même endroit pour construire un seul lien panier. Ce qui vient du
+          serveur (libellé de pièce, avis) descend en propriété, comme avant. */}
+      <PartPicker
+        shop={shop}
+        parts={parts.map((p) => ({
+          product: p,
+          partLabel: partLabel(p),
+          proof: proofFor(p.handle)
+        }))}
+      />
 
       <p className="callout">
-        Not sure which one you want? <a href={CONFIG.PHONE_HREF}>Call {CONFIG.PHONE}</a> — a builder
+        Not sure which one you want? <a href={CONFIG.PHONE_HREF}>Call {CONFIG.PHONE}</a>. A builder
         confirms the fit and the sound before you order.
       </p>
 
@@ -66,7 +73,7 @@ export default function StepResults({
           <b>The fitment is printed</b>
           <p>
             Every part lists the exact years and chassis codes it was built for. If your car
-            isn&rsquo;t on that line, don&rsquo;t buy — call us instead.
+            isn&rsquo;t on that line, don&rsquo;t buy. Call us instead.
           </p>
         </div>
         <div>

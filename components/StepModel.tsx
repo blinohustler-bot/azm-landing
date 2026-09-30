@@ -52,7 +52,7 @@ export default function StepModel({
       <VehicleContext make={make} parts={parts} models={models.length} />
       <h1 id="step-title">Which {make}?</h1>
       <p className="sub">
-        If yours isn&rsquo;t on the list, we don&rsquo;t build for it yet — say so and you&rsquo;ll
+        If yours isn&rsquo;t on the list, we don&rsquo;t build for it yet. Say so and you&rsquo;ll
         get a straight answer instead of a maybe.
       </p>
 

@@ -7,22 +7,24 @@
 
 type Config = {
   LEAD_ENDPOINT: string;
-  TALK: string;
   PHONE: string;
   PHONE_HREF: string;
   PIXEL: string;
   GATE_FIRST: boolean;
   UTM: string;
+  GOOGLE: { RATING: number; COUNT: number; URL: string };
 };
 
 export const CONFIG: Config = {
   /* Le lead part vers notre propre fonction, qui écrit dans GHL. */
   LEAD_ENDPOINT: '/api/lead',
 
-  /* Lien de conversation (m.me de la Page). Vide → le bouton retombe sur le téléphone.
-     84 % du revenu d'AZM se facture par conversation : on ne cache pas ce canal. */
-  TALK: '',
-
+  /* Le canal conversation vit dans l'encadré sous la grille de résultats, qui donne ce
+     numéro. Il y avait en plus un bouton « Ask a builder » sur chaque carte produit,
+     réglé par un CONFIG.TALK resté vide : il retombait sur un lien tel:, mort sur
+     ordinateur, et il prenait la moitié de la largeur au bouton qui vend. Le bouton et
+     le réglage sont partis ensemble ; 84 % du revenu d'AZM se facture par conversation,
+     mais l'offrir trois fois sur le même écran ne la vendait pas mieux. */
   PHONE: '581-745-8680',      // publié sur azmotorsport.ca
   PHONE_HREF: 'tel:+15817458680',
 
@@ -33,8 +35,64 @@ export const CONFIG: Config = {
      nombre de leads. */
   GATE_FIRST: false,
 
-  UTM: 'utm_source=meta&utm_medium=paid&utm_campaign=fitment_lp'
+  UTM: 'utm_source=meta&utm_medium=paid&utm_campaign=fitment_lp',
+
+  /* La fiche Google du commerce. TENUE À LA MAIN, ET C'EST VOULU.
+   *
+   * Un avis Google porte sur l'entreprise, jamais sur une pièce : il n'y a rien à
+   * rattacher à un produit ici, et rien à récolter automatiquement non plus — lire la
+   * note en direct demanderait une clé Places API sur le chemin critique d'une page
+   * payée par la pub. Deux valeurs, écrites ici, revérifiées avant chaque campagne.
+   *
+   * RATING — 4.9, lu sur la fiche Google (place ChIJkzZeE1APyUwREDBP53WmvAw) le
+   *   2026-09-27. C'est aussi ce qu'affiche azmotorsport.ca.
+   * COUNT  — 140, le chiffre qu'AZM publie sur son propre thème Shopify. NON CONFIRMÉ
+   *   indépendamment : la fiche Google ne rend pas son total sans JavaScript. Un
+   *   nombre d'avis faux dans une pub est précisément ce qui se fait signaler —
+   *   à confirmer d'un coup d'œil sur la fiche avant de dépenser.
+   *
+   * Ces avis ne sont pas ceux de reviews.json. Voir l'en-tête de lib/reviews.ts. */
+  GOOGLE: {
+    RATING: 4.9,
+    COUNT: 140,
+    URL: 'https://www.google.com/maps/place/?q=place_id:ChIJkzZeE1APyUwREDBP53WmvAw'
+  }
 };
+
+/* La photo qui ouvre la page.
+ *
+ * Une GT3 992 qui crache une flamme bleue dans une station-service, la nuit. C'est une
+ * photo d'AZM, c'est leur pièce qui produit cette flamme, et aucune autre page ne l'a.
+ * Elle servait de fond à 16 % d'opacité derrière les écrans 02 à 04 : une vraie photo
+ * réduite à une texture.
+ *
+ * Elle est ici et pas en dur dans le composant parce que c'est un réglage de campagne :
+ * une pub ciblée BMW mériterait la photo BMW. Les neuf collections d'AZM sont dans
+ * catalog.json, champ `image` de chaque marque.
+ *
+ * L'hôte cdn.shopify.com est déjà déclaré dans next.config.ts > images.remotePatterns.
+ */
+export const HERO = {
+  SRC: 'https://cdn.shopify.com/s/files/1/0794/1983/4643/collections/7U4A0572.jpg',
+  ALT: 'A Porsche 911 GT3 shooting flame from an AZ Motorsport exhaust at a gas station at night'
+} as const;
+
+/* Le cookie « ce visiteur a déjà laissé ses coordonnées ».
+ *
+ * IL VIT ICI, ET PAS DANS lib/sendLead.ts, POUR UNE RAISON QUI A COÛTÉ CHER.
+ *
+ * sendLead.ts porte `'use client'`. Quand un composant SERVEUR importe une valeur
+ * d'un module client, Next ne lui donne pas la valeur : il lui donne une référence
+ * de module. `app/page.tsx` faisait donc `cookies().get(LEAD_COOKIE)` avec un objet
+ * en guise de nom, ne trouvait jamais rien, et `known` valait toujours false.
+ *
+ * Résultat : le cookie était bien écrit après un envoi confirmé, mais jamais relu.
+ * Un client qui revenait revoyait le formulaire à chaque fois. Le chemin « visiteur
+ * connu » n'avait jamais fonctionné. Trouvé par le test de bout en bout, pas à l'œil.
+ *
+ * config.ts n'a pas de `'use client'` : les deux côtés en lisent la vraie valeur.
+ */
+export const LEAD_COOKIE = 'azm_lead';
 
 export type StepName = 'make' | 'model' | 'generation' | 'gate' | 'results' | 'missing' | 'thanks';
 
