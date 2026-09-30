@@ -7,7 +7,9 @@ const csp = [
   "default-src 'self'",
   /* 'unsafe-inline' reste nécessaire pour le script du pixel Meta, qui s'injecte
      lui-même. Tout le reste du JS est servi par Next depuis notre propre origine. */
-  "script-src 'self' 'unsafe-inline' https://connect.facebook.net",
+  /* 'unsafe-eval' en développement seulement : React s'en sert pour reconstruire les
+     piles d'appel et affiche une erreur sans lui. Il ne l'utilise jamais en production. */
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''} https://connect.facebook.net`,
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
   "img-src 'self' data: https://cdn.shopify.com https://www.facebook.com https://connect.facebook.net",
