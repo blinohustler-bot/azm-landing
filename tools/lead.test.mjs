@@ -22,6 +22,8 @@ const calls = [];
 let existingOpp = null;
 let forceFailure = null;
 let refuseDoublon = false;
+let klaviyoDown = false;
+let klaviyoRefusePhone = false;
 
 const realFetch = globalThis.fetch;
 
@@ -29,6 +31,25 @@ globalThis.fetch = async (url, init) => {
   const u = new URL(url);
   const body = init.body ? JSON.parse(init.body) : null;
   calls.push({ method: init.method, path: u.pathname, query: Object.fromEntries(u.searchParams), body });
+
+  /* Klaviyo : un autre hôte, une autre authentification. */
+  if (u.hostname === 'a.klaviyo.com') {
+    const kjson = (o, status = 200) => ({
+      ok: status < 400, status, statusText: 'x', text: async () => (o ? JSON.stringify(o) : '')
+    });
+    if (init.headers.Authorization !== 'Klaviyo-API-Key pk_fake_0000') throw new Error('auth Klaviyo absente');
+    if (!init.headers.revision) throw new Error('en-tête revision absent');
+    if (klaviyoDown) return kjson({ errors: [{ detail: 'service unavailable' }] }, 503);
+    if (u.pathname === '/api/profile-import') {
+      if (klaviyoRefusePhone && body.data.attributes.phone_number) {
+        return kjson({ errors: [{ detail: 'Invalid phone number format', source: { pointer: '/data/attributes/phone_number' } }] }, 400);
+      }
+      return kjson({ data: { type: 'profile', id: 'kp_1' } }, 201);
+    }
+    if (u.pathname === '/api/events') return kjson(null, 202);
+    if (u.pathname === '/api/lists/LIST1/relationships/profiles') return kjson(null, 204);
+    return kjson({ errors: [{ detail: 'route inattendue ' + u.pathname }] }, 404);
+  }
 
   if (init.headers.Authorization !== 'Bearer pit-fake-token-0000') throw new Error('auth absente');
   if (!init.headers.Version) throw new Error('en-tête Version absent');
@@ -315,6 +336,56 @@ r = await POST(post({
 const noteFlood = calls.find((c) => /notes$/.test(c.path))?.body.body ?? '';
 const compte = Number((noteFlood.match(/Provenance \((\d+)\)/) || [])[1]);
 check('bourrage d\'URL plafonné à 30 paramètres', compte === 30, compte);
+
+/* 10 — Klaviyo : absent tant que la clé n'est pas posée */
+calls.length = 0;
+r = await POST(post({ ...GOOD, email: 'sans-cle@x.co' }, { 'x-vercel-forwarded-for': '198.51.100.20' }));
+check('sans clé Klaviyo → 200', r.status === 200);
+check('sans clé Klaviyo → aucun appel Klaviyo', !calls.some((c) => c.path.startsWith('/api/')));
+
+/* 11 — Klaviyo : profil + événement + liste */
+process.env.KLAVIYO_API_KEY = 'pk_fake_0000';
+process.env.KLAVIYO_LIST_ID = 'LIST1';
+calls.length = 0;
+r = await POST(post(GOOD, { 'x-vercel-forwarded-for': '198.51.100.21' }));
+check('avec Klaviyo → 200', r.status === 200, await bodyOf(r));
+const kProfile = calls.find((c) => c.path === '/api/profile-import');
+check('profil Klaviyo créé', !!kProfile);
+check('profil : courriel, téléphone E.164, prénom, nom',
+  kProfile?.body.data.attributes.email === 'alex@email.com'
+  && kProfile.body.data.attributes.phone_number === '+15145550134'
+  && kProfile.body.data.attributes.first_name === 'Alex'
+  && kProfile.body.data.attributes.last_name === 'Tremblay', kProfile?.body);
+check('profil : le char en propriété',
+  kProfile?.body.data.attributes.properties.fitment_car === 'BMW M3 (2015–2020 · F80)', kProfile?.body.data.attributes.properties);
+check('profil : utm recopiés', kProfile?.body.data.attributes.properties.utm_source === 'meta');
+const kEvent = calls.find((c) => c.path === '/api/events');
+check('événement Fitment Lead envoyé', kEvent?.body.data.attributes.metric.data.attributes.name === 'Fitment Lead', kEvent?.body);
+check("événement : valeur = somme des pièces", kEvent?.body.data.attributes.value === 4349, kEvent?.body.data.attributes.value);
+check('événement : unique_id posé (anti-doublon)', typeof kEvent?.body.data.attributes.unique_id === 'string');
+check('profil rangé dans la liste', calls.some((c) => c.path === '/api/lists/LIST1/relationships/profiles'
+  && c.body.data[0].id === 'kp_1'));
+check("Klaviyo seulement après l'opportunité",
+  calls.findIndex((c) => c.path === '/api/profile-import') > calls.findIndex((c) => c.path === '/opportunities/' && c.method === 'POST'));
+
+/* 12 — téléphone refusé par Klaviyo : le profil part quand même, sans téléphone */
+klaviyoRefusePhone = true;
+calls.length = 0;
+r = await POST(post({ ...GOOD, email: 'tel@x.co' }, { 'x-vercel-forwarded-for': '198.51.100.22' }));
+const imports = calls.filter((c) => c.path === '/api/profile-import');
+check('téléphone refusé → second essai sans téléphone',
+  imports.length === 2 && !imports[1].body.data.attributes.phone_number, imports.map((c) => c.body.data.attributes.phone_number));
+klaviyoRefusePhone = false;
+
+/* 13 — Klaviyo en panne : le lead passe quand même */
+klaviyoDown = true;
+calls.length = 0;
+r = await POST(post({ ...GOOD, email: 'panne@x.co' }, { 'x-vercel-forwarded-for': '198.51.100.23' }));
+check('Klaviyo en panne → le lead reste 200', r.status === 200, await bodyOf(r));
+check('Klaviyo en panne → opportunité créée quand même', calls.some((c) => c.path === '/opportunities/' && c.method === 'POST'));
+klaviyoDown = false;
+delete process.env.KLAVIYO_API_KEY;
+delete process.env.KLAVIYO_LIST_ID;
 
 globalThis.fetch = realFetch;
 console.log(fails ? `\n  ${fails} échec(s)\n` : '\n  tout passe\n');

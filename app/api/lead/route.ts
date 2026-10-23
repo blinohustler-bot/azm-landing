@@ -15,6 +15,8 @@
  *   GHL_STAGE_NAME     optionnel  sinon : la première étape du pipeline
  *   GHL_OPP_EMAIL_FIELD_ID  optionnel  id du champ {{opportunity.customer_email}} (sinon : par clé)
  *   ALLOWED_ORIGINS    optionnel  origines autorisées, séparées par des virgules
+ *   KLAVIYO_API_KEY    optionnel  clé privée Klaviyo (pk_…) ; vide = pas de profil Klaviyo
+ *   KLAVIYO_LIST_ID    optionnel  liste où ranger le profil (n'abonne pas)
  *   LEAD_DEBUG         optionnel  "1" renvoie le détail d'erreur dans la réponse (préprod)
  */
 
@@ -23,6 +25,7 @@ import {
   upsertContact, addNote, resolvePipeline,
   findOpenOpportunity, createOpportunity, updateOpportunity, setOpportunityEmail, GhlError
 } from '@/lib/ghl';
+import { klaviyoEnabled, syncLeadToKlaviyo, KlaviyoError } from '@/lib/klaviyo';
 
 /* La route touche une API externe et un état en mémoire : rien à mettre en cache. */
 export const dynamic = 'force-dynamic';
@@ -192,6 +195,20 @@ export async function POST(req: Request) {
       ? await updateOpportunity(existing.id, { name, monetaryValue: lead.value })
       : await createOpportunity({ name, pipelineId, stageId, contactId, monetaryValue: lead.value });
 
+    /* Le profil Klaviyo part dès que l'opportunité existe, en parallèle du reste : il
+       n'ajoute rien à l'attente du visiteur. Comme la note, il ne fait jamais échouer
+       le lead — GHL est la source de vérité, Klaviyo la relance. */
+    const klaviyo = klaviyoEnabled()
+      ? syncLeadToKlaviyo(lead, { firstName, lastName }).then(
+          (r) => r.profileId,
+          (e) => {
+            console.error('[lead] profil Klaviyo non écrit:',
+              e instanceof KlaviyoError ? `Klaviyo ${e.status}: ${e.message}` : e instanceof Error ? e.message : String(e));
+            return null;
+          }
+        )
+      : Promise.resolve(null);
+
     /* Le courriel dans le champ {{opportunity.customer_email}}. Appel à part et non
        bloquant, comme la note : un champ mal nommé côté GHL ne doit pas coûter le lead. */
     if (opportunityId) {
@@ -211,10 +228,13 @@ export async function POST(req: Request) {
       console.error('[lead] note non écrite:', e instanceof Error ? e.message : String(e));
     }
 
+    const klaviyoProfileId = await klaviyo;
+
     console.log('[lead] ok', {
       source: lead.source,
       contactId,
       opportunityId,
+      klaviyoProfileId,
       contactNew: isNew,
       reused: Boolean(existing?.id),
       value: lead.value
