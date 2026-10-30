@@ -9,6 +9,7 @@ import StepMissing from '@/components/StepMissing';
 import StepThanks from '@/components/StepThanks';
 import LeadRetry from '@/components/LeadRetry';
 import Track from '@/components/Track';
+import ScrollTop from '@/components/ScrollTop';
 import ReviewsFooter from '@/components/ReviewsFooter';
 import { CONFIG, LEAD_COOKIE, type StepName } from '@/lib/config';
 import {
@@ -120,6 +121,7 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
           {car ? `, ${car}` : ''}
         </p>
 
+        <ScrollTop key={`top|${step}|${make?.make ?? ''}|${model?.key ?? ''}|${gen?.from ?? ''}`} />
         {/* Un événement maison par écran affiché : l'entonnoir complet dans Meta, étape
             par étape, pour voir où l'on décroche. La `key` le refait tirer à chaque
             changement d'écran ou de char — sans elle, React garderait le même composant
