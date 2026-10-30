@@ -48,9 +48,6 @@ export default function StepGeneration({
               <small>{g.chassis || `${g.products.length} parts`}</small>
             </Link>
           ))}
-        <Link className="choice choice--plain" href={`${base}&step=missing`} scroll={false}>
-          <span>Older / not sure</span>
-        </Link>
       </div>
     </section>
   );

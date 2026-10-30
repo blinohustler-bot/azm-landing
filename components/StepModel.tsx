@@ -52,8 +52,7 @@ export default function StepModel({
       <VehicleContext make={make} parts={parts} models={models.length} />
       <h1 id="step-title">Which {make}?</h1>
       <p className="sub">
-        If yours isn&rsquo;t on the list, we don&rsquo;t build for it yet. Say so and you&rsquo;ll
-        get a straight answer instead of a maybe.
+        Pick yours from the list.
       </p>
 
       {withSearch ? (
@@ -87,12 +86,9 @@ export default function StepModel({
         ))}
         {shown.length === 0 ? (
           <p className="choices__empty">
-            Nothing matches “{q.trim()}”. Clear the search, or tell us about your car below.
+            Nothing matches “{q.trim()}”. Clear the search and pick from the list.
           </p>
         ) : null}
-        <Link className="choice choice--plain" href={`${base}&step=missing`} scroll={false}>
-          <span>My model isn&rsquo;t listed</span>
-        </Link>
       </div>
 
       {/* aria-live : la liste change sous un champ de recherche, et un lecteur d'écran
