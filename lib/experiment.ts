@@ -25,13 +25,7 @@ export type Experiment = {
   variants: readonly string[];
 };
 
-/* gate1 — lancé le 2026-10-31.
- *   A : le parcours actuel, coordonnées APRÈS le choix du char (le témoin).
- *   B : coordonnées AVANT le choix du char. Le lead naît sans char, puis le char et
- *       les pièces sont ajoutés à la même opportunité GHL quand les pièces s'affichent.
- * Le juge : le coût par lead servable dans GHL (tags ab-gate1-A / ab-gate1-B), pas le
- * nombre de leads. */
-export const EXPERIMENT: Experiment | null = { id: 'gate1', variants: ['A', 'B'] };
+export const EXPERIMENT: Experiment | null = null;
 
 export const AB_COOKIE = 'azm_ab';
 

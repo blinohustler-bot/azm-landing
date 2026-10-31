@@ -11,9 +11,7 @@ import LeadRetry from '@/components/LeadRetry';
 import Track from '@/components/Track';
 import ScrollTop from '@/components/ScrollTop';
 import ReviewsFooter from '@/components/ReviewsFooter';
-import { CONFIG, LEAD_COOKIE, GATED_COOKIE, type StepName } from '@/lib/config';
-import { AB_COOKIE, abVariant } from '@/lib/experiment';
-import LeadCarSync from '@/components/LeadCarSync';
+import { CONFIG, LEAD_COOKIE, type StepName } from '@/lib/config';
 import {
   SHOP, findMake, findModel, findGeneration, partsFor, carName, generationLabel
 } from '@/lib/catalog';
@@ -72,14 +70,7 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
      client revient directement sur ses pièces, sans voir le formulaire clignoter le
      temps que le navigateur lise son localStorage. Ce n'est pas une barrière de
      sécurité — le gate est un dispositif de conversion, et l'a toujours été. */
-  const jar = await cookies();
-  const known = jar.get(LEAD_COOKIE)?.value === '1';
-
-  /* Formulaire en premier : la version B de l'A/B gate1 (lib/experiment.ts), ou tout le
-     monde si CONFIG.GATE_FIRST. `gated` ne peut valoir vrai sans `known` que dans ce
-     cas : la version A ne pose jamais GATED_COOKIE et reste le parcours d'avant. */
-  const gateFirst = CONFIG.GATE_FIRST || abVariant(jar.get(AB_COOKIE)?.value) === 'B';
-  const gated = known || (gateFirst && jar.get(GATED_COOKIE)?.value === '1');
+  const known = (await cookies()).get(LEAD_COOKIE)?.value === '1';
 
   const needsGeneration = Boolean(model && model.generations.length > 1);
   const parts = partsFor(model, gen);
@@ -88,12 +79,12 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
   let step: StepName;
   if (qs.step === 'thanks') step = 'thanks';
   else if (qs.step === 'missing') step = 'missing';
-  else if (gateFirst && !gated) step = 'gate';
+  else if (CONFIG.GATE_FIRST && !known) step = 'gate';
   else if (!make) step = 'make';
   else if (!model) step = 'model';
   else if (needsGeneration && !gen) step = 'generation';
   else if (parts.length === 0) step = 'missing';
-  else if (gated || qs.step === 'results') step = 'results';
+  else if (known || qs.step === 'results') step = 'results';
   else step = 'gate';
 
   /* ── d'où l'on revient ──────────────────────────────────────────────────── */
@@ -103,7 +94,6 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
 
   const backHref: string | null =
     step === 'make' || step === 'thanks' ? null
-      : step === 'gate' && gateFirst ? null   // il ouvre le parcours : rien derrière
       : step === 'model' ? '/'
       : step === 'generation' ? makeHref
       : step === 'missing' ? (make ? makeHref : '/')
@@ -121,7 +111,7 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
   return (
     <>
       <Header backHref={backHref} />
-      <Progress step={step} gateFirst={gateFirst} />
+      <Progress step={step} />
 
       <main>
         {/* Le changement d'écran n'est plus un rechargement de page : sans cette
@@ -177,12 +167,7 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
             <StepGate
               carName={car || 'car'}
               partCount={parts.length}
-              /* Formulaire en premier : on reprend le parcours là où l'URL en était (une
-                 pub peut viser une marque ou un modèle), et la page décide de l'écran. */
-              resultsHref={gateFirst
-                ? (gen ? `${modelHref}&year=${gen.from}` : modelHref)
-                : `${gen ? `${modelHref}&year=${gen.from}` : modelHref}&step=results`}
-              gateFirst={gateFirst}
+              resultsHref={`${gen ? `${modelHref}&year=${gen.from}` : modelHref}&step=results`}
               parts={parts.map((p) => ({ title: p.title, price: p.price }))}
               /* Sans ces trois-là, l'opportunité arrivait dans GHL sans marque : pas de
                  tag de marque sur le contact, et une note qui disait « Marque : — ». */
@@ -198,17 +183,6 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
             {/* Le filet sous la garantie du gate : rejoue un lead que /api/lead
                 n'aurait pas réussi à écrire à l'étape précédente. */}
             <LeadRetry />
-            {/* Formulaire en premier : le lead est né sans char. On l'ajoute à
-                l'opportunité maintenant qu'on le connaît. */}
-            {gateFirst ? (
-              <LeadCarSync
-                car={car}
-                make={make?.make ?? null}
-                model={model?.label ?? null}
-                generation={gen ? generationLabel(gen) : null}
-                parts={parts.map((p) => ({ title: p.title, price: p.price }))}
-              />
-            ) : null}
             <StepResults carName={car} parts={parts} shop={SHOP} />
           </>
         ) : null}

@@ -101,13 +101,6 @@ export const HERO = {
  */
 export const LEAD_COOKIE = 'azm_lead';
 
-/* « A passé le formulaire dans cette session », posé seulement quand le formulaire
-   vient EN PREMIER (version B de l'A/B gate1). Cookie de session, posé même si l'envoi
-   n'a pas encore abouti : sans lui, un envoi raté renverrait au formulaire à chaque
-   clic, puisque LEAD_COOKIE n'est posé que sur un envoi confirmé. LeadRetry rejoue
-   l'envoi sur l'écran des pièces. */
-export const GATED_COOKIE = 'azm_gated';
-
 export type StepName = 'make' | 'model' | 'generation' | 'gate' | 'results' | 'missing' | 'thanks';
 
 /* La barre de progression et le numéro d'étape lisent la même table : une étape
