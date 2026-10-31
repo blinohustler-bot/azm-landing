@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Field, Honeypot, type FieldState } from './LeadFields';
 import { sendLead, okEmail, okPhone, okName } from '@/lib/sendLead';
 import { track } from '@/lib/track';
+import { GATED_COOKIE } from '@/lib/config';
 
 const blank: FieldState = { value: '', bad: false };
 
@@ -22,7 +23,8 @@ export default function StepGate({
   parts,
   make,
   model,
-  generation
+  generation,
+  gateFirst = false
 }: {
   carName: string;
   partCount: number;
@@ -31,7 +33,13 @@ export default function StepGate({
   make: string | null;
   model: string | null;
   generation: string | null;
+  /** Version B de l'A/B gate1 : le formulaire ouvre le parcours, sans char choisi. */
+  gateFirst?: boolean;
 }) {
+  const noCar = !make;
+  /* Formulaire en premier : même arrivé par une pub qui vise une marque, le char n'est
+     pas encore choisi. Pas de puce « Your car », et le texte annonce la suite. */
+  const before = noCar || (gateFirst && !partCount);
   const router = useRouter();
   const [name, setName] = useState(blank);
   const [email, setEmail] = useState(blank);
@@ -57,8 +65,9 @@ export default function StepGate({
        naisse dans GHL et que les pièces s'affichent. Pas à l'affichage du formulaire —
        ça comptait comme lead toute personne qui l'avait seulement vu. */
     const value = parts.reduce((sum, p) => sum + (p.price || 0), 0);
-    track('Lead', { content_name: carName, content_type: 'fitment_form', value, currency: 'CAD' });
-    track('CompleteRegistration', { content_name: carName, status: 'fitment_lead' });
+    const label = noCar ? 'no car yet' : carName;
+    track('Lead', { content_name: label, content_type: 'fitment_form', value, currency: 'CAD' });
+    track('CompleteRegistration', { content_name: label, status: 'fitment_lead' });
 
     /* C'est ICI que l'opportunité doit naître : la personne a donné ses coordonnées,
        elle peut regarder les pièces et refermer l'onglet dans la minute. On attend donc
@@ -70,7 +79,7 @@ export default function StepGate({
       name: name.value.trim(),
       email: email.value.trim(),
       phone: phone.value.trim(),
-      car: carName,
+      car: noCar ? '' : carName,
       make,
       model,
       generation,
@@ -80,17 +89,22 @@ export default function StepGate({
       company
     });
 
+    if (gateFirst) {
+      try { document.cookie = `${GATED_COOKIE}=1; path=/; SameSite=Lax`; } catch { /* idem */ }
+    }
     router.push(resultsHref, { scroll: false });
   }
 
-  const sub = partCount
+  const sub = before
+    ? 'Tell us where to send your fitment sheet. Then pick your car, and the parts built for it show up right away.'
+    : partCount
     ? `We found ${partCount} ${partCount === 1 ? 'part' : 'parts'} built for your ${carName}. Tell us where to send the fitment sheet and they show up right now.`
     : `Tell us where to reach you and we'll confirm what we can build for your ${carName}.`;
 
   return (
     <section className="screen wrap wrap--narrow" aria-labelledby="step-title">
       <p className="rule">
-        <b>04</b> Where to send it
+        {gateFirst ? null : <b>04</b>} Where to send it
       </p>
       <h1 id="step-title">
         Your fitment
@@ -99,9 +113,11 @@ export default function StepGate({
       </h1>
       <p className="sub">{sub}</p>
 
-      <div className="vehicle-chip">
-        Your car <b>{carName}</b>
-      </div>
+      {before ? null : (
+        <div className="vehicle-chip">
+          Your car <b>{carName}</b>
+        </div>
+      )}
 
       <form className="form" onSubmit={submit} noValidate>
         <Field
@@ -122,7 +138,9 @@ export default function StepGate({
         <Honeypot id="i-company" value={company} onChange={setCompany} />
 
         <button className="btn btn--wide" type="submit" disabled={sending}>
-          {sending ? 'Loading your parts…' : 'Show my parts →'}
+          {before
+            ? (sending ? 'One second…' : 'Pick my car →')
+            : (sending ? 'Loading your parts…' : 'Show my parts →')}
         </button>
         <p className="legal">
           No spam. We use this to confirm the fitment on your chassis and to answer install

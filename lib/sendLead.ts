@@ -35,6 +35,9 @@ export type LeadPayload = {
   landing?: string;
   elapsedMs: number;
   company: string;
+  /* La version A/B (lib/experiment.ts). Dans le corps et pas en cookie : l'envoi part
+     en credentials 'omit'. Posée par sendLead, comme `landing`. */
+  ab?: string | null;
 };
 
 /* Au-delà, on rend la main à la personne et la reprise prend le relais. Un aller-retour
@@ -57,6 +60,7 @@ export function landingUrl(): string {
    qui l'importerait d'ici recevrait une reference de module et pas la chaine.
    Reexportee pour les appelants deja cote client. */
 import { LEAD_COOKIE } from './config';
+import { AB_COOKIE, abValue } from './experiment';
 export { LEAD_COOKIE };
 
 /* Marque « ce visiteur est dans GHL ».
@@ -117,11 +121,24 @@ async function postOnce(body: string): Promise<boolean> {
   }
 }
 
+function currentAb(): string | null {
+  try {
+    const pair = document.cookie.split('; ').find((c) => c.startsWith(`${AB_COOKIE}=`));
+    return abValue(pair ? decodeURIComponent(pair.slice(AB_COOKIE.length + 1)) : null);
+  } catch {
+    return null;
+  }
+}
+
 /* Attend la réponse, mais jamais plus que SEND_TIMEOUT_MS. Rend `true` si
    l'opportunité est écrite. */
 export async function sendLead(payload: LeadPayload): Promise<boolean> {
   /* Posée ici et pas dans l'appelant : aucun formulaire ne doit pouvoir l'oublier. */
-  const body = JSON.stringify({ ...payload, landing: payload.landing ?? landingUrl() });
+  const body = JSON.stringify({
+    ...payload,
+    landing: payload.landing ?? landingUrl(),
+    ab: payload.ab ?? currentAb()
+  });
 
   /* Consigné AVANT la tentative : un onglet fermé au mauvais moment ne doit pas
      emporter le lead avec lui. */

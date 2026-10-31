@@ -144,6 +144,23 @@ check('prénom / nom séparés', upsert.body.firstName === 'Alex' && upsert.body
 check('locationId posé', upsert.body.locationId === 'loc_TEST');
 check("source depuis l'utm", upsert.body.source === 'meta — fitment LP', upsert.body.source);
 check('tags posés', upsert.body.tags.includes('fitment-lp') && upsert.body.tags.includes('bmw'), upsert.body.tags);
+check('sans version A/B → aucun tag ab-', !upsert.body.tags.some((t) => t.startsWith('ab-')), upsert.body.tags);
+
+/* 1b — la version A/B devient un tag GHL, seulement si elle correspond au test en cours */
+{
+  const { EXPERIMENT } = await import('@/lib/experiment.ts');
+  if (EXPERIMENT) {
+    const ab = `${EXPERIMENT.id}-${EXPERIMENT.variants[1]}`;
+    let n = calls.length;
+    await POST(post({ ...GOOD, ab }));
+    let up = calls.slice(n).find((c) => c.path === '/contacts/upsert');
+    check('version A/B → tag ab-<id>-<version>', up?.body.tags.includes(`ab-${ab}`), up?.body.tags);
+    n = calls.length;
+    await POST(post({ ...GOOD, ab: 'vieux-test-B' }));
+    up = calls.slice(n).find((c) => c.path === '/contacts/upsert');
+    check('version inconnue → ignorée', !up?.body.tags.some((t) => t.startsWith('ab-')), up?.body.tags);
+  }
+}
 
 const create = calls.find((c) => c.path === '/opportunities/' && c.method === 'POST');
 check('opportunité créée', !!create);

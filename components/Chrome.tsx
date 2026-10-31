@@ -44,8 +44,9 @@ export function Header({ backHref }: { backHref: string | null }) {
   );
 }
 
-export function Progress({ step }: { step: StepName }) {
-  const n = STEP_INDEX[step];
+export function Progress({ step, gateFirst = false }: { step: StepName; gateFirst?: boolean }) {
+  /* Formulaire en premier : il ouvre le parcours, la barre ne doit pas partir à 80 %. */
+  const n = gateFirst && step === 'gate' ? 1 : STEP_INDEX[step];
   const pct = (n / TOTAL_STEPS) * 100;
   return (
     <div

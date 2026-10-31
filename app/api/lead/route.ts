@@ -25,7 +25,7 @@ import {
   upsertContact, addNote, resolvePipeline,
   findOpenOpportunity, createOpportunity, updateOpportunity, setOpportunityEmail, GhlError
 } from '@/lib/ghl';
-import { AB_COOKIE, abValue } from '@/lib/experiment';
+import { abValue } from '@/lib/experiment';
 import { klaviyoEnabled, syncLeadToKlaviyo, KlaviyoError } from '@/lib/klaviyo';
 
 /* La route touche une API externe et un état en mémoire : rien à mettre en cache. */
@@ -110,11 +110,6 @@ const json = (body: unknown, status: number, headers: Headers) =>
     headers: (headers.set('Content-Type', 'application/json'), headers)
   });
 
-function abCookie(header: string | null): string | null {
-  const pair = header?.split(';').map((c) => c.trim()).find((c) => c.startsWith(`${AB_COOKIE}=`));
-  return pair ? decodeURIComponent(pair.slice(AB_COOKIE.length + 1)) : null;
-}
-
 export async function OPTIONS(req: Request) {
   return new Response(null, { status: 204, headers: corsHeaders(req.headers.get('origin')) });
 }
@@ -179,10 +174,10 @@ export async function POST(req: Request) {
     const tags = ['fitment-lp', 'meta-ads'];
     if (lead.source === 'fitment_lp_not_listed') tags.push('hors-catalogue');
     if (lead.make) tags.push(lead.make.toLowerCase());
-    /* La version A/B vit dans un cookie de la page ; la requête du formulaire part de
-       la même origine et le porte. C'est le tag qui permet de compter les leads
-       servables par version dans GHL. */
-    const ab = abValue(abCookie(req.headers.get('cookie')));
+    /* La version A/B arrive dans le corps (l'envoi part sans cookies) et n'est gardée
+       que si elle correspond à l'expérience en cours. C'est le tag qui permet de
+       compter les leads servables par version dans GHL. */
+    const ab = abValue(typeof body.ab === 'string' ? body.ab : null);
     if (ab) tags.push(`ab-${ab}`);
 
     const { id: contactId, isNew } = await upsertContact({
