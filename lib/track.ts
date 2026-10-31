@@ -7,6 +7,8 @@
  * qu'une page cassée parce qu'un bloqueur de pub a retiré le script.
  */
 
+import { AB_COOKIE, abValue } from './experiment';
+
 type Fbq = (action: string, event: string, data?: Record<string, unknown>) => void;
 
 declare global {
@@ -22,7 +24,15 @@ function send(action: 'track' | 'trackCustom', event: string, data?: Record<stri
     if (tries > 0) setTimeout(() => send(action, event, data, tries - 1), 250);
     return;
   }
-  try { window.fbq(action, event, data ?? {}); } catch { /* jamais bloquant */ }
+  try { window.fbq(action, event, withAb(data)); } catch { /* jamais bloquant */ }
+}
+
+/* La version A/B part sur CHAQUE événement : c'est ce qui permet de lire l'entonnoir
+   et les leads par version dans Meta, sans rien changer aux appels existants. */
+function withAb(data?: Record<string, unknown>): Record<string, unknown> {
+  const raw = document.cookie.match(new RegExp(`(?:^|; )${AB_COOKIE}=([^;]*)`))?.[1];
+  const ab = abValue(raw ? decodeURIComponent(raw) : null);
+  return ab ? { ...(data ?? {}), ab } : (data ?? {});
 }
 
 export function track(event: string, data?: Record<string, unknown>) {

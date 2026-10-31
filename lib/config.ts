@@ -10,6 +10,7 @@ type Config = {
   PHONE: string;
   PHONE_HREF: string;
   PIXEL: string;
+  CLARITY: string;
   GATE_FIRST: boolean;
   UTM: string;
   GOOGLE: { RATING: number; COUNT: number; URL: string };
@@ -29,6 +30,12 @@ export const CONFIG: Config = {
   PHONE_HREF: 'tel:+15817458680',
 
   PIXEL: '854592952776027',
+
+  /* Microsoft Clarity : heatmaps, enregistrements de sessions, clics de rage. L'id du
+     projet (clarity.microsoft.com → Settings → Overview) est public, comme celui du
+     pixel. Vide = pas de Clarity. Les champs de formulaire sont masqués par défaut
+     côté Clarity : ne pas changer ce réglage, la page récolte des coordonnées. */
+  CLARITY: '',
 
   /* true = coordonnées AVANT le choix du char. Les taux de base disent que le gate en
      premier abandonne le plus ; c'est l'A/B à trancher sur le CPL servable, pas sur le

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Archivo } from 'next/font/google';
 import Script from 'next/script';
 import { CONFIG } from '@/lib/config';
+import { AB_COOKIE } from '@/lib/experiment';
 import LandingCapture from '@/components/LandingCapture';
 import './globals.css';
 
@@ -62,6 +63,17 @@ n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,
 'script','https://connect.facebook.net/en_US/fbevents.js');
 fbq('init','${CONFIG.PIXEL}');fbq('track','PageView');`}
+          </Script>
+        ) : null}
+        {/* Clarity, chargé comme le pixel : après l'hydratation. La version A/B part en
+            variable de session, pour filtrer heatmaps et enregistrements par version. */}
+        {CONFIG.CLARITY ? (
+          <Script id="ms-clarity" strategy="afterInteractive">
+            {`(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","${CONFIG.CLARITY}");
+var ab=document.cookie.split('; ').find(function(c){return c.indexOf('${AB_COOKIE}=')===0});
+if(ab)clarity('set','ab',decodeURIComponent(ab.slice(${AB_COOKIE.length + 1})));`}
           </Script>
         ) : null}
         {/* Sans JS, Meta ne voit que ce PageView-là : l'image fait le hit elle-même. */}

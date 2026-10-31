@@ -9,11 +9,13 @@ const csp = [
      lui-même. Tout le reste du JS est servi par Next depuis notre propre origine. */
   /* 'unsafe-eval' en développement seulement : React s'en sert pour reconstruire les
      piles d'appel et affiche une erreur sans lui. Il ne l'utilise jamais en production. */
-  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''} https://connect.facebook.net`,
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''} https://connect.facebook.net https://www.clarity.ms https://*.clarity.ms`,
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
-  "img-src 'self' data: https://cdn.shopify.com https://www.facebook.com https://connect.facebook.net",
-  "connect-src 'self' https://www.facebook.com https://connect.facebook.net",
+  /* Clarity charge son script depuis www.clarity.ms, puis envoie vers un sous-domaine
+     de clarity.ms et c.bing.com. */
+  "img-src 'self' data: https://cdn.shopify.com https://www.facebook.com https://connect.facebook.net https://*.clarity.ms https://c.bing.com",
+  "connect-src 'self' https://www.facebook.com https://connect.facebook.net https://*.clarity.ms https://c.bing.com",
   "form-action 'self'",
   "frame-ancestors 'self'",
   "base-uri 'self'"
