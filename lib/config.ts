@@ -35,7 +35,7 @@ export const CONFIG: Config = {
      projet (clarity.microsoft.com → Settings → Overview) est public, comme celui du
      pixel. Vide = pas de Clarity. Les champs de formulaire sont masqués par défaut
      côté Clarity : ne pas changer ce réglage, la page récolte des coordonnées. */
-  CLARITY: '',
+  CLARITY: 'z6gwhblgwz',
 
   /* true = coordonnées AVANT le choix du char. Les taux de base disent que le gate en
      premier abandonne le plus ; c'est l'A/B à trancher sur le CPL servable, pas sur le
