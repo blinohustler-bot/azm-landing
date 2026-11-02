@@ -121,7 +121,8 @@ async function postOnce(body: string): Promise<boolean> {
   }
 }
 
-function currentAb(): string | null {
+/* La version A/B du visiteur, ou null. Lue aussi par le lien d'achat (checkout.ts). */
+export function currentAb(): string | null {
   try {
     const pair = document.cookie.split('; ').find((c) => c.startsWith(`${AB_COOKIE}=`));
     return abValue(pair ? decodeURIComponent(pair.slice(AB_COOKIE.length + 1)) : null);

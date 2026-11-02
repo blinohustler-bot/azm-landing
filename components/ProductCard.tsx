@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Stars from './Stars';
 import { CONFIG } from '@/lib/config';
 import { track } from '@/lib/track';
+import { withCheckout } from '@/lib/checkout';
 /* catalogTypes, jamais catalog : ce fichier est 'use client', et lib/catalog importe
    catalog.json — 360 ko qui partiraient dans le bundle du navigateur. La même règle
    vaut pour reviewTypes / reviews : la note arrive en propriété depuis StepResults,
@@ -217,6 +218,11 @@ export default function ProductCard({
             {current.available ? 'In stock' : 'Built to order'}
           </span>
         </div>
+        {/* À CONFIRMER chez AZM : Shop Pay Installments doit être activé dans leur
+            Shopify, sinon cette ligne promet un paiement qui n'existe pas. */}
+        <p className="paysplit">
+          or 4 payments of <b>{money(Math.ceil(current.price / 4))}</b> with Shop Pay
+        </p>
 
         {/* Un seul bouton. « Ask a builder » doublait l'encadré qui suit la grille et
             offre le même numéro, il était mort sur ordinateur — CONFIG.TALK était vide,
@@ -230,18 +236,30 @@ export default function ProductCard({
           <a
             className="btn"
             href={buyHref}
-            onClick={() =>
+            onClick={(e) => {
+              e.currentTarget.href = withCheckout(buyHref);
               track('AddToCart', {
                 content_ids: [String(current.id)],
                 content_name: product.title,
                 value: current.price,
                 currency: 'CAD'
-              })
-            }
+              });
+            }}
           >
             Buy now
           </a>
         </div>
+        {/* Rassurance au moment du clic. Faits lus sur azmotorsport.ca (politique
+            d'expédition, 2026-01-28). Le délai de 1–2 jours ne vaut que pour une pièce
+            en stock : une pièce fabriquée sur commande prend plus de temps. */}
+        <ul className="assure">
+          <li>Secure Shopify checkout, your details already filled in</li>
+          <li>
+            {current.available
+              ? 'Ships from Brossard, QC in 1–2 business days · Canada & US'
+              : 'Built and shipped from Brossard, QC · Canada & US'}
+          </li>
+        </ul>
 
         {/* La case n'apparaît que sur un écran à plusieurs pièces. Elle sert à
             construire une commande : Shopify remplace le panier à chaque lien

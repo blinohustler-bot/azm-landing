@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import ProductCard from './ProductCard';
 import { CONFIG } from '@/lib/config';
 import { track } from '@/lib/track';
+import { withCheckout } from '@/lib/checkout';
 import { money, type Product } from '@/lib/catalogTypes';
 import type { Proof } from '@/lib/reviewTypes';
 
@@ -106,14 +107,15 @@ export default function PartPicker({ parts, shop }: { parts: PickerPart[]; shop:
           <a
             className="btn"
             href={cartHref}
-            onClick={() =>
+            onClick={(e) => {
+              e.currentTarget.href = withCheckout(cartHref);
               track('AddToCart', {
                 content_ids: lines.map((l) => String(l.variantId)),
                 content_name: `bundle of ${lines.length}`,
                 value: total,
                 currency: 'CAD'
-              })
-            }
+              });
+            }}
           >
             {lines.length === 1 ? 'Buy this part' : `Buy these ${lines.length} together`}
           </a>

@@ -1002,3 +1002,12 @@ footer p{margin:0 0 6px}
   .bundle__sum{flex:1 0 100%}
   .bundle .btn{flex:1 0 100%; text-align:center}
 }
+
+/* MAQUETTE — versements et rassurance sous le prix / le bouton. */
+.paysplit{margin:-4px 0 16px; color:#c9cdd1; font-size:.95rem}
+.paysplit b{color:var(--lime); font-weight:800}
+.assure{list-style:none; margin:14px 0 0; padding:12px 14px; display:grid; gap:8px;
+  border:1px solid var(--line2); background:var(--panel2)}
+.assure li{position:relative; padding-left:24px; color:var(--text); font-size:.9rem; font-weight:600; line-height:1.4}
+.assure li::before{content:''; position:absolute; left:3px; top:.4em; width:11px; height:6px;
+  border-left:2.5px solid var(--lime); border-bottom:2.5px solid var(--lime); transform:rotate(-45deg)}
