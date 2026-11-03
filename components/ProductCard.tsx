@@ -249,6 +249,24 @@ export default function ProductCard({
             Buy now
           </a>
         </div>
+        {/* La case n'apparaît que sur un écran à plusieurs pièces. Elle sert à
+            construire une commande : Shopify remplace le panier à chaque lien
+            /cart/<variante>:1, donc sans elle un client qui veut les downpipes ET
+            l'échappement ne peut pas les commander ensemble. C'est une vraie case à
+            cocher, pas un bouton déguisé : un lecteur d'écran doit l'annoncer comme
+            telle, et son état doit se lire sans la couleur. Habillée en bouton
+            secondaire juste sous « Buy now », sinon personne ne la voyait. */}
+        {pickable ? (
+          <label className="pick">
+            <input
+              type="checkbox"
+              checked={picked}
+              onChange={() => onPick?.(product.id)}
+            />
+            <span>{picked ? 'Added to cart' : 'Add to cart'}</span>
+          </label>
+        ) : null}
+
         {/* Rassurance au moment du clic. Faits lus sur azmotorsport.ca (politique
             d'expédition, 2026-01-28). Le délai de 1–2 jours ne vaut que pour une pièce
             en stock : une pièce fabriquée sur commande prend plus de temps. */}
@@ -261,22 +279,6 @@ export default function ProductCard({
           </li>
         </ul>
 
-        {/* La case n'apparaît que sur un écran à plusieurs pièces. Elle sert à
-            construire une commande : Shopify remplace le panier à chaque lien
-            /cart/<variante>:1, donc sans elle un client qui veut les downpipes ET
-            l'échappement ne peut pas les commander ensemble. C'est une vraie case à
-            cocher, pas un bouton déguisé : un lecteur d'écran doit l'annoncer comme
-            telle, et son état doit se lire sans la couleur. */}
-        {pickable ? (
-          <label className="pick">
-            <input
-              type="checkbox"
-              checked={picked}
-              onChange={() => onPick?.(product.id)}
-            />
-            <span>{picked ? 'In your order' : 'Add to order'}</span>
-          </label>
-        ) : null}
 
         {/* La mention off-road n'apparaît que si aucune option ne l'explique déjà :
             l'aide sous le sélecteur dit la même chose, en plus clair. */}

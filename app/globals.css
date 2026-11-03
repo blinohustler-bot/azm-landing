@@ -949,12 +949,13 @@ footer p{margin:0 0 6px}
    écrans affichent deux pièces ou plus, et l'écart médian entre une pièce et toutes
    les pièces de l'écran est de 2 789 $.                                             */
 .pick{
-  display:flex; align-items:center; gap:10px; cursor:pointer;
-  margin-top:2px; padding:10px 0; min-height:44px;
-  font-weight:600; font-size:.82rem; color:var(--muted);
-  transition:color .16s ease;
+  display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;
+  margin-top:10px; padding:14px 20px; min-height:52px;
+  border:1.5px solid var(--lime); background:transparent;
+  font-weight:900; font-size:.92rem; font-style:italic; text-transform:uppercase;
+  letter-spacing:.02em; color:var(--lime); transition:background .12s ease, color .16s ease;
 }
-.pick:hover{color:var(--text)}
+.pick:hover{background:#cefe0114}
 /* Une vraie case, pas un bouton déguisé : le lecteur d'écran doit l'annoncer comme
    une case, et son état doit se lire sans la couleur. D'où la coche dessinée. */
 .pick input{
@@ -971,7 +972,7 @@ footer p{margin:0 0 6px}
 .pick input:checked{background:var(--lime); border-color:var(--lime)}
 .pick input:checked::after{opacity:1}
 .pick input:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
-.pick:has(input:checked){color:var(--text)}
+.pick:has(input:checked){background:#cefe011f; color:var(--text)}
 
 /* Le récapitulatif. Il colle en bas de l'écran tant qu'on a des pièces cochées :
    la grille est plus haute qu'un écran de téléphone, et un bouton de commande qu'il
