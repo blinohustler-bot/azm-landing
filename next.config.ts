@@ -16,7 +16,11 @@ const csp = [
      de clarity.ms et c.bing.com. */
   "img-src 'self' data: https://cdn.shopify.com https://www.facebook.com https://connect.facebook.net https://*.clarity.ms https://c.bing.com",
   "connect-src 'self' https://www.facebook.com https://connect.facebook.net https://*.clarity.ms https://c.bing.com",
-  "form-action 'self'",
+  /* Le pixel Meta envoie ses événements par un formulaire POST dans une iframe vers
+     www.facebook.com/tr (vu en prod le 2026-11-03 : aucun envoi par image ni fetch).
+     Sans ces deux règles, la CSP bloquait PageView, FormStep, Lead et AddToCart. */
+  "frame-src https://www.facebook.com",
+  "form-action 'self' https://www.facebook.com",
   "frame-ancestors 'self'",
   "base-uri 'self'"
 ].join('; ');
