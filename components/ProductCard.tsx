@@ -255,7 +255,7 @@ export default function ProductCard({
             l'échappement ne peut pas les commander ensemble. C'est une vraie case à
             cocher, pas un bouton déguisé : un lecteur d'écran doit l'annoncer comme
             telle, et son état doit se lire sans la couleur. Habillée en bouton
-            secondaire juste sous « Buy now », sinon personne ne la voyait. */}
+            blanc juste sous « Buy now », sinon personne ne la voyait. */}
         {pickable ? (
           <label className="pick">
             <input
@@ -263,6 +263,19 @@ export default function ProductCard({
               checked={picked}
               onChange={() => onPick?.(product.id)}
             />
+            {picked ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            ) : (
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <circle cx="9" cy="20" r="1.4" />
+                <circle cx="18" cy="20" r="1.4" />
+                <path d="M2 3h3l2.6 12.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.1L21 8H6.2" />
+              </svg>
+            )}
             <span>{picked ? 'Added to cart' : 'Add to cart'}</span>
           </label>
         ) : null}

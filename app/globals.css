@@ -949,30 +949,17 @@ footer p{margin:0 0 6px}
    écrans affichent deux pièces ou plus, et l'écart médian entre une pièce et toutes
    les pièces de l'écran est de 2 789 $.                                             */
 .pick{
-  display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;
-  margin-top:10px; padding:14px 20px; min-height:52px;
-  border:1.5px solid var(--lime); background:transparent;
+  position:relative; display:flex; align-items:center; justify-content:center; gap:10px;
+  cursor:pointer; margin-top:10px; padding:14px 20px; min-height:52px;
+  background:#fff; color:#000; transition:background .12s ease;
   font-weight:900; font-size:.92rem; font-style:italic; text-transform:uppercase;
-  letter-spacing:.02em; color:var(--lime); transition:background .12s ease, color .16s ease;
-}
-.pick:hover{background:#cefe0114}
-/* Une vraie case, pas un bouton déguisé : le lecteur d'écran doit l'annoncer comme
-   une case, et son état doit se lire sans la couleur. D'où la coche dessinée. */
-.pick input{
-  appearance:none; flex:none; width:20px; height:20px; margin:0; cursor:pointer;
-  background:var(--ink); border:1px solid var(--line2); border-radius:2px;
-  display:grid; place-content:center;
-  transition:background .16s ease, border-color .16s ease;
-}
-.pick input::after{
-  content:""; width:10px; height:6px; margin-top:-2px;
-  border-left:2px solid var(--ink); border-bottom:2px solid var(--ink);
-  rotate:-45deg; opacity:0; transition:opacity .12s ease;
-}
-.pick input:checked{background:var(--lime); border-color:var(--lime)}
-.pick input:checked::after{opacity:1}
-.pick input:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
-.pick:has(input:checked){background:#cefe011f; color:var(--text)}
+  letter-spacing:.02em}
+.pick:hover{background:#e9eaeb}
+/* La case reste dans le DOM pour le lecteur d'écran (il annonce « case cochée »),
+   mais c'est l'icône qui montre l'état : panier avant, coche après. */
+.pick input{position:absolute; inset:0; width:100%; height:100%; margin:0; opacity:0; cursor:pointer}
+.pick:has(input:focus-visible){outline:2px solid var(--lime); outline-offset:2px}
+.pick svg{flex:none}
 
 /* Le récapitulatif. Il colle en bas de l'écran tant qu'on a des pièces cochées :
    la grille est plus haute qu'un écran de téléphone, et un bouton de commande qu'il
@@ -1012,3 +999,4 @@ footer p{margin:0 0 6px}
 .assure li{position:relative; padding-left:24px; color:var(--text); font-size:.9rem; font-weight:600; line-height:1.4}
 .assure li::before{content:''; position:absolute; left:3px; top:.4em; width:11px; height:6px;
   border-left:2.5px solid var(--lime); border-bottom:2.5px solid var(--lime); transform:rotate(-45deg)}
+
