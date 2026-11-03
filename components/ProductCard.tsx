@@ -218,10 +218,12 @@ export default function ProductCard({
             {current.available ? 'In stock' : 'Built to order'}
           </span>
         </div>
-        {/* À CONFIRMER chez AZM : Shop Pay Installments doit être activé dans leur
-            Shopify, sinon cette ligne promet un paiement qui n'existe pas. */}
+        {/* AZM offre Klarna, pas Shop Pay Installments (vérifié sur azmotorsport.ca le
+            2026-11-03). Klarna décide lui-même du plan selon le montant : « 4 payments »
+            à 988 $, mais seulement un financement mensuel à 3 888 $. On ne calcule donc
+            aucun montant ici, on annonce seulement que le paiement étalé existe. */}
         <p className="paysplit">
-          or 4 payments of <b>{money(Math.ceil(current.price / 4))}</b> with Shop Pay
+          <b>Pay over time</b> with Klarna at checkout
         </p>
 
         {/* Un seul bouton. « Ask a builder » doublait l'encadré qui suit la grille et
