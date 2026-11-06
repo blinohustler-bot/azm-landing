@@ -8,6 +8,8 @@
 
 import { chatEnabled, clientIp, tylerConfigured, tylerFetch, turnAllowed, visitorContact } from '@/lib/tyler';
 import { screenFor } from '@/lib/chatScreen';
+import { SHOP } from '@/lib/catalog';
+import { isShopUrl } from '@/lib/shopHost';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -39,11 +41,15 @@ const GENERIC_ERROR = 'data: {"type":"error","message":"unreachable"}';
 
 /* Tyler émet des charges `data:` JSON sur UNE seule ligne ; un `data:` réparti sur
    plusieurs lignes n'est pas géré. */
+/* Une proposition dont le lien ne vise pas le magasin est retirée du flux (le widget
+   fait le même contrôle) : CHECKOUT y ajoute les coordonnées du visiteur. La ligne vide
+   qui reste ne fait qu'un évènement vide, ignoré par le widget. */
 function sanitizeLine(line: string): string {
   if (!line.startsWith('data:')) return line;
   try {
     const ev = JSON.parse(line.slice(5).trim());
     if (ev && ev.type === 'error') return GENERIC_ERROR;
+    if (ev && ev.type === 'proposal' && !isShopUrl(ev.url, SHOP)) return '';
   } catch {
     /* ligne non JSON : telle quelle */
   }

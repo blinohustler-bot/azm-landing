@@ -6,6 +6,7 @@ import { CONFIG } from '@/lib/config';
 import { money } from '@/lib/catalogTypes';
 import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
+import { isShopUrl } from '@/lib/shopHost';
 
 /* Le chat Tyler sur l'écran des pièces.
  *
@@ -31,7 +32,7 @@ type Slot = { label: string; startIso: string };
 type Line =
   | { id: number; kind: 'tyler'; text: string }
   | { id: number; kind: 'me'; text: string }
-  | { id: number; kind: 'proposal'; url: string; items: Item[]; totalCAD: number }
+  | { id: number; kind: 'proposal'; url: string; items: Item[]; totalCAD: number; called: boolean }
   | { id: number; kind: 'slots'; slots: Slot[]; used: boolean }
   | { id: number; kind: 'fallback' };
 
@@ -46,6 +47,8 @@ type Props = {
   /* La clé du modèle dans l'URL (« m3 ») : c'est elle qui part au serveur. */
   modelKey: string;
   year?: string;
+  /* L'adresse du magasin (catalogue) : seule destination permise pour CHECKOUT. */
+  shop: string;
 };
 
 const BUBBLE_DELAY_MS = 15_000;
@@ -69,16 +72,18 @@ function clarity(value: 'bubble_shown' | 'open' | 'msg' | 'checkout' | 'call') {
   }
 }
 
-/* Le texte de Tyler est rendu en texte brut (aucun HTML injecté). Seules les adresses
-   http(s) deviennent des liens, construits comme éléments React ; la ponctuation qui
-   suit une adresse en fin de phrase reste du texte. Tout autre schéma reste du texte. */
+/* Le texte de Tyler est rendu en texte brut (aucun HTML injecté). Seule une adresse
+   https du magasin (même liste que CHECKOUT, lib/shopHost.ts) devient un lien, construit
+   comme élément React ; la ponctuation qui la suit reste du texte. Toute autre adresse,
+   http comprise, reste du texte. */
 const URL_RE = /(https?:\/\/[^\s<>"']+)/g;
-function linkify(text: string): ReactNode[] {
+function linkify(text: string, shop: string): ReactNode[] {
   return text.split(URL_RE).map((part, i) => {
     if (i % 2 === 0) return part;
     const m = part.match(/^(.*?)([.,!?;:)\]]*)$/);
     const url = m ? m[1] : part;
     const tail = m ? m[2] : '';
+    if (!isShopUrl(url, shop)) return part;
     return (
       <span key={i}>
         <a href={url} rel="noopener noreferrer">{url}</a>
@@ -87,9 +92,6 @@ function linkify(text: string): ReactNode[] {
     );
   });
 }
-
-const safeUrl = (u: unknown): string | null =>
-  typeof u === 'string' && /^https:\/\/[^\s]+$/.test(u) ? u : null;
 
 function readItems(raw: unknown): Item[] | null {
   if (!Array.isArray(raw) || raw.length === 0) return null;
@@ -111,7 +113,7 @@ function readSlots(raw: unknown): Slot[] | null {
   return out.length ? out : null;
 }
 
-export default function TylerChat({ firstName: firstNameProp, model, make, modelKey, year }: Props) {
+export default function TylerChat({ firstName: firstNameProp, model, make, modelKey, year, shop }: Props) {
   const [enabled, setEnabled] = useState(false);
   const [firstName, setFirstName] = useState(firstNameProp);
   const [bubble, setBubble] = useState(false);
@@ -120,12 +122,15 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
   const [typing, setTyping] = useState(false);
   const [draft, setDraft] = useState('');
   const [yieldDock, setYieldDock] = useState(false);
+  /* Après un repli, l'en-tête dit « Offline » jusqu'au prochain évènement réussi. */
+  const [offline, setOffline] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const dockRef = useRef<HTMLDivElement>(null);
   const fabRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const logRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const nextId = useRef(1);
   const busy = useRef(false);
   const queue = useRef<string[]>([]);
@@ -270,6 +275,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
       if (failed) return;
       failed = true;
       setTyping(false);
+      setOffline(true);
       add({ kind: 'fallback' });
     };
     const arm = () => {
@@ -278,6 +284,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
     };
 
     const handle = (ev: Record<string, unknown>) => {
+      if (ev.type === 'typing' || ev.type === 'message' || ev.type === 'proposal' || ev.type === 'slots') setOffline(false);
       switch (ev.type) {
         case 'typing':
           setTyping(true);
@@ -288,10 +295,10 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
           break;
         case 'proposal': {
           setTyping(false);
-          const url = safeUrl(ev.url);
+          const url = isShopUrl(ev.url, shop) ? ev.url : null;
           const items = readItems(ev.items);
           const total = typeof ev.totalCAD === 'number' && Number.isFinite(ev.totalCAD) ? ev.totalCAD : null;
-          if (url && items && total !== null) add({ kind: 'proposal', url, items, totalCAD: total });
+          if (url && items && total !== null) add({ kind: 'proposal', url, items, totalCAD: total, called: false });
           break;
         }
         case 'slots': {
@@ -358,7 +365,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
       }
       void runTurn(next);
     }
-  }, [add, make, modelKey, year]);
+  }, [add, make, modelKey, year, shop]);
 
   useEffect(() => () => abortRef.current?.abort(), []);
 
@@ -397,6 +404,44 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [open, closeChat]);
+
+  /* La page ne défile pas sous la feuille ouverte (verrou rendu à la fermeture). */
+  useEffect(() => {
+    if (!open) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const saved = [html.style.overflow, body.style.overflow];
+    html.style.overflow = 'hidden';
+    body.style.overflow = 'hidden';
+    return () => {
+      html.style.overflow = saved[0];
+      body.style.overflow = saved[1];
+    };
+  }, [open]);
+
+  /* Le clavier du téléphone : la feuille se pose sur la partie visible de l'écran
+     (visualViewport), pour que le champ et le dernier message restent au-dessus du
+     clavier, y compris dans le navigateur intégré d'Instagram. */
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!open || !vv) return;
+    const fit = () => {
+      const panel = panelRef.current;
+      if (!panel) return;
+      const kb = Math.max(0, window.innerHeight - (vv.height + vv.offsetTop));
+      panel.style.setProperty('--tchat-kb', `${Math.round(kb)}px`);
+      panel.style.setProperty('--tchat-vh', `${Math.round(vv.height)}px`);
+      const log = logRef.current;
+      if (log) log.scrollTop = log.scrollHeight;
+    };
+    fit();
+    vv.addEventListener('resize', fit);
+    vv.addEventListener('scroll', fit);
+    return () => {
+      vv.removeEventListener('resize', fit);
+      vv.removeEventListener('scroll', fit);
+    };
+  }, [open]);
 
   /* Le fil descend tout seul à chaque nouvelle bulle. */
   useEffect(() => {
@@ -451,11 +496,11 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
       {open ? <div className="tchat__scrim" aria-hidden="true" onClick={closeChat} /> : null}
 
       {open ? (
-        <div className="tchat__panel" role="dialog" aria-label="Chat with Tyler">
+        <div ref={panelRef} className="tchat__panel" role="dialog" aria-label="Chat with Tyler">
           <div className="tchat__head">
             <div>
               <b>Tyler · AZ Motorsport</b>
-              <span className="tchat__online"><i aria-hidden="true" />Online</span>
+              <span className={`tchat__online${offline ? ' is-off' : ''}`}><i aria-hidden="true" />{offline ? 'Offline' : 'Online'}</span>
             </div>
             <button type="button" className="tchat__close" aria-label="Close chat" onClick={closeChat}>
               ✕
@@ -464,7 +509,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
 
           <div ref={logRef} className="tchat__log" aria-live="polite">
             {lines.map((l) => {
-              if (l.kind === 'tyler') return <p key={l.id} className="tchat__msg">{linkify(l.text)}</p>;
+              if (l.kind === 'tyler') return <p key={l.id} className="tchat__msg">{linkify(l.text, shop)}</p>;
               if (l.kind === 'me') return <p key={l.id} className="tchat__msg tchat__msg--me">{l.text}</p>;
               if (l.kind === 'fallback') {
                 return (
@@ -524,7 +569,9 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
                   <button
                     type="button"
                     className="tchat__call"
+                    disabled={l.called}
                     onClick={() => {
+                      setLines((prev) => prev.map((x) => (x.id === l.id ? { ...x, called: true } : x)));
                       clarity('call');
                       send(CALL_TEXT);
                     }}
@@ -551,6 +598,14 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
               value={draft}
               maxLength={MAX_TEXT}
               onChange={(e) => setDraft(e.target.value)}
+              onFocus={() => {
+                /* Le clavier s'ouvre : le dernier message et le champ restent visibles. */
+                setTimeout(() => {
+                  const log = logRef.current;
+                  if (log) log.scrollTop = log.scrollHeight;
+                  inputRef.current?.scrollIntoView({ block: 'nearest' });
+                }, 300);
+              }}
               placeholder="Ask about fitment, sound, shipping"
               aria-label="Message Tyler"
               autoComplete="off"

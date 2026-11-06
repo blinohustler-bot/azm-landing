@@ -166,6 +166,20 @@ test('upstream error events are replaced by the generic error; others pass throu
   assert.ok(!out.includes('secret detail'));
 });
 
+test('proposals whose url is not the shop host are dropped; shop proposals pass', async () => {
+  const prop = (url) => `data: ${JSON.stringify({ type: 'proposal', url, items: [{ title: 'X', option: 'Y', priceCAD: 1 }], totalCAD: 1 })}\n\n`;
+  const bad = ['https://evil.example/cart/1:1', 'http://azmotorsport.ca/cart/1:1', 'https://azmotorsport.ca.evil.example/cart/1:1',
+    'javascript:alert(1)', 'https://user@azmotorsport.ca/cart/1:1'];
+  upstream = () => new Response(bad.map(prop).join('') + prop('https://www.azmotorsport.ca/cart/2:1') + prop('https://azmotorsport.ca/cart/3:1') +
+    'data: {"type":"done"}\n\n', { status: 200 });
+  const r = await turn.POST(post('/api/chat/turn', { text: 'hi', ...CAR }, { cookie: cookie() }));
+  const out = await r.text();
+  for (const u of bad) assert.ok(!out.includes(JSON.stringify(u)), `kept ${u}`);
+  assert.ok(out.includes('https://www.azmotorsport.ca/cart/2:1'));
+  assert.ok(out.includes('https://azmotorsport.ca/cart/3:1'));
+  assert.ok(out.includes('"type":"done"'));
+});
+
 /* Un flux amont qui émet les morceaux donnés à intervalles réguliers, et qui meurt
    (erreur de lecture) quand le signal du relais s'abrège. */
 const slowStream = (chunks, gapMs, init, { end = true } = {}) =>

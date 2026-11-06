@@ -186,6 +186,17 @@ check('boutons « Yeah, help me » / « I\'m good »',
 check('✕ porte aria-label « Dismiss »', (await ev(`document.querySelector('.tchat__x').getAttribute('aria-label')`)) === 'Dismiss', 'aria-label');
 const bw = await ev(`Math.round(document.querySelector('.tchat__bubble').getBoundingClientRect().width)`);
 check('bulle ~205 px de large', bw >= 195 && bw <= 210, `${bw} px`);
+const bh = await ev(`Math.round(document.querySelector('.tchat__bubble').getBoundingClientRect().height)`);
+check('bulle ≤ 90 px de haut', bh <= 90, `${bh} px`);
+check('les deux choix sur une ligne', await ev(`document.querySelector('.tchat__yes').getBoundingClientRect().top === document.querySelector('.tchat__no').getBoundingClientRect().top`), 'choix sur deux lignes');
+check('la bulle ne couvre pas le titre de la carte visible', await ev(`(() => {
+  const d = document.querySelector('.tchat__bubble').getBoundingClientRect();
+  return [...document.querySelectorAll('.card h3')].every((h) => { const r = h.getBoundingClientRect();
+    if (r.bottom < 0 || r.top > innerHeight) return true;
+    return !(r.bottom > d.top && r.top < d.bottom && r.right > d.left && r.left < d.right); });
+})()`), 'recouvrement du titre');
+check('le bouton flottant est une pilule lime', await ev(`(() => { const s = getComputedStyle(document.querySelector('.tchat__fab'));
+  return s.backgroundColor === 'rgb(206, 254, 1)' && s.color === 'rgb(0, 0, 0)' && parseFloat(s.borderTopLeftRadius) >= 20; })()`), 'style du bouton');
 check('la bulle ne couvre aucun « Buy now » visible', await ev(`(() => {
   const d = document.querySelector('.tchat__dock').getBoundingClientRect();
   return [...document.querySelectorAll('.card__actions .btn')].every((b) => { const r = b.getBoundingClientRect();
@@ -217,6 +228,8 @@ check('l\'indicateur disparaît', !(await exists('.tchat__typing')), 'typing res
 check('le focus est dans le champ à l\'ouverture', await ev(`document.activeElement === document.querySelector('.tchat__form input')`), await ev('document.activeElement?.className'));
 check('la zone des messages est aria-live polite', (await ev(`document.querySelector('.tchat__log').getAttribute('aria-live')`)) === 'polite', 'aria-live');
 check('Clarity : open', (await clarityCalls()).includes('open'), JSON.stringify(await clarityCalls()));
+check('la page ne défile plus sous la feuille', await ev(`getComputedStyle(document.body).overflow === 'hidden' && getComputedStyle(document.documentElement).overflow === 'hidden'`), 'pas de verrou');
+check('le fond assombri bloque le geste', await ev(`getComputedStyle(document.querySelector('.tchat__scrim')).touchAction === 'none'`), 'touch-action');
 const turns1 = await stub('/__log');
 check('le tour d\'ouverture part avec text null', turns1.length === 1 && turns1[0].text === null, JSON.stringify(turns1));
 
@@ -253,6 +266,7 @@ const r5 = await click('.tchat__call');
 check('clic « Grab a quick call »', r5 === true, r5);
 check('envoie « I\'d rather talk to Tommy »', await waitFor(`[...document.querySelectorAll('.tchat__msg--me')].some((m) => m.textContent === "I'd rather talk to Tommy")`, 2000), 'message absent');
 check('Clarity : call', (await clarityCalls()).includes('call'), JSON.stringify(await clarityCalls()));
+check('« Grab a quick call » désactivé après le premier tap', await ev(`document.querySelector('.tchat__call').disabled`), 'toujours actif');
 check('les créneaux arrivent', await waitFor(`document.querySelectorAll('.tchat__slots button').length === 2`, 6000), 'pas de créneaux');
 const r6 = await click('.tchat__slots button');
 check('clic sur un créneau', r6 === true, r6);
@@ -294,6 +308,7 @@ check('rouvrir garde l\'historique sans nouveau tour', (await ev(`document.query
 await click('.tchat__close');
 await sleep(300);
 check('✕ ferme aussi, focus au bouton', !(await exists('[role=dialog]')) && await ev(`document.activeElement === document.querySelector('.tchat__fab')`), 'fermeture');
+check('fermé : la page défile de nouveau', await ev(`getComputedStyle(document.body).overflow !== 'hidden' && getComputedStyle(document.documentElement).overflow !== 'hidden'`), 'verrou resté');
 
 /* ── 6. le bouton monte au-dessus de la barre de commande ────────────────── */
 console.log('\n=== above the order bar ===');
@@ -319,7 +334,42 @@ check('le message de repli', await waitFor(`!!document.querySelector('.tchat__ms
 check('texte exact du repli', (await text('.tchat__msg--fail')) === "Can't reach Tyler right now, call us at 581-745-8680.", await text('.tchat__msg--fail'));
 check('lien tel:', (await ev(`document.querySelector('.tchat__msg--fail a')?.getAttribute('href')`)) === 'tel:+15817458680', 'pas de tel:');
 check('l\'indicateur ne reste pas', !(await exists('.tchat__typing')), 'typing reste');
+check('en-tête « Offline » après le repli', (await text('.tchat__online')) === 'Offline', await text('.tchat__online'));
 await shot('chat-fallback-390.png');
+await stub('/__mode');
+await type('.tchat__form input', 'hello again');
+await click('.tchat__form button');
+check('« Online » revient au prochain évènement réussi', await waitFor(`document.querySelector('.tchat__online')?.textContent === 'Online'`, 4000), await text('.tchat__online'));
+await waitFor(`!document.querySelector('.tchat__typing')`, 4000);
+
+/* ── 7b. le widget lui-même refuse un lien hors magasin ─────────────────────
+   Le relais retire déjà ces propositions (tools/chatRelay.test.mjs) : pour tester le
+   widget seul, la réponse de /api/chat/turn est fabriquée ici (Fetch.fulfillRequest). */
+console.log('\n=== off-shop links are refused by the widget ===');
+const fake = [
+  { type: 'typing' },
+  { type: 'message', text: 'Look: http://azmotorsport.ca/a and https://evil.example/b and https://www.azmotorsport.ca/ok.' },
+  { type: 'proposal', url: 'https://evil.example/cart/1:1', items: [{ title: 'Evil part', option: 'X', priceCAD: 999 }], totalCAD: 999 },
+  { type: 'proposal', url: 'http://azmotorsport.ca/cart/1:1', items: [{ title: 'Plain http part', option: 'X', priceCAD: 999 }], totalCAD: 999 },
+  { type: 'done' }
+].map((o) => `data: ${JSON.stringify(o)}\n\n`).join('');
+const onPaused = async (m) => {
+  if (m.method !== 'Fetch.requestPaused') return;
+  await snd('Fetch.fulfillRequest', { requestId: m.params.requestId, responseCode: 200,
+    responseHeaders: [{ name: 'Content-Type', value: 'text/event-stream' }], body: Buffer.from(fake).toString('base64') });
+};
+const prevOnMessage = ws.onmessage;
+ws.onmessage = (e) => { prevOnMessage(e); try { onPaused(JSON.parse(e.data)); } catch { /* pas pour nous */ } };
+await snd('Fetch.enable', { patterns: [{ urlPattern: '*/api/chat/turn*' }] });
+const before = await ev(`document.querySelectorAll('.tchat__card').length`);
+await type('.tchat__form input', 'show me');
+await click('.tchat__form button');
+check('le message fabriqué arrive', await waitFor(`[...document.querySelectorAll('.tchat__msg')].some((m) => m.textContent.startsWith('Look:'))`, 4000), 'pas de message');
+await sleep(300);
+check('aucune carte pour une proposition hors magasin ou en http', (await ev(`document.querySelectorAll('.tchat__card').length`)) === before, 'carte affichée');
+check('seul le lien https du magasin est un lien', (await ev(`[...[...document.querySelectorAll('.tchat__msg')].find((m) => m.textContent.startsWith('Look:')).querySelectorAll('a')].map((a) => a.getAttribute('href')).join()`)) === 'https://www.azmotorsport.ca/ok', 'liens');
+await snd('Fetch.disable');
+ws.onmessage = prevOnMessage;
 
 /* ── 8. 25 s sans évènement : le repli ───────────────────────────────────── */
 console.log('\n=== 25s of silence shows fallback ===');

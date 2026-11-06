@@ -1032,9 +1032,11 @@ footer p{margin:0 0 6px}
 
 /* ── le chat Tyler (écran des pièces) ──────────────────────────────────────
    Le chat est du papier sur la page sombre : blanc et #f5f5f5, encre noire, l'en-tête
-   en chrome noire comme la barre du magasin. Le lime n'y sert qu'une fois, au bouton
-   CHECKOUT (l'action qui vend) ; le bouton flottant est blanc pour ne pas disputer le
-   lime aux « Buy now » des cartes. La coupe d'angle est la seule ornementation.
+   en chrome noire comme la barre du magasin. Dans le panneau, le lime ne sert qu'au
+   bouton CHECKOUT (l'action qui vend). La coupe d'angle est la seule ornementation.
+   Exception : le bouton flottant est une pilule lime, validée par le client sur la
+   maquette (chat-entry-v4) ; cette validation passe devant le plafond du lime de
+   DESIGN.md pour ce seul élément.
 
    --tchat-lift est posé par TylerChat.tsx : il monte le bouton et la bulle au-dessus
    de la barre de commande (.bundle) quand elle colle en bas de l'écran. */
@@ -1047,45 +1049,48 @@ footer p{margin:0 0 6px}
 }
 /* Un « Buy now » passe sous le bouton : il s'efface le temps du passage. */
 .tchat__dock.is-yield{opacity:0; visibility:hidden; pointer-events:none}
+/* Exception validée par le client (maquette chat-entry-v4) : pilule lime, texte noir. */
 .tchat__fab{
-  border:0; cursor:pointer; min-height:48px; padding:12px 18px;
-  background:#fff; color:#000; font-weight:800; font-size:.95rem; letter-spacing:-.005em;
-  clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
+  border:0; cursor:pointer; min-height:46px; padding:12px 18px; border-radius:999px;
+  background:var(--lime); color:#000; font-weight:800; font-size:.95rem; letter-spacing:-.005em;
 }
-.tchat__fab:focus-visible{outline:2px solid var(--lime); outline-offset:3px}
+.tchat__fab:focus-visible{outline:2px solid #fff; outline-offset:3px}
 
+/* Petite, à la demande du client : le texte et les deux choix sur une ligne, sous
+   90 px de haut, pour ne pas couvrir le titre de la carte. Le ✕ vit dans la marge
+   droite de la bulle. */
 .tchat__bubble{
   position:relative; width:205px; max-width:calc(100vw - 32px);
-  padding:14px 14px 10px; background:#fff; color:#000;
-  font-size:.9rem; line-height:1.4;
+  padding:9px 24px 9px 10px; background:#fff; color:#000;
+  font-size:.74rem; line-height:1.3;
   clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
   animation:tchatIn .24s var(--ease) both;
 }
-.tchat__bubble p{margin:0 22px 10px 0; font-weight:600}
+.tchat__bubble p{margin:0 0 5px; font-weight:600}
 .tchat__x{
-  position:absolute; top:2px; right:2px; width:36px; height:36px;
-  border:0; background:none; color:#000; opacity:.55; cursor:pointer; font-size:.9rem;
+  position:absolute; top:0; right:0; width:26px; height:30px; padding:0;
+  border:0; background:none; color:#000; opacity:.55; cursor:pointer; font-size:.75rem;
 }
 .tchat__x:hover{opacity:1}
-.tchat__choices{display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px}
+.tchat__choices{display:flex; flex-wrap:nowrap; align-items:center; gap:6px}
 .tchat__yes{
-  border:0; cursor:pointer; min-height:40px; padding:9px 12px;
-  background:#000; color:#fff; font-weight:800; font-size:.82rem;
+  border:0; cursor:pointer; min-height:30px; padding:6px 10px; white-space:nowrap;
+  background:#000; color:#fff; font-weight:800; font-size:.78rem;
 }
 .tchat__no{
-  border:0; cursor:pointer; min-height:40px; padding:9px 4px;
-  background:none; color:#4a4f53; font-weight:600; font-size:.82rem;
+  border:0; cursor:pointer; min-height:30px; padding:6px 6px; white-space:nowrap;
+  background:none; color:#4a4f53; font-weight:600; font-size:.78rem;
 }
 .tchat__bubble button:focus-visible,
 .tchat__panel button:focus-visible,
 .tchat__panel a:focus-visible{outline:2px solid #000; outline-offset:2px}
 
 /* La feuille : ~70 % de la hauteur sur téléphone, un panneau à droite au-delà. */
-.tchat__scrim{position:fixed; inset:0; z-index:39; background:#000000a6; animation:tchatFade .2s ease both}
+.tchat__scrim{position:fixed; inset:0; z-index:39; background:#000000a6; touch-action:none; animation:tchatFade .2s ease both}
 @media(min-width:640px){ .tchat__scrim{display:none} }
 .tchat__panel{
-  position:fixed; left:0; right:0; bottom:0; z-index:40;
-  height:70vh; height:70dvh;
+  position:fixed; left:0; right:0; bottom:var(--tchat-kb, 0px); z-index:40;
+  height:70vh; height:70dvh; max-height:calc(var(--tchat-vh, 100dvh) - 8px);
   display:flex; flex-direction:column;
   background:#f5f5f5; color:#000;
   box-shadow:0 -24px 60px -24px #000;
@@ -1093,7 +1098,7 @@ footer p{margin:0 0 6px}
 }
 @media(min-width:640px){
   .tchat__panel{
-    left:auto; right:20px; bottom:20px; width:380px; height:min(600px, 78vh);
+    left:auto; right:20px; bottom:calc(20px + var(--tchat-kb, 0px)); width:380px; height:min(600px, 78vh);
     clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
   }
 }
@@ -1104,6 +1109,7 @@ footer p{margin:0 0 6px}
 .tchat__head b{display:block; font-weight:800; font-size:.95rem; letter-spacing:-.005em}
 .tchat__online{display:inline-flex; align-items:center; gap:6px; font-size:.76rem; color:#c9ced2}
 .tchat__online i{width:8px; height:8px; border-radius:50%; background:#279a4b}
+.tchat__online.is-off i{background:#8b9196}
 .tchat__close{
   width:44px; height:44px; flex:none; border:0; background:none; color:#fff;
   cursor:pointer; font-size:1rem;
@@ -1151,6 +1157,7 @@ footer p{margin:0 0 6px}
   color:#000; text-align:left; text-decoration:underline; text-underline-offset:3px;
   font-size:.85rem; font-weight:600; cursor:pointer;
 }
+.tchat__call:disabled{opacity:.45; cursor:default}
 
 .tchat__form{
   display:flex; gap:8px; background:#fff; border-top:1px solid #0000001a;

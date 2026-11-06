@@ -99,7 +99,7 @@ export default function StepResults({
         </div>
       </div>
 
-      {chat ? <TylerChat {...chat} /> : null}
+      {chat ? <TylerChat {...chat} shop={shop} /> : null}
     </section>
   );
 }
