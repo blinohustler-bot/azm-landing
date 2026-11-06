@@ -51,3 +51,28 @@ test('missing secret never verifies', () => {
   assert.throws(() => signChatToken('ct_abc123'));
   assert.equal(verifyChatToken(t), null);
 });
+
+/* Les liens cliquables du texte de Tyler (lib/shopHost.ts isChatLinkUrl) : séparés de la
+   liste de CHECKOUT, qui reste le magasin seul. */
+const { isChatLinkUrl, isShopUrl } = await import('@/lib/shopHost.ts');
+const SHOP = 'https://azmotorsport.ca';
+
+test('text links: https on the shop, YouTube, Instagram and GoRendezvous exact hosts only', () => {
+  for (const ok of [
+    'https://azmotorsport.ca/products/x', 'https://www.azmotorsport.ca/a',
+    'https://youtube.com/watch?v=abc', 'https://www.youtube.com/watch?v=abc', 'https://m.youtube.com/watch?v=abc', 'https://youtu.be/abc',
+    'https://instagram.com/reel/abc', 'https://www.instagram.com/p/abc',
+    'https://gorendezvous.com/azmotorsport', 'https://www.gorendezvous.com/fr/azmotorsport'
+  ]) assert.equal(isChatLinkUrl(ok, SHOP), true, ok);
+  for (const bad of [
+    'http://youtube.com/watch?v=abc', 'http://azmotorsport.ca/a',
+    'https://evil.example/a', 'https://youtube.com.evil.example/a', 'https://notyoutube.com/a', 'https://music.youtube.com/a',
+    'https://user@youtube.com/a', 'https://l.instagram.com/?u=https://evil.example', 'javascript:alert(1)', 'https://gorendezvous.co/a', '', null
+  ]) assert.equal(isChatLinkUrl(bad, SHOP), false, String(bad));
+});
+
+test('the CHECKOUT list stays the shop only (a video host is never a checkout)', () => {
+  assert.equal(isShopUrl('https://www.youtube.com/watch?v=abc', SHOP), false);
+  assert.equal(isShopUrl('https://www.gorendezvous.com/a', SHOP), false);
+  assert.equal(isShopUrl('https://azmotorsport.ca/cart/1:1', SHOP), true);
+});

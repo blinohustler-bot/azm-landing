@@ -17,12 +17,30 @@ function shopHosts(shop: string): string[] {
   }
 }
 
-export function isShopUrl(url: unknown, shop: string): url is string {
+function httpsOn(url: unknown, hosts: string[]): url is string {
   if (typeof url !== 'string') return false;
   try {
     const u = new URL(url);
-    return u.protocol === 'https:' && !u.username && !u.password && shopHosts(shop).includes(u.hostname.toLowerCase());
+    return u.protocol === 'https:' && !u.username && !u.password && hosts.includes(u.hostname.toLowerCase());
   } catch {
     return false;
   }
+}
+
+export function isShopUrl(url: unknown, shop: string): url is string {
+  return httpsOn(url, shopHosts(shop));
+}
+
+/* Les liens cliquables dans le TEXTE de Tyler (jamais pour CHECKOUT, qui garde la liste
+   du magasin seul : il porte les coordonnées du visiteur). En plus du magasin : les
+   vidéos (YouTube, Instagram) que find_video envoie, et la prise de rendez-vous de
+   reprogrammation (GoRendezvous) de search_tuning. Hôtes exacts, https seulement. */
+const TEXT_LINK_HOSTS = [
+  'youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be',
+  'instagram.com', 'www.instagram.com',
+  'gorendezvous.com', 'www.gorendezvous.com'
+];
+
+export function isChatLinkUrl(url: unknown, shop: string): url is string {
+  return httpsOn(url, [...shopHosts(shop), ...TEXT_LINK_HOSTS]);
 }

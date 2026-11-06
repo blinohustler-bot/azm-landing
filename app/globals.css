@@ -1127,7 +1127,7 @@ footer p{margin:0 0 6px}
 }
 .tchat__msg a{color:inherit; font-weight:700}
 .tchat__msg--me{align-self:flex-end; background:#000; color:#fff}
-.tchat__msg--fail a{white-space:nowrap; font-variant-numeric:tabular-nums}
+.tchat__msg--fail a,.tchat__msg--note a{white-space:nowrap; font-variant-numeric:tabular-nums}
 .tchat__typing{margin:0; color:#5d6368; font-size:.85rem; font-style:italic; animation:tchatPulse 1.2s ease-in-out infinite}
 
 .tchat__slots{display:flex; flex-wrap:wrap; gap:8px}

@@ -17,6 +17,11 @@
  *   GET /__mode?fail=1          /turn répond 500
  *   GET /__mode?delay=3000      attente avant le message (un tour « long »)
  *   GET /__mode?silent=1        /turn ouvre le flux et ne dit plus rien
+ *   GET /__mode?ping=1          pendant l'attente, un commentaire « : ping » toutes les
+ *                               10 s, comme Tyler (avec delay= : un tour long mais vivant)
+ *   GET /__mode?blocked=handoff /turn répond seulement { status: handoff } (Tommy a le
+ *                               fil) ; blocked=stopped pareil avec « stopped »
+ *   GET /__mode?name=…          le prénom renvoyé par /status (défaut Alex)
  *   GET /__mode                 retour au défaut
  *   GET /__log                  les tours reçus : { text, start, end }, en ms
  */
@@ -24,7 +29,7 @@ import http from 'node:http';
 
 const PORT = Number(process.env.PORT || 4010);
 
-let mode = { fail: false, delay: 300, silent: false };
+let mode = { fail: false, delay: 300, silent: false, ping: false, blocked: '', name: 'Alex' };
 const turns = [];
 
 const server = http.createServer((req, res) => {
@@ -38,7 +43,10 @@ const server = http.createServer((req, res) => {
     mode = {
       fail: u.searchParams.get('fail') === '1',
       delay: Number(u.searchParams.get('delay') || 300),
-      silent: u.searchParams.get('silent') === '1'
+      silent: u.searchParams.get('silent') === '1',
+      ping: u.searchParams.get('ping') === '1',
+      blocked: u.searchParams.get('blocked') || '',
+      name: u.searchParams.get('name') || 'Alex'
     };
     turns.length = 0;
     return send(200, mode);
@@ -50,7 +58,7 @@ const server = http.createServer((req, res) => {
   req.on('data', (c) => (body += c));
   req.on('end', () => {
     if (u.pathname === '/api/webchat/status' && req.method === 'GET') {
-      return send(200, { enabled: true, firstName: 'Alex' });
+      return send(200, { enabled: true, firstName: mode.name });
     }
     if (u.pathname === '/api/webchat/presence' && req.method === 'POST') {
       return send(200, { ok: true });
@@ -66,7 +74,17 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' });
       res.flushHeaders();
       const ev = (o) => res.write(`data: ${JSON.stringify(o)}\n\n`);
+      if (mode.blocked) {
+        ev({ type: 'status', status: mode.blocked });
+        ev({ type: 'done' });
+        log.end = Date.now();
+        return res.end();
+      }
       ev({ type: 'typing' });
+      if (mode.ping) {
+        const beat = setInterval(() => res.write(': ping\n\n'), 10_000);
+        res.on('close', () => clearInterval(beat));
+      }
       if (mode.silent) {
         res.on('close', () => { log.end = Date.now(); });
         return;

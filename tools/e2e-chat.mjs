@@ -348,13 +348,14 @@ await waitFor(`!document.querySelector('.tchat__typing')`, 4000);
 console.log('\n=== off-shop links are refused by the widget ===');
 const fake = [
   { type: 'typing' },
-  { type: 'message', text: 'Look: http://azmotorsport.ca/a and https://evil.example/b and https://www.azmotorsport.ca/ok.' },
+  { type: 'message', text: 'Look: http://azmotorsport.ca/a and https://evil.example/b and https://www.azmotorsport.ca/ok. Clip: https://youtu.be/abc123, book: https://www.gorendezvous.com/azm and https://youtube.com.evil.example/x' },
   { type: 'proposal', url: 'https://evil.example/cart/1:1', items: [{ title: 'Evil part', option: 'X', priceCAD: 999 }], totalCAD: 999 },
   { type: 'proposal', url: 'http://azmotorsport.ca/cart/1:1', items: [{ title: 'Plain http part', option: 'X', priceCAD: 999 }], totalCAD: 999 },
   { type: 'done' }
 ].map((o) => `data: ${JSON.stringify(o)}\n\n`).join('');
 const onPaused = async (m) => {
   if (m.method !== 'Fetch.requestPaused') return;
+  await sleep(1500); // la réponse tarde : l'indicateur doit déjà être là (I4)
   await snd('Fetch.fulfillRequest', { requestId: m.params.requestId, responseCode: 200,
     responseHeaders: [{ name: 'Content-Type', value: 'text/event-stream' }], body: Buffer.from(fake).toString('base64') });
 };
@@ -364,10 +365,13 @@ await snd('Fetch.enable', { patterns: [{ urlPattern: '*/api/chat/turn*' }] });
 const before = await ev(`document.querySelectorAll('.tchat__card').length`);
 await type('.tchat__form input', 'show me');
 await click('.tchat__form button');
-check('le message fabriqué arrive', await waitFor(`[...document.querySelectorAll('.tchat__msg')].some((m) => m.textContent.startsWith('Look:'))`, 4000), 'pas de message');
+check('« typing… » dès l\'envoi, avant toute réponse de Tyler', await waitFor(`!!document.querySelector('.tchat__typing')`, 400), 'pas d\'indicateur immédiat');
+check('le message fabriqué arrive', await waitFor(`[...document.querySelectorAll('.tchat__msg')].some((m) => m.textContent.startsWith('Look:'))`, 5000), 'pas de message');
 await sleep(300);
 check('aucune carte pour une proposition hors magasin ou en http', (await ev(`document.querySelectorAll('.tchat__card').length`)) === before, 'carte affichée');
-check('seul le lien https du magasin est un lien', (await ev(`[...[...document.querySelectorAll('.tchat__msg')].find((m) => m.textContent.startsWith('Look:')).querySelectorAll('a')].map((a) => a.getAttribute('href')).join()`)) === 'https://www.azmotorsport.ca/ok', 'liens');
+const textLinks = await ev(`[...[...document.querySelectorAll('.tchat__msg')].find((m) => m.textContent.startsWith('Look:')).querySelectorAll('a')].map((a) => a.getAttribute('href')).join()`);
+check('liens de texte : magasin, vidéo, rendez-vous en https seulement (pas http, pas sosie)',
+  textLinks === 'https://www.azmotorsport.ca/ok,https://youtu.be/abc123,https://www.gorendezvous.com/azm', textLinks);
 await snd('Fetch.disable');
 ws.onmessage = prevOnMessage;
 
@@ -383,6 +387,56 @@ check('le repli après 25 s de silence', await waitFor(`!!document.querySelector
 await sleep(500);
 check('le tour a été abandonné côté Tyler', (await stub('/__log'))[0]?.end !== null, JSON.stringify(await stub('/__log')));
 check('console sans erreur', jsErrors.length === 0, jsErrors.join(' | '));
+
+/* ── 9. un tour long mais vivant : le battement « : ping » tient le widget ── */
+console.log('\n=== a long turn with heartbeats is not a failure ===');
+await stub('/__mode?delay=28000&ping=1');
+await goto();
+await click('.tchat__fab');
+check('« typing… » pendant le tour long', await waitFor(`!!document.querySelector('.tchat__typing')`, 4000), 'pas d\'indicateur');
+await sleep(26_500);
+check('pas de repli à 27 s (les « : ping » passent le relais)', !(await exists('.tchat__msg--fail')), 'repli malgré le battement');
+check('le message arrive après 28 s', await waitFor(`[...document.querySelectorAll('.tchat__msg')].some((m) => m.textContent === "Quick check, it's a 2021 M3 you're working with?")`, 6000), 'pas de message');
+check('toujours aucun repli', !(await exists('.tchat__msg--fail')), 'repli');
+
+/* ── 10. Tommy a le fil : Tyler ne répond pas, le visiteur le sait ───────── */
+console.log('\n=== blocked turn: Tommy will get back to you ===');
+await stub('/__mode');
+await goto();
+await click('.tchat__fab');
+await waitFor(`[...document.querySelectorAll('.tchat__msg')].some((m) => m.textContent.startsWith('Quick check'))`, 4000);
+await stub('/__mode?blocked=handoff');
+await type('.tchat__form input', 'Can I get it before Friday?');
+await click('.tchat__form button');
+check('la ligne « Tommy will get back to you »', await waitFor(`!!document.querySelector('.tchat__msg--note')`, 4000), 'pas de ligne');
+check('texte exact', (await text('.tchat__msg--note')) === 'Tommy will get back to you shortly. You can also call 581-745-8680.', await text('.tchat__msg--note'));
+check('lien tel:', (await ev(`document.querySelector('.tchat__msg--note a')?.getAttribute('href')`)) === 'tel:+15817458680', 'pas de tel:');
+check('en-tête « Offline »', (await text('.tchat__online')) === 'Offline', await text('.tchat__online'));
+check('aucun « typing… »', !(await exists('.tchat__typing')), 'typing affiché');
+check('le message du visiteur reste affiché', await ev(`[...document.querySelectorAll('.tchat__msg--me')].some((m) => m.textContent === 'Can I get it before Friday?')`), 'message perdu');
+await shot('chat-blocked-390.png');
+await type('.tchat__form input', 'hello?');
+await click('.tchat__form button');
+await sleep(250);
+check('pas de « typing… » sur un fil arrêté', !(await exists('.tchat__typing')), 'typing affiché');
+await sleep(800);
+check('la ligne Tommy n\'est pas répétée', (await ev(`document.querySelectorAll('.tchat__msg--note').length`)) === 1, 'répétée');
+const tb = await stub('/__log');
+check('les deux messages sont bien partis vers Tyler (gardés côté Tyler)', tb.map((x) => x.text).join('|') === 'Can I get it before Friday?|hello?', JSON.stringify(tb.map((x) => x.text)));
+check('console sans erreur', jsErrors.length === 0, jsErrors.join(' | '));
+
+/* ── 11. un long prénom ne fait pas déborder la bulle ────────────────────── */
+console.log('\n=== long first name ===');
+await stub('/__mode?name=' + encodeURIComponent('Maximilien-Alexandre Beauchemin-Tremblay'));
+await ev('sessionStorage.clear()');
+const t11 = Date.now();
+await goto();
+await sleep(Math.max(0, 16_000 - (Date.now() - t11)));
+check('la bulle est là', await exists('.tchat__bubble'), 'pas de bulle');
+const greet11 = (await text('.tchat__bubble p')).trim();
+check('prénom : premier mot, 14 caractères, copie raccourcie pour tenir en deux lignes', greet11 === 'Hey Maximilien-Ale, need a hand with parts for your M3?', greet11);
+const bh11 = await ev(`Math.round(document.querySelector('.tchat__bubble').getBoundingClientRect().height)`);
+check('bulle ≤ 90 px de haut avec un long prénom', bh11 <= 90, `${bh11} px`);
 
 await stub('/__mode');
 ws.close(); proc.kill(); stubProc?.kill();

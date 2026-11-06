@@ -1,12 +1,12 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { CONFIG } from '@/lib/config';
 import { money } from '@/lib/catalogTypes';
 import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
-import { isShopUrl } from '@/lib/shopHost';
+import { isChatLinkUrl, isShopUrl } from '@/lib/shopHost';
 
 /* Le chat Tyler sur l'écran des pièces.
  *
@@ -34,7 +34,10 @@ type Line =
   | { id: number; kind: 'me'; text: string }
   | { id: number; kind: 'proposal'; url: string; items: Item[]; totalCAD: number; called: boolean }
   | { id: number; kind: 'slots'; slots: Slot[]; used: boolean }
-  | { id: number; kind: 'fallback' };
+  | { id: number; kind: 'fallback' }
+  /* Tyler ne répond pas sur ce fil (Tommy l'a, ou le chat est arrêté) : le message du
+     visiteur est gardé côté Tyler et Tommy est prévenu. */
+  | { id: number; kind: 'tommy' };
 
 /* Une ligne sans son id (Omit distribué sur chaque membre de l'union). */
 type NewLine = Line extends infer L ? (L extends Line ? Omit<L, 'id'> : never) : never;
@@ -72,10 +75,19 @@ function clarity(value: 'bubble_shown' | 'open' | 'msg' | 'checkout' | 'call') {
   }
 }
 
+/* Le prénom de la bulle : le premier mot, 14 caractères au plus (un prénom composé ou
+   un nom complet tapé dans le formulaire ne fait pas déborder la bulle). */
+function bubbleName(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const first = raw.trim().split(/\s+/)[0] ?? '';
+  return first ? first.slice(0, 14) : undefined;
+}
+
 /* Le texte de Tyler est rendu en texte brut (aucun HTML injecté). Seule une adresse
-   https du magasin (même liste que CHECKOUT, lib/shopHost.ts) devient un lien, construit
-   comme élément React ; la ponctuation qui la suit reste du texte. Toute autre adresse,
-   http comprise, reste du texte. */
+   https de la liste des liens de texte (le magasin, les vidéos YouTube / Instagram, la
+   prise de rendez-vous GoRendezvous : lib/shopHost.ts isChatLinkUrl, PAS la liste de
+   CHECKOUT) devient un lien, construit comme élément React ; la ponctuation qui la suit
+   reste du texte. Toute autre adresse, http comprise, reste du texte. */
 const URL_RE = /(https?:\/\/[^\s<>"']+)/g;
 function linkify(text: string, shop: string): ReactNode[] {
   return text.split(URL_RE).map((part, i) => {
@@ -83,7 +95,7 @@ function linkify(text: string, shop: string): ReactNode[] {
     const m = part.match(/^(.*?)([.,!?;:)\]]*)$/);
     const url = m ? m[1] : part;
     const tail = m ? m[2] : '';
-    if (!isShopUrl(url, shop)) return part;
+    if (!isChatLinkUrl(url, shop)) return part;
     return (
       <span key={i}>
         <a href={url} rel="noopener noreferrer">{url}</a>
@@ -115,7 +127,7 @@ function readSlots(raw: unknown): Slot[] | null {
 
 export default function TylerChat({ firstName: firstNameProp, model, make, modelKey, year, shop }: Props) {
   const [enabled, setEnabled] = useState(false);
-  const [firstName, setFirstName] = useState(firstNameProp);
+  const [firstName, setFirstName] = useState(bubbleName(firstNameProp));
   const [bubble, setBubble] = useState(false);
   const [open, setOpen] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
@@ -139,6 +151,11 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
   const abortRef = useRef<AbortController | null>(null);
   const wasOpen = useRef(false);
   const yieldRef = useRef(false);
+  /* Tyler ne répond pas sur ce fil (statut stopped / handoff) : pas d'indicateur
+     « typing… » qui ferait croire qu'il écrit, et la ligne « Tommy will get back to you »
+     une seule fois, jusqu'à ce que Tyler réponde de nouveau. */
+  const stopped = useRef(false);
+  const tommyShown = useRef(false);
 
   const add = useCallback((l: NewLine) => {
     const id = nextId.current++;
@@ -152,7 +169,8 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { enabled?: boolean; firstName?: string } | null) => {
         if (!alive || !d?.enabled) return;
-        if (typeof d.firstName === 'string' && d.firstName.trim()) setFirstName(d.firstName.trim());
+        const name = bubbleName(d.firstName);
+        if (name) setFirstName(name);
         setEnabled(true);
       })
       .catch(() => { /* 401, réseau : pas de chat, sans bruit */ });
@@ -266,6 +284,9 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
      `done`, puis part (les messages en attente partent ensemble, dans un seul tour). */
   const runTurn = useCallback(async (text: string | null) => {
     busy.current = true;
+    /* Le visiteur a écrit : « typing… » tout de suite, sans attendre le premier évènement
+       de Tyler (le modèle prend quelques secondes avant de répondre). */
+    if (text !== null && !stopped.current) setTyping(true);
     const ctl = new AbortController();
     abortRef.current = ctl;
     let silence: ReturnType<typeof setTimeout> | null = null;
@@ -284,8 +305,27 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
     };
 
     const handle = (ev: Record<string, unknown>) => {
-      if (ev.type === 'typing' || ev.type === 'message' || ev.type === 'proposal' || ev.type === 'slots') setOffline(false);
+      if (ev.type === 'typing' || ev.type === 'message' || ev.type === 'proposal' || ev.type === 'slots') {
+        setOffline(false);
+        stopped.current = false;
+        tommyShown.current = false;
+      }
       switch (ev.type) {
+        case 'status':
+          /* Un humain a le fil, ou le chat est arrêté : Tyler ne répondra pas. Le message
+             tapé est gardé chez Tyler et Tommy est prévenu ; une ouverture seule n'a rien
+             transmis, elle reçoit le repli avec le numéro. Les autres statuts (booked…)
+             ne changent rien ici. */
+          if (ev.status !== 'stopped' && ev.status !== 'handoff') break;
+          stopped.current = true;
+          setTyping(false);
+          setOffline(true);
+          if (text === null) add({ kind: 'fallback' });
+          else if (!tommyShown.current) {
+            tommyShown.current = true;
+            add({ kind: 'tommy' });
+          }
+          break;
         case 'typing':
           setTyping(true);
           break;
@@ -374,6 +414,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
     if (!text) return;
     add({ kind: 'me', text });
     clarity('msg');
+    if (!stopped.current) setTyping(true);
     if (busy.current) queue.current.push(text);
     else void runTurn(text);
   }, [add, runTurn]);
@@ -449,11 +490,25 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
     if (el) el.scrollTop = el.scrollHeight;
   }, [lines, typing, open]);
 
+  /* La bulle tient en deux lignes (≤ 90 px, sous le titre de la carte). La copie validée
+     ne passe qu'avec un prénom court (« Alex ») : au-delà, on la raccourcit d'un cran
+     (« … with parts for your M3? »), puis sans le prénom. Mesuré au rendu : la largeur
+     d'un prénom ou d'un modèle ne se devine pas au nombre de caractères. */
+  const greetRef = useRef<HTMLParagraphElement>(null);
+  const [greetLevel, setGreetLevel] = useState(0);
+  useEffect(() => { setGreetLevel(0); }, [firstName, model]);
+  useLayoutEffect(() => {
+    const p = greetRef.current;
+    if (!bubble || !p) return;
+    const lh = parseFloat(getComputedStyle(p).lineHeight) || 16;
+    if (p.offsetHeight > lh * 2 + 1 && greetLevel < (firstName ? 2 : 1)) setGreetLevel(greetLevel + 1);
+  }, [bubble, firstName, model, greetLevel]);
+
   if (!enabled) return null;
 
-  const greeting = firstName
-    ? `Hey ${firstName}, need a hand picking the right parts for your ${model}?`
-    : `Hey, need a hand picking the right parts for your ${model}?`;
+  const name = greetLevel < 2 ? firstName : undefined;
+  const ask = greetLevel === 0 ? `need a hand picking the right parts for your ${model}?` : `need a hand with parts for your ${model}?`;
+  const greeting = name ? `Hey ${name}, ${ask}` : `Hey, ${ask}`;
 
   /* Rendu dans <body> : la section des résultats garde un `translate` de son animation
      d'entrée, ce qui ferait de `position:fixed` une position relative à la section (le
@@ -472,7 +527,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
               >
                 ✕
               </button>
-              <p>{greeting}</p>
+              <p ref={greetRef}>{greeting}</p>
               <div className="tchat__choices">
                 <button type="button" className="tchat__yes" onClick={openChat}>Yeah, help me</button>
                 <button type="button" className="tchat__no" onClick={() => setBubble(false)}>I'm good</button>
@@ -515,6 +570,14 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
                 return (
                   <p key={l.id} className="tchat__msg tchat__msg--fail">
                     Can't reach Tyler right now, call us at{' '}
+                    <a href={CONFIG.PHONE_HREF} onClick={() => clarity('call')}>{CONFIG.PHONE}</a>.
+                  </p>
+                );
+              }
+              if (l.kind === 'tommy') {
+                return (
+                  <p key={l.id} className="tchat__msg tchat__msg--note">
+                    Tommy will get back to you shortly. You can also call{' '}
                     <a href={CONFIG.PHONE_HREF} onClick={() => clarity('call')}>{CONFIG.PHONE}</a>.
                   </p>
                 );
