@@ -179,7 +179,9 @@ check('un envoi valide mene aux resultats', (await url()).includes('step=results
 console.log('\n05 — les pieces');
 const nCards = await count('.card');
 check('au moins une carte produit', nCards >= 1, `${nCards} cartes`);
-check('toutes les photos produit sont chargees', await evalJs(`[...document.querySelectorAll('.card__media img')].every(i => i.complete && i.naturalWidth > 0)`), 'une photo produit ne charge pas');
+/* La photo visible de chaque carte. Les photos suivantes d'un carrousel sont
+   paresseuses par construction (CardGallery) : elles ne chargent qu'à l'approche. */
+check('toutes les photos produit sont chargees', await evalJs(`[...document.querySelectorAll('.card__media > img, .gallery__slide:first-child img')].every(i => i.complete && i.naturalWidth > 0)`), 'une photo produit ne charge pas');
 check('plus de bouton « Ask a builder »', (await evalJs(`document.body.textContent.includes('Ask a builder')`)) === false, 'le bouton est encore la');
 const buy = await evalJs(`(() => { const a = document.querySelector('.card .btn'); return a ? a.getAttribute('href') : ''; })()`);
 check('le lien d achat vise le panier Shopify', /azmotorsport\.ca\/cart\/\d+:1\?/.test(buy), buy.slice(0, 90));

@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Stars from './Stars';
+import CardGallery from './CardGallery';
+import HearIt from './HearIt';
 import { CONFIG } from '@/lib/config';
 import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
@@ -12,6 +14,9 @@ import { withCheckout } from '@/lib/checkout';
    déjà réduite à la pièce affichée. */
 import { fitmentLines, money, type Product } from '@/lib/catalogTypes';
 import { formatMonth, formatRating, trimQuote, type Proof } from '@/lib/reviewTypes';
+/* Même règle : la vidéo et « best seller » arrivent en propriétés, lib/videos et
+   lib/bestsellers restent côté serveur. */
+import { cardTags, type CardVideo } from '@/lib/cardMedia';
 
 /* Le choix catless / catted n'est pas une option technique : c'est la question du son
    et de la légalité, celle qui bloque vraiment l'achat. On l'explique sous le
@@ -46,7 +51,9 @@ export default function ProductCard({
   pickable = false,
   picked = false,
   onPick,
-  onVariant
+  onVariant,
+  video = null,
+  bestSeller = false
 }: {
   product: Product;
   shop: string;
@@ -66,6 +73,11 @@ export default function ProductCard({
      disparaître entièrement plutôt que laisser un gabarit vide — une carte avec
      « 0 avis » est pire qu'une carte sans ligne d'avis. */
   proof: Proof;
+  /* La vidéo d'AZ qui montre CE char avec CE type de pièce, ou null (le cas le plus
+     courant : 46 fiches sur 121 en ont une, et seulement pour le char qu'elle montre). */
+  video?: CardVideo;
+  /* Vrai seulement si bestsellers.json désigne cette pièce pour cet écran. */
+  bestSeller?: boolean;
 }) {
   /* On garde l'index d'origine de chaque option.
      L'ancienne page filtrait « Title » puis indexait v.options avec la position dans
@@ -101,6 +113,17 @@ export default function ProductCard({
 
   const tip = help(current?.options ?? []);
   const img = product.images[0];
+  /* Les tags se recalculent à chaque changement de variante : « Max power » suit
+     Race (catless), « Ships free » suit le prix de la variante choisie. */
+  const tags = cardTags({
+    bestSeller,
+    proof,
+    part: product.part,
+    selected: opts.map((o) => current?.options[o.i] ?? ''),
+    price: current.price,
+    freeShipMin: CONFIG.FREE_SHIP_MIN
+  });
+  const sizes = '(min-width:760px) 50vw, 100vw';
   const fits = fitmentLines(product);
 
   const buyHref =
@@ -109,12 +132,16 @@ export default function ProductCard({
   return (
     <article className="card">
       <div className="card__media">
-        {img ? (
+        {/* Deux photos ou plus : le carrousel. Une seule : la carte d'avant, à
+            l'identique — 77 fiches n'en ont qu'une. */}
+        {product.images.length > 1 ? (
+          <CardGallery images={product.images} alt={product.title} priority={priority} sizes={sizes} />
+        ) : img ? (
           <Image
             src={img}
             alt={product.title}
             fill
-            sizes="(min-width:760px) 50vw, 100vw"
+            sizes={sizes}
             /* La première carte est souvent le plus grand élément de l'écran de
                résultats : elle se charge en priorité, les suivantes paresseusement. */
             priority={priority}
@@ -126,6 +153,17 @@ export default function ProductCard({
 
       <div className="card__body">
         <h3>{product.title}</h3>
+
+        {/* Au plus deux tags, et chacun est vrai pour la variante affichée — voir
+            cardTags. Texte seul, sans pictogramme : DESIGN.md interdit l'icône
+            décorative. La liste disparaît quand il n'y a rien de vrai à dire. */}
+        {tags.length ? (
+          <ul className="chips" aria-label="Highlights">
+            {tags.map((t) => (
+              <li key={t} className="chip">{t}</li>
+            ))}
+          </ul>
+        ) : null}
 
         {/* La note de la pièce, juste sous son nom — la place où tout acheteur en
             ligne la cherche. Elle vient des avis déposés sur azmotorsport.ca, pas de
@@ -140,6 +178,10 @@ export default function ProductCard({
             </span>
           </p>
         ) : null}
+
+        {/* Le son, sur le char du visiteur. Placé avec la note : c'est la même
+            famille de preuve, avant le fitment et avant le bloc de décision. */}
+        {video ? <HearIt video={video} handle={product.handle} productTitle={product.title} /> : null}
 
         {/* Le bloc de fitment attaque le frein n°1 du créneau : 86 % des retours de
             pièces en ligne sont un mauvais fitment. On l'imprime, on ne le cache pas. */}

@@ -7,6 +7,7 @@ import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
 import { money, type Product } from '@/lib/catalogTypes';
 import type { Proof } from '@/lib/reviewTypes';
+import type { CardVideo } from '@/lib/cardMedia';
 
 /* Construire une commande de plusieurs pièces.
  *
@@ -34,6 +35,8 @@ export type PickerPart = {
   product: Product;
   partLabel: string;
   proof: Proof;
+  video: CardVideo;
+  bestSeller: boolean;
 };
 
 /* La variante réellement choisie sur une carte. Elle change sous les sélecteurs
@@ -86,6 +89,8 @@ export default function PartPicker({ parts, shop }: { parts: PickerPart[]; shop:
             partLabel={p.partLabel}
             priority={i === 0}
             proof={p.proof}
+            video={p.video}
+            bestSeller={p.bestSeller}
             pickable={many}
             picked={picked.includes(p.product.id)}
             onPick={toggle}

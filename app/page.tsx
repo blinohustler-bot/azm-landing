@@ -15,6 +15,7 @@ import { CONFIG, LEAD_COOKIE, type StepName } from '@/lib/config';
 import {
   SHOP, findMake, findModel, findGeneration, partsFor, carName, generationLabel
 } from '@/lib/catalog';
+import { screenKey } from '@/lib/bestsellers';
 
 /* Le parcours, décidé côté serveur à partir de l'URL.
  *
@@ -183,7 +184,18 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
             {/* Le filet sous la garantie du gate : rejoue un lead que /api/lead
                 n'aurait pas réussi à écrire à l'étape précédente. */}
             <LeadRetry />
-            <StepResults carName={car} parts={parts} shop={SHOP} />
+            {/* Le modèle et l'écran descendent pour la vidéo (jamais celle d'un autre
+                char que celui choisi) et pour « Best seller » (le plus vendu de CET
+                écran). Même découpage d'écran que tools/build-bestsellers.mjs. */}
+            <StepResults
+              carName={car}
+              parts={parts}
+              shop={SHOP}
+              modelKey={model?.key ?? null}
+              screen={make && model
+                ? screenKey(make.make, model.key, needsGeneration ? gen?.from ?? null : null)
+                : null}
+            />
           </>
         ) : null}
 

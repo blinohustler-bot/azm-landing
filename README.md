@@ -529,3 +529,27 @@ paiement ne transite ni par cette page ni par la fonction.
 - La limite de débit vit dans la mémoire d'un lambda : elle tient contre un script isolé,
   pas contre une attaque distribuée. Si ça devient un problème, c'est Vercel Firewall ou
   un KV partagé, pas un compteur plus gros.
+
+---
+
+## La carte produit : photos, son, tags
+
+**Photos.** Une fiche à deux photos ou plus devient un carrousel (`components/CardGallery.tsx`) :
+`scroll-snap` au doigt, compteur « 2 / 4 », flèches pour la souris seulement, aucun
+auto-défilement. La première photo charge comme avant, les suivantes sont paresseuses.
+
+**« Hear it on a G80 M3 ».** `node build-videos.mjs` lit l'inventaire YouTube de Tyler
+(`azm-tyler/knowledge/videos.json`) et écrit `videos.json`. L'association pièce → vidéo
+est une table écrite à la main (`RULES`, en tête du script) : même char, même type de
+pièce, et sinon rien. La carte ne montre la vidéo qu'au visiteur dont le modèle est
+celui de la vidéo (`lib/videos.ts`). L'iframe `youtube-nocookie.com` n'existe qu'après
+le tap ; c'est le seul hôte ajouté à la CSP (`frame-src`).
+
+**Tags.** `lib/cardMedia.ts → cardTags()` : au plus deux, chacun vrai pour la variante
+affichée. `Best seller` vient de `bestsellers.json`, livré vide : il faut lancer
+`tools/build-bestsellers.mjs` à la main avec un jeton Admin Shopify (voir son en-tête).
+
+```bash
+npm test                                         # inclut tools/media.test.mjs
+AZM_URL=http://localhost:3100 node tools/e2e-media.mjs   # captures dans tools/out/
+```

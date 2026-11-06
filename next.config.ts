@@ -19,7 +19,11 @@ const csp = [
   /* Le pixel Meta envoie ses événements par un formulaire POST dans une iframe vers
      www.facebook.com/tr (vu en prod le 2026-11-03 : aucun envoi par image ni fetch).
      Sans ces deux règles, la CSP bloquait PageView, FormStep, Lead et AddToCart. */
-  "frame-src https://www.facebook.com",
+  /* youtube-nocookie : le lecteur « Hear it on… » de la carte produit, créé au tap.
+     Rien de plus : ce qui se charge DANS l'iframe (scripts, images de YouTube) relève
+     de la politique du document YouTube, pas de la nôtre. Pas de youtube.com non
+     plus — la version sans cookie est la seule utilisée. */
+  "frame-src https://www.facebook.com https://www.youtube-nocookie.com",
   "form-action 'self' https://www.facebook.com",
   "frame-ancestors 'self'",
   "base-uri 'self'"

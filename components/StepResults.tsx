@@ -4,6 +4,8 @@ import Track from './Track';
 import { CONFIG } from '@/lib/config';
 import { partLabel, type Product } from '@/lib/catalog';
 import { proofFor } from '@/lib/reviews';
+import { videoFor } from '@/lib/videos';
+import { isBestSeller } from '@/lib/bestsellers';
 
 /* 05 — les pièces.
  *
@@ -25,11 +27,18 @@ import { proofFor } from '@/lib/reviews';
 export default function StepResults({
   carName,
   parts,
-  shop
+  shop,
+  modelKey,
+  screen
 }: {
   carName: string;
   parts: Product[];
   shop: string;
+  /* La clé du modèle choisi (« m3 ») : la vidéo d'une carte n'est montrée que si
+     elle montre CE modèle-là. */
+  modelKey: string | null;
+  /* L'écran affiché (marque | modèle | génération), pour « Best seller ». */
+  screen: string | null;
 }) {
   const n = parts.length;
 
@@ -59,7 +68,12 @@ export default function StepResults({
         parts={parts.map((p) => ({
           product: p,
           partLabel: partLabel(p),
-          proof: proofFor(p.handle)
+          proof: proofFor(p.handle),
+          /* Même principe que l'avis : lus ici, côté serveur, et réduits à la carte.
+             Le navigateur ne reçoit qu'un id de vidéo et un booléen, jamais les
+             fichiers. */
+          video: videoFor(p.handle, modelKey),
+          bestSeller: isBestSeller(p.handle, screen)
         }))}
       />
 
