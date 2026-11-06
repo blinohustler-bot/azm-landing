@@ -10,6 +10,9 @@ import { chatEnabled, clientIp, tylerConfigured, tylerFetch, turnAllowed, visito
 import { screenFor } from '@/lib/chatScreen';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+/* Un tour dure 25 à 45 s ; plafond de flux côté relais : 55 s (TIMEOUTS.total). */
+export const maxDuration = 60;
 
 const MAX_TEXT = 1000;
 const MAX_BODY = 8 * 1024;
@@ -34,6 +37,8 @@ const fallback = () =>
    tels quels. */
 const GENERIC_ERROR = 'data: {"type":"error","message":"unreachable"}';
 
+/* Tyler émet des charges `data:` JSON sur UNE seule ligne ; un `data:` réparti sur
+   plusieurs lignes n'est pas géré. */
 function sanitizeLine(line: string): string {
   if (!line.startsWith('data:')) return line;
   try {
@@ -48,21 +53,49 @@ function sanitizeLine(line: string): string {
 function sanitizeStream(body: ReadableStream<Uint8Array>): ReadableStream<Uint8Array> {
   const dec = new TextDecoder();
   const enc = new TextEncoder();
+  const reader = body.getReader();
   let buf = '';
-  return body.pipeThrough(
-    new TransformStream<Uint8Array, Uint8Array>({
-      transform(chunk, ctl) {
-        buf += dec.decode(chunk, { stream: true });
+  let sawDone = false;
+  let finished = false;
+
+  const out = (lines: string[]) =>
+    lines.map((l) => {
+      const clean = sanitizeLine(l);
+      if (clean.startsWith('data:') && clean.includes('"type":"done"')) sawDone = true;
+      return clean;
+    });
+  /* Le flux s'est terminé ou est mort sans `done` : le widget doit quand même recevoir
+     une erreur puis la fin, sinon son repli ne se déclenche jamais. */
+  const ending = () => (sawDone ? '' : GENERIC_ERROR + '\n\ndata: {"type":"done"}\n\n');
+
+  return new ReadableStream<Uint8Array>({
+    async pull(ctl) {
+      if (finished) return;
+      try {
+        const { done, value } = await reader.read();
+        if (done) {
+          buf += dec.decode();
+          const tail = buf ? out([buf]).join('\n') + '\n\n' : '';
+          finished = true;
+          ctl.enqueue(enc.encode(tail + ending()));
+          ctl.close();
+          return;
+        }
+        buf += dec.decode(value, { stream: true });
         const lines = buf.split('\n');
         buf = lines.pop() ?? '';
-        if (lines.length) ctl.enqueue(enc.encode(lines.map(sanitizeLine).join('\n') + '\n'));
-      },
-      flush(ctl) {
-        buf += dec.decode();
-        if (buf) ctl.enqueue(enc.encode(sanitizeLine(buf)));
+        if (lines.length) ctl.enqueue(enc.encode(out(lines).join('\n') + '\n'));
+      } catch {
+        finished = true;
+        const end = ending();
+        if (end) ctl.enqueue(enc.encode(end));
+        ctl.close();
       }
-    })
-  );
+    },
+    cancel(reason) {
+      return reader.cancel(reason);
+    }
+  });
 }
 
 export async function POST(req: Request) {
@@ -94,7 +127,7 @@ export async function POST(req: Request) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contactId, text: text ?? null, screen })
-    });
+    }, 'turn');
     if (!up.ok || !up.body) return fallback();
     return new Response(sanitizeStream(up.body), { status: 200, headers: SSE_HEADERS });
   } catch {
