@@ -289,8 +289,13 @@ export default function ProductCard({
           <li>Secure Shopify checkout, your details already filled in</li>
           <li>
             {current.available
-              ? 'Ships from Brossard, QC in 1–2 business days · Canada & US'
-              : 'Built and shipped from Brossard, QC · Canada & US'}
+              ? 'Ships from Brossard, QC in 1–2 business days'
+              : 'Built and shipped from Brossard, QC'}
+          </li>
+          <li>
+            {current.price >= CONFIG.FREE_SHIP_MIN
+              ? 'Free shipping to Canada & the US'
+              : `Free shipping to Canada & the US on orders over ${money(CONFIG.FREE_SHIP_MIN)}`}
           </li>
         </ul>
 

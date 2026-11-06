@@ -14,6 +14,7 @@ type Config = {
   GATE_FIRST: boolean;
   UTM: string;
   GOOGLE: { RATING: number; COUNT: number; URL: string };
+  FREE_SHIP_MIN: number;
 };
 
 export const CONFIG: Config = {
@@ -63,7 +64,13 @@ export const CONFIG: Config = {
     RATING: 4.9,
     COUNT: 140,
     URL: 'https://www.google.com/maps/place/?q=place_id:ChIJkzZeE1APyUwREDBP53WmvAw'
-  }
+  },
+
+  /* Livraison gratuite Canada + USA dès ce montant (CAD, prix affichés sur la page).
+   * Confirmé par Tommy au weekly du 2026-11-06 ; c'est aussi le seuil réglé dans
+   * Shopify. Le frais de 150 $ sous ce seuil bloquait le checkout (Clarity : paniers
+   * ouverts depuis la LP, 0 payé). Ailleurs dans le monde : pas de promesse. */
+  FREE_SHIP_MIN: 1000
 };
 
 /* La photo qui ouvre la page.

@@ -81,6 +81,13 @@ h3{margin:0; font-weight:800; font-size:1rem; line-height:1.25; letter-spacing:-
 .brand{display:flex; align-items:center; gap:11px; font-style:italic; font-weight:900; text-transform:uppercase; font-size:.96rem; letter-spacing:-.01em}
 .brand img{width:28px; height:28px}
 .top__spacer{flex:1}
+/* Bandeau livraison gratuite (weekly 2026-11-06). Une ligne, sans aplat de couleur :
+   le lime n'est que sur l'offre, comme les autres accents de la page. */
+.shipbar{
+  margin:0; padding:7px 16px; text-align:center; border-bottom:1px solid var(--line);
+  font-size:.78rem; letter-spacing:.02em; color:#c9ced2; background:var(--panel);
+}
+.shipbar b{color:var(--lime); font-weight:800; text-transform:uppercase; letter-spacing:.06em}
 .phone{
   display:inline-flex; align-items:center; gap:8px; text-decoration:none;
   font-weight:600; font-size:.84rem; letter-spacing:.01em; white-space:nowrap;
@@ -1005,10 +1012,12 @@ footer p{margin:0 0 6px}
   margin-left:auto; padding-left:12px;
 }
 .bundle .btn{flex:none; padding:15px 24px}
+.bundle__ship{margin:0; flex:1 0 100%; order:3; font-size:.8rem; color:var(--muted)}
 @media(max-width:560px){
   .bundle{gap:10px; padding:12px 14px}
   .bundle__sum{flex:1 0 100%}
-  .bundle .btn{flex:1 0 100%; text-align:center}
+  .bundle .btn{flex:1 0 100%; text-align:center; order:4}
+  .bundle__ship{margin-top:-4px}
 }
 
 /* MAQUETTE — versements et rassurance sous le prix / le bouton. */
