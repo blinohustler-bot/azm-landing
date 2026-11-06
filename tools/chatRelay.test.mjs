@@ -234,3 +234,42 @@ test('rate limit: 30 turns per IP, the 31st is 429', async () => {
   /* une autre IP n'est pas touchée */
   assert.equal((await turn.POST(post('/api/chat/turn', { text: 'hi', ...CAR }, { cookie: cookie() }))).status, 200);
 });
+
+test('only visitor events pass: tool, score, profile, action, guardrail, thinking and junk lines are dropped', async () => {
+  const lines = [
+    { type: 'thinking' },
+    { type: 'tool', name: 'search_catalog', input: { vehicle: 'M3' }, output: { secret: 'TOOL-OUTPUT' } },
+    { type: 'score', score: { total: 91, reasons: ['SCORE-REASON'] } },
+    { type: 'profile', profile: { budget: 'PROFILE-BUDGET' } },
+    { type: 'action', label: 'GHL note', detail: 'contact ct_abc123 ACTION-DETAIL', dryRun: false },
+    { type: 'guardrail', violations: [{ rule: 'x', detail: 'GUARDRAIL-DRAFT' }] },
+    { type: 'typing' },
+    { type: 'message', text: 'Yes it fits.' },
+    { type: 'slots', slots: [{ label: 'Tomorrow 10:00', startIso: '2026-11-07T15:00:00Z' }] },
+    { type: 'status', status: 'handoff' },
+    { type: 'done' }
+  ].map((o) => `data: ${JSON.stringify(o)}\n\n`).join('');
+  upstream = () => new Response('event: internal\nid: 7\ndata: not json SECRET-RAW\n\n' + lines, { status: 200 });
+  const r = await turn.POST(post('/api/chat/turn', { text: 'hi', ...CAR }, { cookie: cookie() }));
+  const out = await r.text();
+  const types = out.split('\n').filter((l) => l.startsWith('data:')).map((l) => JSON.parse(l.slice(5)).type);
+  assert.deepEqual(types, ['typing', 'message', 'slots', 'status', 'done']);
+  for (const leak of ['TOOL-OUTPUT', 'SCORE-REASON', 'PROFILE-BUDGET', 'ACTION-DETAIL', 'ct_abc123', 'GUARDRAIL-DRAFT', 'SECRET-RAW', 'event: internal', 'id: 7'])
+    assert.ok(!out.includes(leak), `leaked ${leak}`);
+});
+
+test('heartbeat comments from Tyler pass through, as they come (they keep the widget silence timer alive)', async () => {
+  const saved = { ...TIMEOUTS };
+  Object.assign(TIMEOUTS, { headers: 50, total: 2000 });
+  try {
+    upstream = (u, init) => slowStream([': ping\n\n', ': ping\n\n', 'data: {"type":"message","text":"a"}\n\n', 'data: {"type":"done"}\n\n'], 40, init);
+    const r = await turn.POST(post('/api/chat/turn', { text: 'hi', ...CAR }, { cookie: cookie() }));
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    const first = dec.decode((await reader.read()).value);
+    assert.equal(first, ': ping\n\n', 'the first ping reaches the browser before any event');
+    let rest = '';
+    for (;;) { const { done, value } = await reader.read(); if (done) break; rest += dec.decode(value); }
+    assert.equal(first + rest, ': ping\n\n: ping\n\ndata: {"type":"message","text":"a"}\n\ndata: {"type":"done"}\n\n');
+  } finally { Object.assign(TIMEOUTS, saved); }
+});

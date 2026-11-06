@@ -35,23 +35,33 @@ const fallback = () =>
 
 /* Relaie le flux SSE de Tyler ligne à ligne, en continu (rien n'est mis en tampon au-delà
    d'une ligne). Tout évènement { type: "error" } est remplacé par l'erreur générique : le
-   détail d'une panne de Tyler ne doit pas atteindre le navigateur. Les autres passent
-   tels quels. */
+   détail d'une panne de Tyler ne doit pas atteindre le navigateur. Seuls les évènements
+   de la liste blanche passent (voir sanitizeLine). */
 const GENERIC_ERROR = 'data: {"type":"error","message":"unreachable"}';
 
 /* Tyler émet des charges `data:` JSON sur UNE seule ligne ; un `data:` réparti sur
    plusieurs lignes n'est pas géré. */
+/* Liste blanche : seuls ces évènements atteignent le navigateur. Les évènements internes
+   de Tyler (outils et leurs résultats, score, profil, garde-fous, actions avec l'id du
+   contact) sont retirés, même si Tyler les envoyait par erreur. (Pas d'export : un
+   fichier route de Next n'accepte que ses propres exports.) */
+const VISITOR_EVENTS = new Set(['typing', 'message', 'proposal', 'slots', 'error', 'done', 'status']);
+
 /* Une proposition dont le lien ne vise pas le magasin est retirée du flux (le widget
-   fait le même contrôle) : CHECKOUT y ajoute les coordonnées du visiteur. La ligne vide
-   qui reste ne fait qu'un évènement vide, ignoré par le widget. */
+   fait le même contrôle) : CHECKOUT y ajoute les coordonnées du visiteur. Une ligne
+   retirée devient une ligne vide, soit un évènement vide, ignoré par le widget. Les
+   commentaires SSE (« : ping », le battement de Tyler toutes les 10 s) passent tels
+   quels : ils montrent au widget que le tour vit encore. Tout le reste est retiré. */
 function sanitizeLine(line: string): string {
-  if (!line.startsWith('data:')) return line;
+  if (line === '' || line.startsWith(':')) return line;
+  if (!line.startsWith('data:')) return '';
   try {
     const ev = JSON.parse(line.slice(5).trim());
-    if (ev && ev.type === 'error') return GENERIC_ERROR;
-    if (ev && ev.type === 'proposal' && !isShopUrl(ev.url, SHOP)) return '';
+    if (!ev || typeof ev !== 'object' || !VISITOR_EVENTS.has(ev.type)) return '';
+    if (ev.type === 'error') return GENERIC_ERROR;
+    if (ev.type === 'proposal' && !isShopUrl(ev.url, SHOP)) return '';
   } catch {
-    /* ligne non JSON : telle quelle */
+    return ''; /* ligne non JSON : retirée */
   }
   return line;
 }
