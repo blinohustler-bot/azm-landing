@@ -1029,3 +1029,150 @@ footer p{margin:0 0 6px}
 .assure li::before{content:''; position:absolute; left:3px; top:.4em; width:11px; height:6px;
   border-left:2.5px solid var(--lime); border-bottom:2.5px solid var(--lime); transform:rotate(-45deg)}
 
+
+/* ── le chat Tyler (écran des pièces) ──────────────────────────────────────
+   Le chat est du papier sur la page sombre : blanc et #f5f5f5, encre noire, l'en-tête
+   en chrome noire comme la barre du magasin. Le lime n'y sert qu'une fois, au bouton
+   CHECKOUT (l'action qui vend) ; le bouton flottant est blanc pour ne pas disputer le
+   lime aux « Buy now » des cartes. La coupe d'angle est la seule ornementation.
+
+   --tchat-lift est posé par TylerChat.tsx : il monte le bouton et la bulle au-dessus
+   de la barre de commande (.bundle) quand elle colle en bas de l'écran. */
+.tchat__dock{
+  position:fixed; right:16px; z-index:30;
+  bottom:calc(var(--tchat-lift, 16px) + env(safe-area-inset-bottom, 0px));
+  display:flex; flex-direction:column; align-items:flex-end; gap:10px;
+  filter:drop-shadow(0 10px 22px #000000a6);
+  transition:bottom .2s var(--ease), opacity .15s ease, visibility .15s;
+}
+/* Un « Buy now » passe sous le bouton : il s'efface le temps du passage. */
+.tchat__dock.is-yield{opacity:0; visibility:hidden; pointer-events:none}
+.tchat__fab{
+  border:0; cursor:pointer; min-height:48px; padding:12px 18px;
+  background:#fff; color:#000; font-weight:800; font-size:.95rem; letter-spacing:-.005em;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
+}
+.tchat__fab:focus-visible{outline:2px solid var(--lime); outline-offset:3px}
+
+.tchat__bubble{
+  position:relative; width:205px; max-width:calc(100vw - 32px);
+  padding:14px 14px 10px; background:#fff; color:#000;
+  font-size:.9rem; line-height:1.4;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
+  animation:tchatIn .24s var(--ease) both;
+}
+.tchat__bubble p{margin:0 22px 10px 0; font-weight:600}
+.tchat__x{
+  position:absolute; top:2px; right:2px; width:36px; height:36px;
+  border:0; background:none; color:#000; opacity:.55; cursor:pointer; font-size:.9rem;
+}
+.tchat__x:hover{opacity:1}
+.tchat__choices{display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px}
+.tchat__yes{
+  border:0; cursor:pointer; min-height:40px; padding:9px 12px;
+  background:#000; color:#fff; font-weight:800; font-size:.82rem;
+}
+.tchat__no{
+  border:0; cursor:pointer; min-height:40px; padding:9px 4px;
+  background:none; color:#4a4f53; font-weight:600; font-size:.82rem;
+}
+.tchat__bubble button:focus-visible,
+.tchat__panel button:focus-visible,
+.tchat__panel a:focus-visible{outline:2px solid #000; outline-offset:2px}
+
+/* La feuille : ~70 % de la hauteur sur téléphone, un panneau à droite au-delà. */
+.tchat__scrim{position:fixed; inset:0; z-index:39; background:#000000a6; animation:tchatFade .2s ease both}
+@media(min-width:640px){ .tchat__scrim{display:none} }
+.tchat__panel{
+  position:fixed; left:0; right:0; bottom:0; z-index:40;
+  height:70vh; height:70dvh;
+  display:flex; flex-direction:column;
+  background:#f5f5f5; color:#000;
+  box-shadow:0 -24px 60px -24px #000;
+  animation:tchatUp .26s var(--ease) both;
+}
+@media(min-width:640px){
+  .tchat__panel{
+    left:auto; right:20px; bottom:20px; width:380px; height:min(600px, 78vh);
+    clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
+  }
+}
+.tchat__head{
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:10px 6px 10px 16px; background:#000; color:#fff;
+}
+.tchat__head b{display:block; font-weight:800; font-size:.95rem; letter-spacing:-.005em}
+.tchat__online{display:inline-flex; align-items:center; gap:6px; font-size:.76rem; color:#c9ced2}
+.tchat__online i{width:8px; height:8px; border-radius:50%; background:#279a4b}
+.tchat__close{
+  width:44px; height:44px; flex:none; border:0; background:none; color:#fff;
+  cursor:pointer; font-size:1rem;
+}
+.tchat__panel .tchat__close:focus-visible{outline-color:#fff; outline-offset:-4px}
+
+.tchat__log{
+  flex:1; overflow-y:auto; overscroll-behavior:contain;
+  display:flex; flex-direction:column; gap:10px; padding:16px;
+}
+.tchat__msg{
+  margin:0; max-width:86%; align-self:flex-start; padding:10px 13px;
+  background:#fff; color:#000; font-size:.95rem; line-height:1.45;
+  white-space:pre-wrap; overflow-wrap:anywhere;
+}
+.tchat__msg a{color:inherit; font-weight:700}
+.tchat__msg--me{align-self:flex-end; background:#000; color:#fff}
+.tchat__msg--fail a{white-space:nowrap; font-variant-numeric:tabular-nums}
+.tchat__typing{margin:0; color:#5d6368; font-size:.85rem; font-style:italic; animation:tchatPulse 1.2s ease-in-out infinite}
+
+.tchat__slots{display:flex; flex-wrap:wrap; gap:8px}
+.tchat__slots button{
+  cursor:pointer; min-height:40px; padding:9px 12px;
+  background:#fff; color:#000; border:1px solid #000; font-weight:700; font-size:.85rem;
+  font-variant-numeric:tabular-nums;
+}
+.tchat__slots button:disabled{opacity:.4; cursor:default}
+
+/* La proposition : ce que Tyler a choisi, au prix qu'il a envoyé, et le bouton. */
+.tchat__card{
+  align-self:stretch; padding:14px; background:#fff;
+  clip-path:polygon(0 0, 100% 0, 100% calc(100% - var(--cut)), calc(100% - var(--cut)) 100%, 0 100%);
+}
+.tchat__card ul{list-style:none; margin:0; padding:0; display:grid; gap:6px}
+.tchat__card li{display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:.9rem; line-height:1.35}
+.tchat__card li b{font-weight:800}
+.tchat__card li em{font-style:normal; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap}
+.tchat__price{margin:10px 0 12px; display:flex; align-items:baseline; gap:10px}
+.tchat__price b{font-size:1.5rem; font-weight:900; font-style:italic; letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.tchat__price span{color:#279a4b; font-weight:700; font-size:.85rem}
+.tchat__card .btn{padding:15px 20px}
+.tchat__card .btn:focus-visible{outline:2px solid #000; outline-offset:3px}
+.tchat__call{
+  display:block; margin-top:6px; padding:10px 0; min-height:44px; border:0; background:none;
+  color:#000; text-align:left; text-decoration:underline; text-underline-offset:3px;
+  font-size:.85rem; font-weight:600; cursor:pointer;
+}
+
+.tchat__form{
+  display:flex; gap:8px; background:#fff; border-top:1px solid #0000001a;
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+}
+/* 16 px au moins : en dessous, Safari iOS zoome sur le champ au focus. */
+.tchat__form input{
+  flex:1; min-width:0; padding:12px; font-size:16px; color:#000; background:#fff;
+  border:1px solid #00000033; border-radius:3px;
+}
+.tchat__form input:focus-visible{outline:2px solid #000; outline-offset:-1px}
+.tchat__form button{
+  border:0; cursor:pointer; min-height:46px; padding:0 16px;
+  background:#000; color:#fff; font-weight:800; font-size:.9rem;
+}
+.tchat__form button:disabled{opacity:.35; cursor:default}
+
+@keyframes tchatIn{from{opacity:0; translate:0 8px} to{opacity:1; translate:0 0}}
+@keyframes tchatUp{from{translate:0 24px; opacity:0} to{translate:0 0; opacity:1}}
+@keyframes tchatPulse{50%{opacity:.45}}
+@keyframes tchatFade{from{opacity:0}}
+@media(prefers-reduced-motion:reduce){
+  .tchat__dock{transition:none}
+  .tchat__bubble,.tchat__panel,.tchat__typing,.tchat__scrim{animation:none}
+}
