@@ -273,3 +273,9 @@ test('heartbeat comments from Tyler pass through, as they come (they keep the wi
     assert.equal(first + rest, ': ping\n\n: ping\n\ndata: {"type":"message","text":"a"}\n\ndata: {"type":"done"}\n\n');
   } finally { Object.assign(TIMEOUTS, saved); }
 });
+
+test('the gate status "blocked" reaches the widget unchanged', async () => {
+  upstream = () => new Response('data: {"type":"status","status":"blocked"}\n\ndata: {"type":"done"}\n\n', { status: 200 });
+  const r = await turn.POST(post('/api/chat/turn', { text: 'hi', ...CAR }, { cookie: cookie() }));
+  assert.equal(await r.text(), 'data: {"type":"status","status":"blocked"}\n\ndata: {"type":"done"}\n\n');
+});

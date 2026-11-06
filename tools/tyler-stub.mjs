@@ -19,8 +19,11 @@
  *   GET /__mode?silent=1        /turn ouvre le flux et ne dit plus rien
  *   GET /__mode?ping=1          pendant l'attente, un commentaire « : ping » toutes les
  *                               10 s, comme Tyler (avec delay= : un tour long mais vivant)
- *   GET /__mode?blocked=handoff /turn répond seulement { status: handoff } (Tommy a le
- *                               fil) ; blocked=stopped pareil avec « stopped »
+ *   GET /__mode?blocked=1       /turn répond seulement { status: blocked } (la porte du
+ *                               chat refuse : Tommy a le fil, Tyler est arrêté)
+ *   GET /__mode?says=stopped    Tyler répond un message puis { status: stopped } (le
+ *                               visiteur a demandé l'arrêt) ; says=handoff : un message
+ *                               « Tommy va te contacter » puis { status: handoff }
  *   GET /__mode?name=…          le prénom renvoyé par /status (défaut Alex)
  *   GET /__mode                 retour au défaut
  *   GET /__log                  les tours reçus : { text, start, end }, en ms
@@ -29,7 +32,7 @@ import http from 'node:http';
 
 const PORT = Number(process.env.PORT || 4010);
 
-let mode = { fail: false, delay: 300, silent: false, ping: false, blocked: '', name: 'Alex' };
+let mode = { fail: false, delay: 300, silent: false, ping: false, blocked: false, says: '', name: 'Alex' };
 const turns = [];
 
 const server = http.createServer((req, res) => {
@@ -45,7 +48,8 @@ const server = http.createServer((req, res) => {
       delay: Number(u.searchParams.get('delay') || 300),
       silent: u.searchParams.get('silent') === '1',
       ping: u.searchParams.get('ping') === '1',
-      blocked: u.searchParams.get('blocked') || '',
+      blocked: u.searchParams.get('blocked') === '1',
+      says: u.searchParams.get('says') || '',
       name: u.searchParams.get('name') || 'Alex'
     };
     turns.length = 0;
@@ -74,11 +78,16 @@ const server = http.createServer((req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache' });
       res.flushHeaders();
       const ev = (o) => res.write(`data: ${JSON.stringify(o)}\n\n`);
+      const finish = () => { ev({ type: 'done' }); log.end = Date.now(); res.end(); };
       if (mode.blocked) {
-        ev({ type: 'status', status: mode.blocked });
-        ev({ type: 'done' });
-        log.end = Date.now();
-        return res.end();
+        ev({ type: 'status', status: 'blocked' });
+        return finish();
+      }
+      if (mode.says) {
+        ev({ type: 'typing' });
+        ev({ type: 'message', text: mode.says === 'stopped' ? "Got it — you won't hear from us again. Take care 🫡" : "I'm getting Tommy on it right now, he'll reach out to you personally." });
+        ev({ type: 'status', status: mode.says });
+        return finish();
       }
       ev({ type: 'typing' });
       if (mode.ping) {

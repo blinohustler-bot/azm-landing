@@ -75,11 +75,12 @@ function clarity(value: 'bubble_shown' | 'open' | 'msg' | 'checkout' | 'call') {
   }
 }
 
-/* Le prénom de la bulle : le premier mot, 14 caractères au plus (un prénom composé ou
-   un nom complet tapé dans le formulaire ne fait pas déborder la bulle). */
+/* Le prénom de la bulle : le premier mot, coupé au premier trait d'union
+   (« Maximilien-Alexandre » → « Maximilien »), 14 caractères au plus : un prénom composé
+   ou un nom complet tapé dans le formulaire ne fait pas déborder la bulle. */
 function bubbleName(raw: unknown): string | undefined {
   if (typeof raw !== 'string') return undefined;
-  const first = raw.trim().split(/\s+/)[0] ?? '';
+  const first = raw.trim().split(/[\s-]+/)[0] ?? '';
   return first ? first.slice(0, 14) : undefined;
 }
 
@@ -156,6 +157,9 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
      une seule fois, jusqu'à ce que Tyler réponde de nouveau. */
   const stopped = useRef(false);
   const tommyShown = useRef(false);
+  /* Le visiteur a demandé l'arrêt et Tyler l'a confirmé : plus rien ne s'envoie. */
+  const [ended, setEnded] = useState(false);
+  const endedRef = useRef(false);
 
   const add = useCallback((l: NewLine) => {
     const id = nextId.current++;
@@ -312,11 +316,19 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
       }
       switch (ev.type) {
         case 'status':
-          /* Un humain a le fil, ou le chat est arrêté : Tyler ne répondra pas. Le message
-             tapé est gardé chez Tyler et Tommy est prévenu ; une ouverture seule n'a rien
-             transmis, elle reçoit le repli avec le numéro. Les autres statuts (booked…)
-             ne changent rien ici. */
-          if (ev.status !== 'stopped' && ev.status !== 'handoff') break;
+          /* « stopped » / « handoff » suivent les mots de Tyler lui-même (« you won't hear
+             from us again », « Tommy will reach out ») : rien à ajouter, mais après un arrêt
+             le champ se ferme. « blocked » : Tyler n'a rien dit, seule la porte du chat a
+             répondu (un humain a le fil, le chat est arrêté). Le message tapé est gardé chez
+             Tyler et Tommy est prévenu ; une ouverture seule n'a rien transmis, elle reçoit
+             le repli avec le numéro. Les autres statuts (booked…) ne changent rien. */
+          if (ev.status === 'stopped') {
+            setTyping(false);
+            endedRef.current = true;
+            setEnded(true);
+            break;
+          }
+          if (ev.status !== 'blocked') break;
           stopped.current = true;
           setTyping(false);
           setOffline(true);
@@ -411,7 +423,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
 
   const send = useCallback((raw: string) => {
     const text = raw.trim().slice(0, MAX_TEXT);
-    if (!text) return;
+    if (!text || endedRef.current) return;
     add({ kind: 'me', text });
     clarity('msg');
     if (!stopped.current) setTyping(true);
@@ -659,6 +671,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
               ref={inputRef}
               type="text"
               value={draft}
+              disabled={ended}
               maxLength={MAX_TEXT}
               onChange={(e) => setDraft(e.target.value)}
               onFocus={() => {
@@ -674,7 +687,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
               autoComplete="off"
               enterKeyHint="send"
             />
-            <button type="submit" disabled={!draft.trim()}>Send</button>
+            <button type="submit" disabled={ended || !draft.trim()}>Send</button>
           </form>
         </div>
       ) : null}

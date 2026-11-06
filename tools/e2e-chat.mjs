@@ -405,7 +405,7 @@ await stub('/__mode');
 await goto();
 await click('.tchat__fab');
 await waitFor(`[...document.querySelectorAll('.tchat__msg')].some((m) => m.textContent.startsWith('Quick check'))`, 4000);
-await stub('/__mode?blocked=handoff');
+await stub('/__mode?blocked=1');
 await type('.tchat__form input', 'Can I get it before Friday?');
 await click('.tchat__form button');
 check('la ligne « Tommy will get back to you »', await waitFor(`!!document.querySelector('.tchat__msg--note')`, 4000), 'pas de ligne');
@@ -425,6 +425,31 @@ const tb = await stub('/__log');
 check('les deux messages sont bien partis vers Tyler (gardés côté Tyler)', tb.map((x) => x.text).join('|') === 'Can I get it before Friday?|hello?', JSON.stringify(tb.map((x) => x.text)));
 check('console sans erreur', jsErrors.length === 0, jsErrors.join(' | '));
 
+/* ── 10b. Tyler lui-même passe la main ou arrête : rien n'est ajouté ─────── */
+console.log('\n=== Tyler\'s own handoff / opt-out add nothing ===');
+await stub('/__mode');
+await goto();
+await click('.tchat__fab');
+await waitFor(`[...document.querySelectorAll('.tchat__msg')].some((m) => m.textContent.startsWith('Quick check'))`, 4000);
+await stub('/__mode?says=handoff');
+await type('.tchat__form input', 'Can Tommy call me?');
+await click('.tchat__form button');
+check('le message de passage de main de Tyler', await waitFor(`[...document.querySelectorAll('.tchat__msg')].some((m) => m.textContent.startsWith("I'm getting Tommy on it"))`, 4000), 'pas de message');
+await sleep(400);
+check('handoff : pas de ligne « Tommy will get back »', !(await exists('.tchat__msg--note')), 'ligne ajoutée');
+check('handoff : en-tête toujours « Online »', (await text('.tchat__online')) === 'Online', await text('.tchat__online'));
+check('handoff : le champ reste ouvert', await ev(`!document.querySelector('.tchat__form input').disabled`), 'champ fermé');
+await stub('/__mode?says=stopped');
+await type('.tchat__form input', 'stop');
+await click('.tchat__form button');
+check('la confirmation d\'arrêt de Tyler', await waitFor(`[...document.querySelectorAll('.tchat__msg')].some((m) => m.textContent.startsWith('Got it'))`, 4000), 'pas de message');
+await sleep(400);
+check('stopped : pas de ligne « Tommy will get back »', !(await exists('.tchat__msg--note')), 'ligne ajoutée');
+check('stopped : aucun repli', !(await exists('.tchat__msg--fail')), 'repli');
+check('stopped : le champ et Send sont fermés', await ev(`document.querySelector('.tchat__form input').disabled && document.querySelector('.tchat__form button').disabled`), 'encore ouvert');
+check('stopped : aucun « typing… »', !(await exists('.tchat__typing')), 'typing affiché');
+check('console sans erreur', jsErrors.length === 0, jsErrors.join(' | '));
+
 /* ── 11. un long prénom ne fait pas déborder la bulle ────────────────────── */
 console.log('\n=== long first name ===');
 await stub('/__mode?name=' + encodeURIComponent('Maximilien-Alexandre Beauchemin-Tremblay'));
@@ -434,7 +459,7 @@ await goto();
 await sleep(Math.max(0, 16_000 - (Date.now() - t11)));
 check('la bulle est là', await exists('.tchat__bubble'), 'pas de bulle');
 const greet11 = (await text('.tchat__bubble p')).trim();
-check('prénom : premier mot, 14 caractères, copie raccourcie pour tenir en deux lignes', greet11 === 'Hey Maximilien-Ale, need a hand with parts for your M3?', greet11);
+check('prénom : coupé au trait d\'union, copie raccourcie pour tenir en deux lignes', greet11 === 'Hey Maximilien, need a hand with parts for your M3?', greet11);
 const bh11 = await ev(`Math.round(document.querySelector('.tchat__bubble').getBoundingClientRect().height)`);
 check('bulle ≤ 90 px de haut avec un long prénom', bh11 <= 90, `${bh11} px`);
 
