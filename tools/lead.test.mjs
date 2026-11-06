@@ -428,6 +428,24 @@ delete process.env.KLAVIYO_LIST_ID;
   check('"true" en texte (forgé) → pas de tag', up && !up.body.tags.includes('sms-opt-in'), up?.body.tags);
 }
 
+/* 15 — jeton de contact du chat : cookie signé posé avec le lead, seulement si le secret existe */
+{
+  process.env.CHAT_TOKEN_SECRET = 'secret-de-test-0000';
+  const r15 = await POST(post({ ...GOOD, email: 'chat-oui@x.co' }, { 'x-vercel-forwarded-for': '198.51.100.50' }));
+  const sc = r15.headers.get('set-cookie') ?? '';
+  check('secret posé → lead 200', r15.status === 200, await bodyOf(r15));
+  check('secret posé → cookie azm_chat aux bons attributs',
+    /^azm_chat=[A-Za-z0-9_.-]+; Path=\/; Max-Age=2592000; HttpOnly; Secure; SameSite=Lax$/.test(sc), sc);
+  const { verifyChatToken } = await import('@/lib/chatToken.ts');
+  const token = /^azm_chat=([^;]+)/.exec(sc)?.[1];
+  check('le jeton du cookie nomme le contact upserté', verifyChatToken(token) === 'ct_1', verifyChatToken(token));
+
+  delete process.env.CHAT_TOKEN_SECRET;
+  const r15b = await POST(post({ ...GOOD, email: 'chat-non@x.co' }, { 'x-vercel-forwarded-for': '198.51.100.51' }));
+  check('secret absent → lead 200 quand même', r15b.status === 200, await bodyOf(r15b));
+  check('secret absent → aucun cookie azm_chat', !(r15b.headers.get('set-cookie') ?? '').includes('azm_chat'), r15b.headers.get('set-cookie'));
+}
+
 globalThis.fetch = realFetch;
 console.log(fails ? `\n  ${fails} échec(s)\n` : '\n  tout passe\n');
 process.exit(fails ? 1 : 0);

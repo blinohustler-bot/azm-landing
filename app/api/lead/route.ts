@@ -27,6 +27,7 @@ import {
 } from '@/lib/ghl';
 import { abValue } from '@/lib/experiment';
 import { SMS_TAG } from '@/lib/consent';
+import { CHAT_COOKIE, CHAT_TOKEN_TTL_S, signChatToken } from '@/lib/chatToken';
 import { klaviyoEnabled, syncLeadToKlaviyo, KlaviyoError } from '@/lib/klaviyo';
 
 /* La route touche une API externe et un état en mémoire : rien à mettre en cache. */
@@ -248,6 +249,14 @@ export async function POST(req: Request) {
       reused: Boolean(existing?.id),
       value: lead.value
     });
+    /* Jeton de contact du chat : dit à Tyler quel contact écrit, sans exposer son id.
+       Sans CHAT_TOKEN_SECRET, pas de cookie — le lead, lui, est déjà passé. */
+    if (process.env.CHAT_TOKEN_SECRET) {
+      headers.append(
+        'Set-Cookie',
+        `${CHAT_COOKIE}=${signChatToken(contactId)}; Path=/; Max-Age=${CHAT_TOKEN_TTL_S}; HttpOnly; Secure; SameSite=Lax`
+      );
+    }
     return json({ ok: true }, 200, headers);
   } catch (e) {
     /* Le détail reste dans les logs. Le navigateur reçoit un code nu : un message

@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "tsc --noEmit",
-    "test": "node --conditions=react-server --import ./tools/alias-hook.mjs tools/lead.test.mjs",
+    "test": "node --conditions=react-server --import ./tools/alias-hook.mjs tools/lead.test.mjs && node --conditions=react-server --import ./tools/alias-hook.mjs tools/chat.test.mjs",
     "ghl:check": "node tools/ghl-check.mjs",
     "catalog": "node build-index.mjs",
     "reviews": "node build-reviews.mjs",
