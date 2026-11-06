@@ -15,6 +15,7 @@ type Config = {
   UTM: string;
   GOOGLE: { RATING: number; COUNT: number; URL: string };
   FREE_SHIP_MIN: number;
+  TYLER_CHAT: boolean;
 };
 
 export const CONFIG: Config = {
@@ -70,7 +71,12 @@ export const CONFIG: Config = {
    * Confirmé par Tommy au weekly du 2026-11-06 ; c'est aussi le seuil réglé dans
    * Shopify. Le frais de 150 $ sous ce seuil bloquait le checkout (Clarity : paniers
    * ouverts depuis la LP, 0 payé). Ailleurs dans le monde : pas de promesse. */
-  FREE_SHIP_MIN: 1000
+  FREE_SHIP_MIN: 1000,
+
+  /* Le chat Tyler sur l'écran des résultats. false = éteint partout : /api/chat/status
+     répond { enabled: false } et le widget ne s'affiche pas. À passer à true quand
+     TYLER_URL et TYLER_WEBCHAT_SECRET sont posés et que Tyler est prêt en direct. */
+  TYLER_CHAT: false
 };
 
 /* La photo qui ouvre la page.
