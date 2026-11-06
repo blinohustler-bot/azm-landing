@@ -19,9 +19,9 @@ export const SMS_TAG = 'sms-opt-in';
    acceptée, c'est ce qui permet de retrouver le libellé exact plus tard. */
 /* v2 : formulation standard de l'industrie, mots complets (« Message and data rates »,
    pas « Msg & data »). Le vérificateur A2P de GHL ratait les abréviations. */
-export const SMS_CONSENT_VERSION = '2026-11-06-v2';
+export const SMS_CONSENT_VERSION = '2026-11-06-v3';
 export const SMS_CONSENT_TEXT =
-  'I agree to receive text messages from AZ Motorsport at the phone number provided: my fitment sheet, ' +
+  'I agree to receive text messages from AZ Motorsport (9417-5155 Québec Inc.) at the phone number provided: my fitment sheet, ' +
   'replies about my build, order updates and occasional offers. Consent is not required to see your parts or to buy. ' +
   'Message frequency varies. Message and data rates may apply. Reply STOP to opt out at any time. Reply HELP for help. ' +
   'See our Privacy Policy and Terms of Service.';
