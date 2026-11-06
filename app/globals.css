@@ -380,6 +380,18 @@ body::after{
 .btn--ghost:hover{border-color:var(--lime); color:var(--lime); filter:none}
 .btn--ghost:focus-visible{outline-color:var(--lime)}
 .btn--wide{width:100%}
+/* Case « texte-moi » : jamais pré-cochée (lib/consent.ts). */
+.consent{display:grid; grid-template-columns:auto 1fr; gap:12px; align-items:start}
+.consent input{
+  appearance:none; width:20px; height:20px; margin:1px 0 0; cursor:pointer;
+  border:1px solid var(--line2); border-radius:3px; background:var(--ink);
+  display:grid; place-content:center;
+}
+.consent input::after{content:""; width:10px; height:10px; background:var(--lime); transform:scale(0); transition:transform .12s ease}
+.consent input:checked{border-color:var(--lime)}
+.consent input:checked::after{transform:scale(1)}
+.consent input:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
+.consent label{font-size:.8rem; line-height:1.5; color:var(--muted); cursor:pointer}
 .legal{margin:2px 0 0; font-size:.78rem; color:#6a7075; line-height:1.5; max-width:52ch}
 .formError{
   margin:0; padding:12px 14px; border-left:2px solid var(--orange); background:#f94c1014;

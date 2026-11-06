@@ -35,6 +35,8 @@ export type LeadPayload = {
   landing?: string;
   elapsedMs: number;
   company: string;
+  /* Case « texte-moi » cochée (lib/consent.ts). Donne le tag sms-opt-in dans GHL. */
+  smsConsent?: boolean;
   /* La version A/B (lib/experiment.ts). Dans le corps et pas en cookie : l'envoi part
      en credentials 'omit'. Posée par sendLead, comme `landing`. */
   ab?: string | null;

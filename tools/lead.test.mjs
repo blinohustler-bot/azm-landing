@@ -404,6 +404,30 @@ klaviyoDown = false;
 delete process.env.KLAVIYO_API_KEY;
 delete process.env.KLAVIYO_LIST_ID;
 
+/* 14 — consentement aux textos : le tag sms-opt-in seulement si la case est cochée */
+{
+  let n = calls.length;
+  const r14 = await POST(post({ ...GOOD, email: 'sms-oui@x.co', smsConsent: true }, { 'x-vercel-forwarded-for': '198.51.100.40' }));
+  check('case cochée → 200', r14.status === 200, await bodyOf(r14));
+  let up = calls.slice(n).find((c) => c.path === '/contacts/upsert');
+  check('case cochée → tag sms-opt-in', up?.body.tags.includes('sms-opt-in'), up?.body.tags);
+  let nt = calls.slice(n).find((c) => /notes$/.test(c.path));
+  check('case cochée → preuve dans la note',
+    /Textos\s+: OUI, case cochée le \d{4}-/.test(nt?.body.body ?? '') && /Reply STOP/.test(nt?.body.body ?? ''), nt?.body.body);
+
+  n = calls.length;
+  await POST(post({ ...GOOD, email: 'sms-non@x.co' }, { 'x-vercel-forwarded-for': '198.51.100.41' }));
+  up = calls.slice(n).find((c) => c.path === '/contacts/upsert');
+  check('case non cochée → pas de tag sms-opt-in', up && !up.body.tags.includes('sms-opt-in'), up?.body.tags);
+  nt = calls.slice(n).find((c) => /notes$/.test(c.path));
+  check('case non cochée → la note le dit', /Textos\s+: NON/.test(nt?.body.body ?? ''), nt?.body.body);
+
+  n = calls.length;
+  await POST(post({ ...GOOD, email: 'sms-forge@x.co', smsConsent: 'true' }, { 'x-vercel-forwarded-for': '198.51.100.42' }));
+  up = calls.slice(n).find((c) => c.path === '/contacts/upsert');
+  check('"true" en texte (forgé) → pas de tag', up && !up.body.tags.includes('sms-opt-in'), up?.body.tags);
+}
+
 globalThis.fetch = realFetch;
 console.log(fails ? `\n  ${fails} échec(s)\n` : '\n  tout passe\n');
 process.exit(fails ? 1 : 0);

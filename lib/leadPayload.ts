@@ -6,6 +6,8 @@
  * qu'un POST forgé ne puisse ni gonfler un enregistrement ni injecter un champ.
  */
 
+import { SMS_CONSENT_TEXT, SMS_CONSENT_VERSION } from '@/lib/consent';
+
 const MAX = { name: 120, email: 160, phone: 40, text: 200, url: 500, part: 140 };
 const MAX_PARTS = 20;
 
@@ -92,6 +94,9 @@ export type Lead = {
   landing: string;
   utms: Record<string, string>;
   at: string;
+  /* true seulement si la case a été cochée : un `"true"` ou un `1` forgé ne vaut pas
+     consentement. */
+  smsConsent: boolean;
 };
 
 /* Retourne { lead } ou { error } — jamais une exception : un lead mal formé est une
@@ -147,7 +152,8 @@ export function parseLead(raw: unknown): { lead?: Lead; error?: string } {
       page,
       landing,
       utms: utmsFrom(landing),
-      at: new Date().toISOString()
+      at: new Date().toISOString(),
+      smsConsent: r.smsConsent === true
     }
   };
 }
@@ -173,7 +179,12 @@ export function noteBody(lead: Lead): string {
     `Modèle    : ${lead.model || '—'}`,
     `Génération: ${lead.generation || '—'}`,
     `Téléphone : ${lead.phoneRaw}`,
-    `Courriel  : ${lead.email}`
+    `Courriel  : ${lead.email}`,
+    '',
+    /* La preuve du consentement : quand, quel texte, depuis quelle page. */
+    lead.smsConsent
+      ? `Textos    : OUI, case cochée le ${lead.at} (texte v${SMS_CONSENT_VERSION} : « ${SMS_CONSENT_TEXT} »)`
+      : 'Textos    : NON, case non cochée. Pas de texto marketing sans consentement.'
   ];
   if (lead.parts.length) {
     lines.push('', `Pièces compatibles (${lead.parts.length}) :`);

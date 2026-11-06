@@ -26,6 +26,7 @@ import {
   findOpenOpportunity, createOpportunity, updateOpportunity, setOpportunityEmail, GhlError
 } from '@/lib/ghl';
 import { abValue } from '@/lib/experiment';
+import { SMS_TAG } from '@/lib/consent';
 import { klaviyoEnabled, syncLeadToKlaviyo, KlaviyoError } from '@/lib/klaviyo';
 
 /* La route touche une API externe et un état en mémoire : rien à mettre en cache. */
@@ -174,6 +175,8 @@ export async function POST(req: Request) {
     const tags = ['fitment-lp', 'meta-ads'];
     if (lead.source === 'fitment_lp_not_listed') tags.push('hors-catalogue');
     if (lead.make) tags.push(lead.make.toLowerCase());
+    /* Le scénario de Tyler ne texte que les contacts sms-opt-in (lib/consent.ts). */
+    if (lead.smsConsent) tags.push(SMS_TAG);
     /* La version A/B arrive dans le corps (l'envoi part sans cookies) et n'est gardée
        que si elle correspond à l'expérience en cours. C'est le tag qui permet de
        compter les leads servables par version dans GHL. */

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Field, Honeypot, type FieldState } from './LeadFields';
+import { Field, Honeypot, SmsConsent, type FieldState } from './LeadFields';
 import { sendLead, okEmail, okPhone, okName } from '@/lib/sendLead';
 import { track } from '@/lib/track';
 
@@ -27,6 +27,7 @@ export default function StepMissing({
   const [email, setEmail] = useState(blank);
   const [phone, setPhone] = useState(blank);
   const [company, setCompany] = useState('');
+  const [smsConsent, setSmsConsent] = useState(false);
   const shownAt = useRef(Date.now());
   const [sending, setSending] = useState(false);
 
@@ -61,7 +62,8 @@ export default function StepMissing({
       model,
       page: window.location.href,
       elapsedMs: Date.now() - shownAt.current,
-      company
+      company,
+      smsConsent
     });
 
     router.push(`/?step=thanks&car=${encodeURIComponent(carText)}`, { scroll: false });
@@ -103,6 +105,7 @@ export default function StepMissing({
           placeholder="(514) 555-0134" error="We need a number our builder can reach."
           state={phone} onChange={(v) => setPhone({ value: v, bad: false })}
         />
+        <SmsConsent id="m-sms" checked={smsConsent} onChange={setSmsConsent} />
         <Honeypot id="m-company" value={company} onChange={setCompany} />
 
         <button className="btn btn--wide" type="submit" disabled={sending}>

@@ -9,6 +9,8 @@
  * d'une classe CSS rouge — visible pour qui regarde l'écran, invisible pour le reste.
  */
 
+import { SMS_CONSENT_TEXT } from '@/lib/consent';
+
 export type FieldState = { value: string; bad: boolean };
 
 export function Field({
@@ -50,6 +52,30 @@ export function Field({
       <p className="err" id={`${id}-err`}>
         {error}
       </p>
+    </div>
+  );
+}
+
+/* La case de consentement aux textos. Jamais pré-cochée, jamais obligatoire : voir
+   lib/consent.ts. Le libellé affiché EST le texte recopié dans la note GHL. */
+export function SmsConsent({
+  id,
+  checked,
+  onChange
+}: {
+  id: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <div className="consent">
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+      />
+      <label htmlFor={id}>{SMS_CONSENT_TEXT}</label>
     </div>
   );
 }
