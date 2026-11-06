@@ -19,6 +19,12 @@ export const SMS_TAG = 'sms-opt-in';
    acceptée, c'est ce qui permet de retrouver le libellé exact plus tard. */
 export const SMS_CONSENT_VERSION = '2026-11-06';
 export const SMS_CONSENT_TEXT =
-  'Text me my fitment sheet and replies about my build from AZ Motorsport. ' +
+  'Text me my fitment sheet, replies about my build and occasional offers from AZ Motorsport. ' +
   'Msg & data rates may apply. Msg frequency varies. Reply STOP to opt out, HELP for help. ' +
-  'Not required to see your parts.';
+  'Not required to see your parts or to buy. See our Privacy Policy and SMS Terms.';
+
+/* Les deux mots du texte qui deviennent des liens dans la case (components/LeadFields). */
+export const SMS_CONSENT_LINKS: { label: string; href: string }[] = [
+  { label: 'Privacy Policy', href: '/privacy' },
+  { label: 'SMS Terms', href: '/terms' }
+];

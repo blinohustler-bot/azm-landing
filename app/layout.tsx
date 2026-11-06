@@ -50,6 +50,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               All manufacturer names, symbols and descriptions are used for identification purposes
               only. AZ Motorsport is not affiliated with, nor endorsed by, these manufacturers.
             </p>
+            <p>
+              <a href="/privacy">Privacy Policy</a> · <a href="/terms">SMS Terms</a>
+            </p>
           </div>
         </footer>
 

@@ -392,6 +392,14 @@ body::after{
 .consent input:checked::after{transform:scale(1)}
 .consent input:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
 .consent label{font-size:.8rem; line-height:1.5; color:var(--muted); cursor:pointer}
+.consent label a, footer a{color:var(--text); text-decoration:underline; text-underline-offset:2px}
+/* Pages /privacy et /terms : du texte à lire, pas un écran de parcours. */
+.legalpage h2{font-size:1.05rem; margin:28px 0 8px; font-style:normal; text-transform:none}
+.legalpage p, .legalpage li{color:var(--muted); line-height:1.6; font-size:.95rem}
+.legalpage ul{padding-left:18px; margin:0}
+.legalpage .strong{color:var(--text); font-weight:600}
+.legalpage a{color:var(--text); text-decoration:underline; text-underline-offset:2px}
+.legalpage__back{margin-top:32px}
 .legal{margin:2px 0 0; font-size:.78rem; color:#6a7075; line-height:1.5; max-width:52ch}
 .formError{
   margin:0; padding:12px 14px; border-left:2px solid var(--orange); background:#f94c1014;
