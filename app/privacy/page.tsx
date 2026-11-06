@@ -35,7 +35,7 @@ export default function Privacy() {
       <ul>
         <li>To send your fitment sheet and confirm which parts fit your vehicle.</li>
         <li>To answer your questions, prepare quotes, and process and support your order and install.</li>
-        <li>If you opted in, to send you text messages as described in our <Link href="/terms">SMS Terms</Link>.</li>
+        <li>If you opted in, to send you text messages as described in our <Link href="/terms">Terms of Service</Link>.</li>
         <li>To improve this site and measure our advertising.</li>
       </ul>
 
@@ -44,7 +44,7 @@ export default function Privacy() {
         We only text you if you checked the SMS consent box on our form. The box is never pre-checked and
         is not required to see your parts or to buy. Message frequency varies. Message and data rates may
         apply. Reply STOP to opt out at any time, or HELP for help. Full details are in our{' '}
-        <Link href="/terms">SMS Terms</Link>.
+        <Link href="/terms">Terms of Service</Link>.
       </p>
       <p className="strong">
         We do not sell, rent or share your mobile phone number, or your SMS opt-in data and consent, with
@@ -93,7 +93,7 @@ export default function Privacy() {
         Privacy questions or requests: {LEGAL.email} or {LEGAL.phone}. {LEGAL.entity}, {LEGAL.address}.
       </p>
 
-      <p className="legalpage__back"><Link href="/">← Back to fitment</Link> · <Link href="/terms">SMS Terms</Link></p>
+      <p className="legalpage__back"><Link href="/">← Back to fitment</Link> · <Link href="/terms">Terms of Service</Link></p>
     </main>
   );
 }

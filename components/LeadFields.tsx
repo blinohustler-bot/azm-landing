@@ -12,7 +12,7 @@
 import { SMS_CONSENT_TEXT, SMS_CONSENT_LINKS } from '@/lib/consent';
 
 /* Le texte reste UNE chaîne (c'est elle qui part dans la note GHL comme preuve) ; seuls
-   les mots « Privacy Policy » et « SMS Terms » deviennent des liens à l'affichage. Ils
+   les mots « Privacy Policy » et « Terms of Service » deviennent des liens à l'affichage. Ils
    s'ouvrent dans un nouvel onglet pour ne pas perdre le formulaire en cours. */
 function withLinks(text: string) {
   const parts: React.ReactNode[] = [];
