@@ -99,6 +99,8 @@ check('GT3 à valves : aucune vidéo (F1 ou pas, on ne sait pas)', !ids('porsche
 check('911 Turbo S 992 : aucune vidéo (trois pièces + high flow, trop loin de chaque fiche)',
   ['azm-porsche-turbo-s-992-downpipe', 'azm-porsche-turbo-s-992-titanium-valved-exhaust',
     'azm-porsche-911-turbo-turbo-s-992-racing-headers'].every((h) => !ids(h).length));
+check('montage SF90 1300 hp jamais associé (promet plus que la pièce)',
+  !entries.some(([, l]) => l.some((v) => v.id === 'nv-aj2ZFsAg' || /\b1300 ?hp\b/i.test(v.title))));
 const all = entries.flatMap(([h, l]) => l.map((v) => ({ h, ...v })));
 check('toute combinaison porte sa mention « Build also runs the AZM … »',
   all.every((v) => (v.combo ? /^Build also runs the AZM (downpipes|exhaust|headers)( and (downpipes|exhaust|headers))?$/.test(v.also) : v.also === null)),

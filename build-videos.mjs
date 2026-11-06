@@ -85,6 +85,13 @@ export function partsIn(clean) {
    - la vidéo de présentation de l'atelier. */
 const GLOBAL_OUT = /\bintakes?\b|\bz ?pipe\b|\bvs\.?\b|\bbattle\b|\bheadquarters\b/;
 
+/* Vidéos écartées une à une, pour toutes les fiches, avec la raison. */
+const EXCLUDED_IDS = {
+  /* « SF90 1300HP » (montage S4T) : un char préparé à 1300 hp promet des résultats que
+     la pièce seule ne donne pas — une affirmation qu'on ne fait jamais. */
+  'nv-aj2ZFsAg': 'build préparé 1300 hp'
+};
+
 /* Une préparation moteur change le son (pétarades d'une cartographie) : la vidéo
    reste vraie — la pièce y est — mais on préfère celle où l'on entend la pièce seule. */
 const TUNED = /\bstage ?2\b|(?<!no )\btune\b|\bs4t\b|stage4tuning|\bdyno\b|\b\d{3,4} ?hp\b|\becu\b/;
@@ -317,13 +324,6 @@ export const RULES = {
     part: 'downpipe',
     cars: [car(/\bsf90\b/, 'an SF90', ['sf90'])]
   },
-  /* Même règle de chaîne que partout (voir SOURCE) : « SF90 1300HP … Catless
-     Downpipes + Catback Exhaust » vient de la chaîne d'AZ, l'échappement compte comme
-     le leur. C'est une combinaison, et la carte le dit. */
-  'azm-ferrari-sf90-exhaust': {
-    part: 'exhaust-system',
-    cars: [car(/\bsf90\b/, 'an SF90', ['sf90'])]
-  },
   /* Les vidéos montrent une 812 GTS ; la fiche couvre Superfast et GTS (même V12).
      Un seul char admis : une deuxième vidéo pour le même modèle ne serait jamais
      montrée (la carte prend la première), ce serait de la donnée morte. */
@@ -349,7 +349,8 @@ export const RULES = {
      - 911 Turbo S 992 (downpipes, collecteurs, échappement) : la seule vidéo montre
        les trois pièces plus des downpipes high flow ensemble ; le son entendu est
        trop loin de n'importe laquelle des trois fiches prise seule.
-     - X5M/X6M S68 LCI, échappements S63 : aucun titre ne nomme la génération. */
+     - X5M/X6M S68 LCI, échappements S63 : aucun titre ne nomme la génération.
+     - Échappement SF90 : sa seule vidéo est exclue (EXCLUDED_IDS, montage 1300 hp). */
 };
 
 /* ── application ─────────────────────────────────────────────────────────── */
@@ -391,7 +392,7 @@ export function associate(videos, catalogHandles) {
       /* Les Shorts (196 sur 201) sont verticaux : la carte en tient compte. */
       if (v.kind && v.kind !== 'video' && v.kind !== 'short') continue;
       const clean = cleanTitle(v.title);
-      if (GLOBAL_OUT.test(clean)) continue;
+      if (GLOBAL_OUT.test(clean) || EXCLUDED_IDS[v.id]) continue;
       const parts = partsIn(clean);
       if (!parts.includes(rule.part)) continue;
       if (rule.must && ![].concat(rule.must).every((re) => re.test(clean))) continue;

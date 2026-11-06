@@ -1,5 +1,5 @@
 {
-  "generated": "2026-11-06T22:52:33.300Z",
+  "generated": "2026-11-06T22:57:22.201Z",
   "source": "azm-tyler/knowledge/videos.json",
   "products": {
     "azm-audi-rs3-8y-downpipe": [
@@ -597,19 +597,6 @@
         "combo": false,
         "also": null,
         "title": "Ferrari SF90 Catless Downpipe Revs | AZ Motorsport #sf90 #ferrari #catless #stage4tuning"
-      }
-    ],
-    "azm-ferrari-sf90-exhaust": [
-      {
-        "id": "nv-aj2ZFsAg",
-        "label": "an SF90",
-        "models": [
-          "sf90"
-        ],
-        "vertical": true,
-        "combo": true,
-        "also": "Build also runs the AZM downpipes",
-        "title": "Ferrari SF90 1300HP paired with Catless Downpipes + Catback Exhaust #s4t #stage4tuning #sf90"
       }
     ],
     "ferrari-812-superfast-downpipe": [
