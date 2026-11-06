@@ -1097,8 +1097,11 @@ footer p{margin:0 0 6px}
 /* Le lecteur, né au tap. Une vidéo classique en 16:9 ; un Short (196 vidéos sur 201)
    en 9:16, plafonné pour qu'il tienne dans l'écran du téléphone avec son bouton. */
 .player{display:grid; gap:8px}
+/* La combinaison, dite sans crier : petit texte gris sous le bouton. */
+.hear__wrap{display:grid; gap:6px}
+.hear__also{margin:0; font-size:.76rem; color:var(--muted); line-height:1.4}
 .player iframe{display:block; width:100%; aspect-ratio:16/9; border:0; background:#000}
-.player--tall iframe{aspect-ratio:9/16; width:auto; max-width:100%; height:min(72svh, 620px); justify-self:center}
+.player--tall iframe{aspect-ratio:9/16; width:auto; max-width:100%; height:min(60svh, 520px); justify-self:center}
 .player__close{
   justify-self:start; display:inline-flex; align-items:center; gap:8px; cursor:pointer;
   padding:9px 12px; background:transparent; color:var(--muted);

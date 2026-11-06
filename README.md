@@ -538,12 +538,16 @@ paiement ne transite ni par cette page ni par la fonction.
 `scroll-snap` au doigt, compteur « 2 / 4 », flèches pour la souris seulement, aucun
 auto-défilement. La première photo charge comme avant, les suivantes sont paresseuses.
 
-**« Hear it on a G80 M3 ».** `node build-videos.mjs` lit l'inventaire YouTube de Tyler
-(`azm-tyler/knowledge/videos.json`) et écrit `videos.json`. L'association pièce → vidéo
-est une table écrite à la main (`RULES`, en tête du script) : même char, même type de
-pièce, et sinon rien. La carte ne montre la vidéo qu'au visiteur dont le modèle est
-celui de la vidéo (`lib/videos.ts`). L'iframe `youtube-nocookie.com` n'existe qu'après
-le tap ; c'est le seul hôte ajouté à la CSP (`frame-src`).
+**« Hear it on a G80 M3 ».** `node build-videos.mjs` lit l'inventaire YouTube de Tyler,
+par défaut `C:/Users/Admin/Documents/azm-tyler/knowledge/videos.json` (un autre chemin
+se passe en argument : `node build-videos.mjs chemin/videos.json`), et écrit
+`videos.json`. L'association pièce → vidéo est une table écrite à la main (`RULES`, en
+tête du script) : même char, même type de pièce, et sinon rien. Quand la vidéo montre
+aussi une autre pièce AZM, la carte le dit sous le bouton (« Build also runs the AZM
+exhaust »). La carte ne montre la vidéo qu'au visiteur dont le modèle est celui de la
+vidéo (`lib/videos.ts`). L'iframe `youtube-nocookie.com` n'existe qu'après le tap ;
+c'est le seul hôte ajouté à la CSP (`frame-src`). Une lecture envoie l'événement maison
+`VideoPlay` (pas un second `ViewContent`).
 
 **Tags.** `lib/cardMedia.ts → cardTags()` : au plus deux, chacun vrai pour la variante
 affichée. `Best seller` vient de `bestsellers.json`, livré vide : il faut lancer

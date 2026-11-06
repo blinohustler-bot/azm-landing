@@ -96,6 +96,15 @@ check('Corvette C8 : aucune vidéo (#stingray et #z06 sur la même)',
   !ids('azm-chevrolet-corvette-c8-stingray-e-ray-2020-2025-downpipes').length
   && !ids('azm-chevrolet-corvette-c8-z06-2023-2025-front-pipes-downpipes-catless-high-flow-catted').length);
 check('GT3 à valves : aucune vidéo (F1 ou pas, on ne sait pas)', !ids('porsche-gt3-gt3-rs-992-race-exhaust-system').length);
+check('911 Turbo S 992 : aucune vidéo (trois pièces + high flow, trop loin de chaque fiche)',
+  ['azm-porsche-turbo-s-992-downpipe', 'azm-porsche-turbo-s-992-titanium-valved-exhaust',
+    'azm-porsche-911-turbo-turbo-s-992-racing-headers'].every((h) => !ids(h).length));
+const all = entries.flatMap(([h, l]) => l.map((v) => ({ h, ...v })));
+check('toute combinaison porte sa mention « Build also runs the AZM … »',
+  all.every((v) => (v.combo ? /^Build also runs the AZM (downpipes|exhaust|headers)( and (downpipes|exhaust|headers))?$/.test(v.also) : v.also === null)),
+  all.filter((v) => v.combo !== Boolean(v.also)).map((v) => v.h).join(', '));
+check('jamais deux vidéos pour le même modèle d’une fiche (donnée morte)',
+  entries.every(([, l]) => { const seen = l.flatMap((v) => v.models); return new Set(seen).size === seen.length; }));
 check('Aventador S/SV : pas de vidéo SVJ', !(shipped.products['azm-lamborghini-aventador-s-sv-downpipes'] ?? []).some((v) => /svj/i.test(v.title)));
 check('GT63S : pas d’E Performance', !(shipped.products['azm-mercedes-gt63-gt63s-performance-downpipes'] ?? []).some((v) => /gt63 ?se|perfomance/i.test(v.title)));
 check('M240i F22 (gen 1) jamais sur la fiche GEN2', !ids('b58-downpipe-catless-for-2019-bmw-m340i-m440i-m240i-x5-40i-xdrive-g20-g22-g26-g05').includes('VvAwHfSZhzE'));

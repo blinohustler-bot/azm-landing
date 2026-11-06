@@ -41,6 +41,15 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = process.argv[2] || 'C:/Users/Admin/Documents/azm-tyler/knowledge/videos.json';
 
+/* SOURCE : LA RÈGLE « AZM », LA MÊME POUR TOUTES LES FICHES
+   Toutes les vidéos de l'inventaire viennent de la chaîne YouTube d'AZ Motorsport.
+   Une pièce nommée dans le titre d'une de ces vidéos est donc tenue pour une pièce
+   AZM, que le titre écrive « AZM » ou non (« A90 Supra B58 with catless downpipes »
+   ne le dit pas, et c'est bien leur downpipe). On n'exige « AZM » dans le titre
+   nulle part, et on n'écarte aucune vidéo pour son absence. Les exceptions ne
+   portent que sur le CHAR (génération, carrosserie) et sur les pièces hors
+   catalogue (GLOBAL_OUT). */
+
 /* ── lecture d'un titre ──────────────────────────────────────────────────── */
 
 /* Le titre tel qu'on le juge : en minuscules, sans hashtags (ils nomment d'autres
@@ -246,20 +255,6 @@ export const RULES = {
     part: 'downpipe', must: /\b992(\.1)?\b/, not: /\bturbo\b|\bgt3\b/,
     cars: [car(/\bcarrera\b/, 'a 992 Carrera 4 GTS', ['911 carrera'])]
   },
-  /* 911 Turbo S 992 : les vidéos montrent downpipes, collecteurs et échappement
-     ensemble. Elles servent les trois fiches, la plus « pure » n'existant pas. */
-  'azm-porsche-turbo-s-992-downpipe': {
-    part: 'downpipe', must: /\b992(\.1)?\b/,
-    cars: [car(/\bturbo s\b/, 'a 992 Turbo S', ['911 turbo'])]
-  },
-  'azm-porsche-turbo-s-992-titanium-valved-exhaust': {
-    part: 'exhaust-system', must: /\b992(\.1)?\b/,
-    cars: [car(/\bturbo s\b/, 'a 992 Turbo S', ['911 turbo'])]
-  },
-  'azm-porsche-911-turbo-turbo-s-992-racing-headers': {
-    part: 'headers', must: /\b992(\.1)?\b/,
-    cars: [car(/\bturbo s\b/, 'a 992 Turbo S', ['911 turbo'])]
-  },
   /* GT3 992 : deux fiches d'échappement. Les vidéos disent « F1 » : elles vont à la
      fiche « Full F1 Exhaust », jamais à la « Race Exhaust System » à valves — on ne
      sait pas laquelle des deux est montrée quand le titre ne dit pas F1, donc la fiche
@@ -300,7 +295,7 @@ export const RULES = {
   /* Huracán LP580/LP610 — jamais l'EVO/STO, qui a sa propre fiche. */
   '2808-azm-lamborghini-lp610-with-valve-and-muffler': {
     part: 'exhaust-system', must: /\blp ?(580|610)\b/, not: /\bevo\b|\bsto\b/,
-    cars: [car(/\bhuracan\b/, 'a Huracan', ['huracan'])]
+    cars: [car(/\bhuracan\b/, 'a Huracan LP610', ['huracan'])]
   },
 
   /* McLaren ──────────────────────────────────────────────────────────────── */
@@ -318,20 +313,27 @@ export const RULES = {
   },
 
   /* Ferrari ──────────────────────────────────────────────────────────────── */
-  /* La vidéo « SF90 1300HP … Catback Exhaust » ne dit pas que l'échappement est
-     d'AZM : la fiche échappement SF90 n'a pas de vidéo. */
   'azm-ferrari-sf90-downpipe': {
     part: 'downpipe',
     cars: [car(/\bsf90\b/, 'an SF90', ['sf90'])]
   },
-  /* Les vidéos montrent une 812 GTS ; la fiche couvre Superfast et GTS (même V12). */
+  /* Même règle de chaîne que partout (voir SOURCE) : « SF90 1300HP … Catless
+     Downpipes + Catback Exhaust » vient de la chaîne d'AZ, l'échappement compte comme
+     le leur. C'est une combinaison, et la carte le dit. */
+  'azm-ferrari-sf90-exhaust': {
+    part: 'exhaust-system',
+    cars: [car(/\bsf90\b/, 'an SF90', ['sf90'])]
+  },
+  /* Les vidéos montrent une 812 GTS ; la fiche couvre Superfast et GTS (même V12).
+     Un seul char admis : une deuxième vidéo pour le même modèle ne serait jamais
+     montrée (la carte prend la première), ce serait de la donnée morte. */
   'ferrari-812-superfast-downpipe': {
     part: 'downpipe',
-    cars: [car(/\b812 gts\b/, 'an 812 GTS', ['812']), car(/\b812\b/, 'an 812', ['812'])]
+    cars: [car(/\b812 gts\b/, 'an 812 GTS', ['812'])]
   },
   'ferrari-812-titanium-valved-exhaust': {
     part: 'exhaust-system',
-    cars: [car(/\b812 gts\b/, 'an 812 GTS', ['812']), car(/\b812\b/, 'an 812', ['812'])]
+    cars: [car(/\b812 gts\b/, 'an 812 GTS', ['812'])]
   },
   'ti-3862-azm-ferrari-f8-tributo-3-9t-v8-titanium-downpipe-2020': {
     part: 'downpipe',
@@ -344,6 +346,9 @@ export const RULES = {
      - Mercedes S63 W222 : « S63 … M177 » est aussi le moteur de la W223 (2023+).
      - RS3/TTRS 8V : « Audi RS3 » sans génération.
      - GT3 992 « Race Exhaust System » à valves : voir la règle F1 ci-dessus.
+     - 911 Turbo S 992 (downpipes, collecteurs, échappement) : la seule vidéo montre
+       les trois pièces plus des downpipes high flow ensemble ; le son entendu est
+       trop loin de n'importe laquelle des trois fiches prise seule.
      - X5M/X6M S68 LCI, échappements S63 : aucun titre ne nomme la génération. */
 };
 
@@ -357,6 +362,15 @@ function firstCar(rule, clean) {
     if (m && (!best || m.index < best.at)) best = { car: c, at: m.index };
   }
   return best?.car ?? null;
+}
+
+/* Une combinaison se dit sous le bouton : « Hear it on a 720S » sur la fiche
+   échappement, quand la vidéo a aussi des downpipes AZM, laisserait croire que tout
+   le son vient de l'échappement. Null quand la vidéo montre la pièce seule. */
+const PART_NAME = { downpipe: 'downpipes', 'exhaust-system': 'exhaust', headers: 'headers' };
+export function alsoPhrase(others) {
+  if (!others.length) return null;
+  return `Build also runs the AZM ${others.map((p) => PART_NAME[p]).join(' and ')}`;
 }
 
 /* Le meilleur d'abord : la pièce seule avant une combinaison, sans préparation avant
@@ -387,7 +401,8 @@ export function associate(videos, catalogHandles) {
       hits.push({
         id: v.id, title: v.title, views: v.views || 0, label: c.label, models: c.models,
         vertical: v.kind === 'short',
-        pure: parts.length === 1, tuned: TUNED.test(clean)
+        pure: parts.length === 1, tuned: TUNED.test(clean),
+        also: alsoPhrase(parts.filter((p) => p !== rule.part))
       });
     }
     /* Une vidéo par char : la meilleure pour la G80, la meilleure pour la G82… */
@@ -397,8 +412,8 @@ export function associate(videos, catalogHandles) {
     }
     const picks = [...byLabel.values()];
     if (picks.length) {
-      out[handle] = picks.map(({ id, label, models, pure, vertical, title }) => ({
-        id, label, models, vertical, combo: !pure, title
+      out[handle] = picks.map(({ id, label, models, pure, vertical, title, also }) => ({
+        id, label, models, vertical, combo: !pure, also, title
       }));
       for (const p of picks) report.push({ handle, ...p });
     }

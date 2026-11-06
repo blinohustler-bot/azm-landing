@@ -152,6 +152,17 @@ check('aucune iframe YouTube au chargement', (await ev(`document.querySelectorAl
 const ytReq = await ev(`performance.getEntriesByType('resource').filter(r=>/youtube|ytimg|googlevideo/.test(r.name)).length`);
 check('aucune requête YouTube au chargement', ytReq === 0, `${ytReq} requêtes`);
 
+/* La combinaison est dite : la vidéo de l'échappement G80 a aussi les downpipes. */
+const alsoDp = await ev(`document.querySelectorAll('.card')[${dp}].querySelector('.hear__also')?.textContent ?? null`);
+const alsoEx = await ev(`document.querySelectorAll('.card')[${ex}].querySelector('.hear__also')?.textContent ?? null`);
+console.log(`        downpipes : ${alsoDp} | échappement : ${alsoEx}`);
+check('vidéo de la pièce seule : aucune mention', alsoDp === null, alsoDp);
+check('vidéo combinée : « Build also runs the AZM downpipes »', alsoEx === 'Build also runs the AZM downpipes', alsoEx);
+await shotCard(ex, 'card-combo-390.png');
+
+/* Les appels au pixel, enregistrés : on remplace fbq juste avant le tap. */
+await ev(`window.__fb = []; window.fbq = (...a) => window.__fb.push(a); true`);
+
 /* Un vrai tap (événements tactiles), pas un clic JavaScript. */
 await ev(`document.querySelectorAll('.card')[${dp}].querySelector('.hear').scrollIntoView({block:'center'})`);
 await sleep(300);
@@ -165,6 +176,12 @@ check('le tap crée l’iframe youtube-nocookie', src.startsWith('https://www.yo
 check('playsinline=1 et rel=0', /playsinline=1/.test(src) && /rel=0/.test(src), src);
 check('une seule iframe YouTube sur la page', (await ev(`document.querySelectorAll('iframe[src*="youtube"]').length`)) === 1, 'plusieurs');
 check('la CSP n’a rien bloqué', cspErrors.length === 0, cspErrors.join(' | '));
+const fb = await ev(`JSON.stringify(window.__fb)`);
+console.log(`        pixel : ${fb}`);
+const calls = JSON.parse(fb);
+check('lecture = trackCustom VideoPlay (handle + video_id)',
+  calls.some(([a, e, d]) => a === 'trackCustom' && e === 'VideoPlay' && d?.video_id && d?.content_ids?.length === 1), fb);
+check('lecture ≠ second ViewContent', !calls.some(([, e]) => e === 'ViewContent'), fb);
 await shotCard(dp, 'card-video-open-390.png');
 
 await ev(`document.querySelectorAll('.card')[${dp}].querySelector('.player__close').click()`);
@@ -191,7 +208,8 @@ const screens = [
   '/?make=Porsche&model=gt3&year=2022&step=results',
   '/?make=McLaren&model=720s&step=results',
   '/?make=Lamborghini&model=urus&step=results',
-  '/?make=Audi&model=rs7&step=results'
+  '/?make=Audi&model=rs7&step=results',
+  '/?make=Porsche&model=911%20turbo&year=2021&step=results'
 ];
 for (const s of screens) {
   await goto(s);

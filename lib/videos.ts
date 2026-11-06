@@ -19,6 +19,7 @@ type Candidate = {
   models: string[];
   vertical: boolean;
   combo: boolean;
+  also: string | null;
   title: string;
 };
 
@@ -33,5 +34,5 @@ const videos = raw as unknown as { generated: string; products: Record<string, C
 export function videoFor(handle: string, modelKey: string | null | undefined): CardVideo {
   if (!modelKey) return null;
   const hit = videos.products[handle]?.find((c) => c.models.includes(modelKey));
-  return hit ? { id: hit.id, label: hit.label, vertical: hit.vertical } : null;
+  return hit ? { id: hit.id, label: hit.label, vertical: hit.vertical, also: hit.also ?? null } : null;
 }

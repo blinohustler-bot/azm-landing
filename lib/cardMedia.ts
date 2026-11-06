@@ -14,7 +14,16 @@ import type { Proof } from './reviewTypes';
    le char tel qu'il est nommé à l'écran, article compris (« a G80 M3 »). `vertical`
    vaut true pour un Short — 196 des 201 vidéos de la chaîne. Null est le cas
    courant : la carte n'affiche alors rien de plus. */
-export type CardVideo = { id: string; label: string; vertical: boolean } | null;
+export type CardVideo = {
+  id: string;
+  label: string;
+  vertical: boolean;
+  /* Null quand la vidéo montre la pièce seule. Sinon la phrase qui dit ce que la
+     vidéo montre d'autre (« Build also runs the AZM exhaust ») : sans elle, « Hear it
+     on a 720S » sur la fiche échappement laisserait croire que tout le son vient de
+     l'échappement, alors que les downpipes y sont pour beaucoup. */
+  also: string | null;
+} | null;
 
 /* youtube-nocookie : pas de cookie YouTube tant que la personne ne lance pas la
    lecture, et c'est le seul hôte de cadre ajouté à la CSP.

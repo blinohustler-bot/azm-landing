@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { track } from '@/lib/track';
+import { trackCustom } from '@/lib/track';
 import { embedUrl, type CardVideo } from '@/lib/cardMedia';
 
 declare global {
@@ -41,12 +41,9 @@ export default function HearIt({
 
   const play = () => {
     setOpen(true);
-    track('ViewContent', {
-      content_name: 'video',
-      content_type: 'video',
-      content_ids: [handle],
-      video_id: video.id
-    });
+    /* Un événement maison, pas un ViewContent : ViewContent est déjà tiré à
+       l'arrivée sur les résultats, et un second le gonflerait dans Meta. */
+    trackCustom('VideoPlay', { content_ids: [handle], video_id: video.id });
     /* Clarity : un tag de session, pour filtrer les enregistrements de ceux qui ont
        écouté. Absent si Clarity n'est pas chargé (bloqueur) — jamais bloquant. */
     try { window.clarity?.('set', 'video_play', handle); } catch { /* rien */ }
@@ -58,14 +55,20 @@ export default function HearIt({
     requestAnimationFrame(() => opener.current?.focus());
   };
 
+  /* Dit, sous le bouton et sous le lecteur, ce que la vidéo montre d'autre. */
+  const also = video.also ? <p className="hear__also">{video.also}</p> : null;
+
   if (!open) {
     return (
-      <button type="button" className="hear" ref={opener} onClick={play}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5Z" />
-        </svg>
-        Hear it on {video.label}
-      </button>
+      <div className="hear__wrap">
+        <button type="button" className="hear" ref={opener} onClick={play}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5Z" />
+          </svg>
+          Hear it on {video.label}
+        </button>
+        {also}
+      </div>
     );
   }
 
@@ -87,6 +90,7 @@ export default function HearIt({
         </svg>
         Close video
       </button>
+      {also}
     </div>
   );
 }
