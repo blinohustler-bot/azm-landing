@@ -12,11 +12,15 @@ import { withCheckout } from '@/lib/checkout';
    catalog.json — 360 ko qui partiraient dans le bundle du navigateur. La même règle
    vaut pour reviewTypes / reviews : la note arrive en propriété depuis StepResults,
    déjà réduite à la pièce affichée. */
-import { fitmentLines, money, type Product } from '@/lib/catalogTypes';
+import { fitmentRows, money, type Product } from '@/lib/catalogTypes';
 import { formatMonth, formatRating, trimQuote, type Proof } from '@/lib/reviewTypes';
 /* Même règle : la vidéo et « best seller » arrivent en propriétés, lib/videos et
    lib/bestsellers restent côté serveur. */
 import { cardTags, type CardVideo } from '@/lib/cardMedia';
+
+/* Au-delà, la liste se replie : 11 lignes de 992 poussaient le bouton d'achat hors
+   de l'écran. Jamais un « +1 » : autant montrer la ligne. */
+const FIT_PREVIEW = 5;
 
 /* Le choix catless / catted n'est pas une option technique : c'est la question du son
    et de la légalité, celle qui bloque vraiment l'achat. On l'explique sous le
@@ -124,7 +128,9 @@ export default function ProductCard({
     freeShipMin: CONFIG.FREE_SHIP_MIN
   });
   const sizes = '(min-width:760px) 50vw, 100vw';
-  const fits = fitmentLines(product);
+  const fits = fitmentRows(product);
+  const [allFits, setAllFits] = useState(false);
+  const shownFits = allFits || fits.length <= FIT_PREVIEW + 1 ? fits : fits.slice(0, FIT_PREVIEW);
 
   const buyHref =
     `${shop}/cart/${current.id}:1?${CONFIG.UTM}&utm_content=${encodeURIComponent(product.handle)}`;
@@ -194,7 +200,19 @@ export default function ProductCard({
               </svg>
               Built for these exact cars
             </p>
-            <p className="fitbox__body">{fits.join(' · ')}</p>
+            <ul className="fitlist">
+              {shownFits.map((f) => (
+                <li key={`${f.years}|${f.car}`}>
+                  <span className="fitlist__car">{f.car}</span>
+                  {f.years ? <span className="fitlist__yr">{f.years}</span> : null}
+                </li>
+              ))}
+            </ul>
+            {shownFits.length < fits.length ? (
+              <button type="button" className="fitlist__more" onClick={() => setAllFits(true)}>
+                +{fits.length - shownFits.length} more cars
+              </button>
+            ) : null}
           </div>
         ) : null}
 

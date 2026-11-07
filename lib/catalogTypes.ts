@@ -98,6 +98,42 @@ export function fitmentLines(p: Product): string[] {
   return kept.length ? kept : p.fitments;
 }
 
+/* Une ligne par char, années à part.
+ *
+ * Shopify colle souvent plusieurs chars dans une même ligne de description :
+ * « 2020–2024 992 Carrera 2023–2024 992 Carrera T 2020–2024 992 Carrera 4 … ».
+ * Affiché tel quel, c'était un pavé illisible. On coupe devant chaque millésime (une
+ * année 19xx/20xx suivie d'un espace, éventuellement en plage) et on sépare les années
+ * du nom pour les aligner à droite. Une entrée sans millésime (McLaren P1) garde son
+ * texte entier, sans années. */
+const YEAR_START = /(?<![-–—])\s+(?=(?:19|20)\d{2}(?:\s*[-–—]\s*(?:(?:19|20)\d{2}|present))?\+?\s)/i;
+const YEAR_HEAD = /^((?:19|20)\d{2}(?:\s*[-–—]\s*(?:(?:19|20)\d{2}|present))?\+?)(?:\s+|(?=[^\d\s]))(.+)$/i;
+/* Sans millésime, on ne garde qu'une courte ligne qui ressemble à un nom de char : la
+   fiche R8 n'a aucune ligne datée et retombait sur son texte marketing entier. */
+const plausibleCar = (s: string) =>
+  s.length <= 40 && !s.includes(':') && !/^(product overview|key features|important notice)/i.test(s);
+
+export type FitRow = { years: string | null; car: string };
+
+export function fitmentRows(p: Product): FitRow[] {
+  const rows: FitRow[] = [];
+  const seen = new Set<string>();
+  for (const line of fitmentLines(p)) {
+    for (const part of line.split(YEAR_START)) {
+      const s = part.replace(/\s+/g, ' ').trim();
+      if (!s) continue;
+      const m = YEAR_HEAD.exec(s);
+      const row: FitRow = m
+        ? { years: m[1].replace(/\s*[-–—]\s*/g, '–'), car: m[2] }
+        : { years: null, car: s };
+      if (!row.years && !plausibleCar(row.car)) continue;
+      const key = `${row.years}|${row.car}`;
+      if (!seen.has(key)) { seen.add(key); rows.push(row); }
+    }
+  }
+  return rows;
+}
+
 const PART_LABEL: Record<string, string> = {
   downpipe: 'Downpipes',
   'exhaust-system': 'Race exhaust',
