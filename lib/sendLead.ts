@@ -63,6 +63,7 @@ export function landingUrl(): string {
    Reexportee pour les appelants deja cote client. */
 import { LEAD_COOKIE } from './config';
 import { AB_COOKIE, abValue } from './experiment';
+import { reportLeadConversion } from './gtag';
 export { LEAD_COOKIE };
 
 /* Marque « ce visiteur est dans GHL ».
@@ -152,6 +153,10 @@ export async function sendLead(payload: LeadPayload): Promise<boolean> {
   if (ok) {
     clearPending();
     markKnown();
+    /* Google Ads : APRÈS le OK du serveur, jamais au clic — sinon un envoi raté
+       compterait comme lead. Une reprise réussie (flushPendingLead) compte aussi :
+       c'est à ce moment-là que le lead existe vraiment. */
+    reportLeadConversion(body);
   }
   return ok;
 }
@@ -165,6 +170,10 @@ export async function flushPendingLead(): Promise<boolean> {
   if (ok) {
     clearPending();
     markKnown();
+    /* Google Ads : APRÈS le OK du serveur, jamais au clic — sinon un envoi raté
+       compterait comme lead. Une reprise réussie (flushPendingLead) compte aussi :
+       c'est à ce moment-là que le lead existe vraiment. */
+    reportLeadConversion(body);
   }
   return ok;
 }

@@ -3,19 +3,34 @@ import type { NextConfig } from 'next';
 /* Les en-têtes vivaient dans vercel.json tant que la page était statique. Ils sont
    ici maintenant : une seule source, et ils s'appliquent aussi en `next dev`, là où
    une CSP cassée se voit tout de suite plutôt qu'en production. */
+/* Google Ads + GA4 (gtag.js). Le script vient de googletagmanager.com, puis les hits
+   partent selon le navigateur par image, fetch ou sendBeacon vers ces domaines — d'où
+   la même liste dans script, img et connect. google.ca : Google Ads renvoie les
+   visiteurs canadiens vers le domaine du pays, et un joker ne couvre pas un TLD. */
+const GOOGLE = [
+  'https://www.googletagmanager.com',
+  'https://*.google-analytics.com',
+  'https://*.analytics.google.com',
+  'https://www.googleadservices.com',
+  'https://googleads.g.doubleclick.net',
+  'https://*.doubleclick.net',
+  'https://www.google.com',
+  'https://www.google.ca'
+].join(' ');
+
 const csp = [
   "default-src 'self'",
   /* 'unsafe-inline' reste nécessaire pour le script du pixel Meta, qui s'injecte
      lui-même. Tout le reste du JS est servi par Next depuis notre propre origine. */
   /* 'unsafe-eval' en développement seulement : React s'en sert pour reconstruire les
      piles d'appel et affiche une erreur sans lui. Il ne l'utilise jamais en production. */
-  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''} https://connect.facebook.net https://www.clarity.ms https://*.clarity.ms`,
+  `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''} https://connect.facebook.net https://www.clarity.ms https://*.clarity.ms ${GOOGLE}`,
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
   /* Clarity charge son script depuis www.clarity.ms, puis envoie vers un sous-domaine
      de clarity.ms et c.bing.com. */
-  "img-src 'self' data: https://cdn.shopify.com https://www.facebook.com https://connect.facebook.net https://*.clarity.ms https://c.bing.com",
-  "connect-src 'self' https://www.facebook.com https://connect.facebook.net https://*.clarity.ms https://c.bing.com",
+  `img-src 'self' data: https://cdn.shopify.com https://www.facebook.com https://connect.facebook.net https://*.clarity.ms https://c.bing.com ${GOOGLE}`,
+  `connect-src 'self' https://www.facebook.com https://connect.facebook.net https://*.clarity.ms https://c.bing.com ${GOOGLE}`,
   /* Le pixel Meta envoie ses événements par un formulaire POST dans une iframe vers
      www.facebook.com/tr (vu en prod le 2026-11-03 : aucun envoi par image ni fetch).
      Sans ces deux règles, la CSP bloquait PageView, FormStep, Lead et AddToCart. */
@@ -23,7 +38,8 @@ const csp = [
      Rien de plus : ce qui se charge DANS l'iframe (scripts, images de YouTube) relève
      de la politique du document YouTube, pas de la nôtre. Pas de youtube.com non
      plus — la version sans cookie est la seule utilisée. */
-  "frame-src https://www.facebook.com https://www.youtube-nocookie.com",
+  /* td.doubleclick.net : Google Ads y pose une iframe de mesure à la conversion. */
+  "frame-src https://www.facebook.com https://www.youtube-nocookie.com https://td.doubleclick.net https://www.googletagmanager.com",
   "form-action 'self' https://www.facebook.com",
   "frame-ancestors 'self'",
   "base-uri 'self'"

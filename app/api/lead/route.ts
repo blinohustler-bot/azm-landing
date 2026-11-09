@@ -26,6 +26,7 @@ import {
   findOpenOpportunity, createOpportunity, updateOpportunity, setOpportunityEmail, GhlError
 } from '@/lib/ghl';
 import { abValue } from '@/lib/experiment';
+import { MIN_FILL_MS } from '@/lib/config';
 import { SMS_TAG } from '@/lib/consent';
 import { klaviyoEnabled, syncLeadToKlaviyo, KlaviyoError } from '@/lib/klaviyo';
 
@@ -33,7 +34,6 @@ import { klaviyoEnabled, syncLeadToKlaviyo, KlaviyoError } from '@/lib/klaviyo';
 export const dynamic = 'force-dynamic';
 
 const MAX_BODY = 32 * 1024;      // un lead fait ~1 ko ; au-delà c'est autre chose
-const MIN_FILL_MS = 2500;        // un humain ne remplit pas trois champs plus vite
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_REQUESTS = 40;   // toutes requêtes confondues, y compris les refusées
 const MAX_WRITES = 6;      // celles qui écrivent réellement dans GHL

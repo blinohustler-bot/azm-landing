@@ -79,6 +79,19 @@ var ab=document.cookie.split('; ').find(function(c){return c.indexOf('${AB_COOKI
 if(ab)clarity('set','ab',decodeURIComponent(ab.slice(${AB_COOKIE.length + 1})));`}
           </Script>
         ) : null}
+        {/* Google Ads + GA4, chargés comme le pixel : après l'hydratation, jamais devant
+            le premier écran. La conversion « lead » part de lib/gtag.ts, sur un envoi
+            confirmé seulement. */}
+        {CONFIG.GOOGLE_ADS ? (
+          <>
+            <Script id="gtag-src" strategy="afterInteractive"
+              src={`https://www.googletagmanager.com/gtag/js?id=${CONFIG.GOOGLE_ADS}`} />
+            <Script id="gtag-init" strategy="afterInteractive">
+              {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}
+gtag('js',new Date());gtag('config','${CONFIG.GOOGLE_ADS}');${CONFIG.GA4 ? `gtag('config','${CONFIG.GA4}');` : ''}`}
+            </Script>
+          </>
+        ) : null}
         {/* Sans JS, Meta ne voit que ce PageView-là : l'image fait le hit elle-même. */}
         {CONFIG.PIXEL ? (
           <noscript>

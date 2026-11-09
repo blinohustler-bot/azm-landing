@@ -11,6 +11,9 @@ type Config = {
   PHONE_HREF: string;
   PIXEL: string;
   CLARITY: string;
+  GOOGLE_ADS: string;
+  GOOGLE_ADS_LEAD: string;
+  GA4: string;
   GATE_FIRST: boolean;
   UTM: string;
   GOOGLE: { RATING: number; COUNT: number; URL: string };
@@ -37,6 +40,14 @@ export const CONFIG: Config = {
      pixel. Vide = pas de Clarity. Les champs de formulaire sont masqués par défaut
      côté Clarity : ne pas changer ce réglage, la page récolte des coordonnées. */
   CLARITY: 'z6gwhblgwz',
+
+  /* Google Ads + GA4 : le même compte et la même propriété qu'azmotorsport.ca, pour
+     que les deux sites se parlent (demande d'Elliot, 2026-11-09). GOOGLE_ADS_LEAD est
+     l'action de conversion « lead » : elle ne part QUE sur un envoi confirmé par
+     /api/lead (lib/gtag.ts), jamais au clic. Vide = pas de tag Google. */
+  GOOGLE_ADS: 'AW-17463422231',
+  GOOGLE_ADS_LEAD: 'AW-17463422231/G6KdCJickrUdEJfamodB',
+  GA4: 'G-QY6G8JZS4D',
 
   /* true = coordonnées AVANT le choix du char. Les taux de base disent que le gate en
      premier abandonne le plus ; c'est l'A/B à trancher sur le CPL servable, pas sur le
@@ -107,6 +118,12 @@ export const HERO = {
  * config.ts n'a pas de `'use client'` : les deux côtés en lisent la vraie valeur.
  */
 export const LEAD_COOKIE = 'azm_lead';
+
+/* Un humain ne remplit pas trois champs plus vite. Lu par /api/lead (piège à robots,
+   qui répond 200 sans rien écrire) ET par lib/gtag.ts : ce que le serveur écarte en
+   silence ne doit pas compter comme conversion Google. Ici pour la même raison que
+   LEAD_COOKIE : les deux côtés doivent en lire la vraie valeur. */
+export const MIN_FILL_MS = 2500;
 
 export type StepName = 'make' | 'model' | 'generation' | 'gate' | 'results' | 'missing' | 'thanks';
 
