@@ -84,8 +84,13 @@ test('status with a valid cookie relays enabled + firstName', async () => {
 });
 
 test('status is disabled when the gate is off or Tyler is not configured', async () => {
-  delete process.env.TYLER_CHAT_FORCE;
-  assert.deepEqual(await (await status.GET(get('/api/chat/status', { cookie: cookie() }))).json(), { enabled: false });
+  /* « Interrupteur éteint » ne se teste que si CONFIG.TYLER_CHAT est false : une fois
+     le chat allumé en production, seul « Tyler non configuré » reste vérifiable ici. */
+  const { CONFIG } = await import('@/lib/config.ts');
+  if (!CONFIG.TYLER_CHAT) {
+    delete process.env.TYLER_CHAT_FORCE;
+    assert.deepEqual(await (await status.GET(get('/api/chat/status', { cookie: cookie() }))).json(), { enabled: false });
+  }
   process.env.TYLER_CHAT_FORCE = '1';
   delete process.env.TYLER_URL;
   assert.deepEqual(await (await status.GET(get('/api/chat/status', { cookie: cookie() }))).json(), { enabled: false });

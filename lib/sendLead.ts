@@ -37,8 +37,8 @@ export type LeadPayload = {
   company: string;
   /* Case « texte-moi » cochée (lib/consent.ts). Donne le tag sms-opt-in dans GHL. */
   smsConsent?: boolean;
-  /* La version A/B (lib/experiment.ts). Dans le corps et pas en cookie : l'envoi part
-     en credentials 'omit'. Posée par sendLead, comme `landing`. */
+  /* La version A/B (lib/experiment.ts). Dans le corps : la route la lit là, cookie ou
+     pas. Posée par sendLead, comme `landing`. */
   ab?: string | null;
 };
 
@@ -105,7 +105,11 @@ async function postOnce(body: string): Promise<boolean> {
       /* keepalive : si la personne ferme l'onglet juste après, la requête part quand
          même. */
       keepalive: true,
-      credentials: 'omit',
+      /* same-origin et PAS omit : la réponse pose le cookie azm_chat (jeton du chat
+         Tyler). En 'omit', le navigateur jette le Set-Cookie et le chat ne s'ouvre
+         jamais après un vrai envoi (bug du 12 nov. 2026, invisible à l'e2e qui pose
+         le cookie à la main). */
+      credentials: 'same-origin',
       signal: AbortSignal.timeout(SEND_TIMEOUT_MS)
     });
     if (res.ok) return true;
