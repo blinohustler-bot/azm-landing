@@ -216,8 +216,9 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
       if (!alive || m !== 'identify') return;
       /* Vieux lead : ses coordonnées sont gardées par sendLead (localStorage azm_lead).
          On retrouve SON contact sans rien écrire dans GHL, puis on relit le statut. */
+      let raw: string | null = null;
       let saved: { name?: string; email?: string; phone?: string } | null = null;
-      try { saved = JSON.parse(localStorage.getItem('azm_lead') || 'null'); } catch { saved = null; }
+      try { raw = localStorage.getItem('azm_lead'); saved = JSON.parse(raw || 'null'); } catch { saved = null; }
       if (!saved?.email || !saved.phone) return;
       const name = bubbleName(saved.name);
       if (name) setFirstName(name);
@@ -230,7 +231,22 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
           body: JSON.stringify({ email: saved.email, phone: saved.phone })
         });
         const d = (r.ok ? await r.json() : null) as { ok?: boolean } | null;
-        if (alive && d?.ok) await loadStatus();
+        if (!alive) return;
+        if (d?.ok) { await loadStatus(); return; }
+        /* Pas de contact sûr par la recherche (téléphone différent dans GHL, contact
+           fusionné…), mais ce navigateur a envoyé ce lead lui-même : on le renvoie tel
+           quel à /api/lead. Le contact est retrouvé (upsert), l'opportunité ouverte
+           mise à jour sans doublon, et la réponse pose le cookie du chat. Le visiteur ne
+           retape rien (Sam, 12 nov. 2026 : « il devrait déjà savoir qui je suis »).
+           Pas de sendLead ici : ce n'est pas un nouveau lead, aucune conversion ne part. */
+        if (!saved.name || !raw) return;
+        const lr = await fetch('/api/lead', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: raw
+        });
+        if (alive && lr.ok) await loadStatus();
       } catch { /* reste en identify : le formulaire prendra le relais */ }
     })();
     return () => { alive = false; };
