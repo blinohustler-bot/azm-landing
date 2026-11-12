@@ -130,6 +130,28 @@ export async function upsertContact(input: {
   return { id: out.contact?.id ?? out.id ?? null, isNew: out.new === true };
 }
 
+/* Retrouver un contact SANS rien écrire : le chat d'un visiteur qui revient (lead d'avant,
+   pas de cookie de chat). Le courriel ET le téléphone doivent désigner le même contact :
+   un courriel tapé seul ne doit jamais ouvrir le fil de quelqu'un d'autre. null = rien
+   de sûr, le widget redemande les coordonnées et passe par /api/lead. */
+const last10 = (s: unknown) => String(s ?? '').replace(/\D/g, '').slice(-10);
+export async function findContactByEmailAndPhone(email: string, phone: string): Promise<string | null> {
+  const want = last10(phone);
+  if (!email || want.length < 10) return null;
+  type Dup = { contact?: { id?: string; phone?: string; email?: string; additionalPhones?: unknown[]; additionalEmails?: unknown[] } | null };
+  const phonesOf = (c: NonNullable<Dup['contact']>) =>
+    [c.phone, ...(Array.isArray(c.additionalPhones) ? c.additionalPhones.map((p) => (p as { phone?: string })?.phone ?? p) : [])].map(last10);
+  const emailsOf = (c: NonNullable<Dup['contact']>) =>
+    [c.email, ...(Array.isArray(c.additionalEmails) ? c.additionalEmails.map((e) => (e as { email?: string })?.email ?? e) : [])]
+      .map((e) => String(e ?? '').trim().toLowerCase());
+  const loc = process.env.GHL_LOCATION_ID;
+  const byEmail = await request<Dup>('GET', '/contacts/search/duplicate', { query: { locationId: loc, email } });
+  if (byEmail.contact?.id && phonesOf(byEmail.contact).includes(want)) return byEmail.contact.id;
+  const byPhone = await request<Dup>('GET', '/contacts/search/duplicate', { query: { locationId: loc, number: phone } });
+  if (byPhone.contact?.id && emailsOf(byPhone.contact).includes(email.trim().toLowerCase())) return byPhone.contact.id;
+  return null;
+}
+
 export async function addNote(contactId: string, body: string) {
   return request<unknown>('POST', `/contacts/${encodeURIComponent(contactId)}/notes`, {
     body: { body }

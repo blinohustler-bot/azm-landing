@@ -1259,6 +1259,18 @@ footer p{margin:0 0 6px}
   background:#000; color:#fff; font-weight:800; font-size:.9rem;
 }
 .tchat__form button:disabled{opacity:.35; cursor:default}
+.tchat__form[hidden]{display:none}
+
+/* Mode « identify » : le visiteur sans contact connu donne ses coordonnées dans le fil.
+   Mêmes champs que la barre d'envoi (16 px, bord noir à 20 %), empilés. */
+.tchat__who{display:grid; gap:8px}
+.tchat__who input{
+  width:100%; padding:12px; font-size:16px; color:#000; background:#fff;
+  border:1px solid #00000033; border-radius:3px;
+}
+.tchat__who input:focus-visible{outline:2px solid #000; outline-offset:-1px}
+.tchat__who .btn{margin-top:4px}
+.tchat__who .btn:disabled{opacity:.5; cursor:default}
 
 @keyframes tchatIn{from{opacity:0; translate:0 8px} to{opacity:1; translate:0 0}}
 @keyframes tchatUp{from{translate:0 24px; opacity:0} to{translate:0 0; opacity:1}}

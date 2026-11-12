@@ -7,6 +7,16 @@ import { money } from '@/lib/catalogTypes';
 import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
 import { isChatLinkUrl, isShopUrl } from '@/lib/shopHost';
+import { sendLead } from '@/lib/sendLead';
+import { MIN_FILL_MS } from '@/lib/config';
+
+/* Quel chat ce visiteur voit (réponse de /api/chat/status) :
+   - tyler    : Tyler répond ;
+   - human    : Tyler ne répond pas sur ce fil (Tommy l'a, pause, Tyler injoignable). Le
+                message part quand même : Tyler le garde en note GHL et prévient Tommy ;
+   - identify : pas encore de contact. Le widget retrouve le fil avec les coordonnées
+                gardées (vieux lead), sinon il les demande à l'ouverture. */
+type Mode = 'tyler' | 'human' | 'identify';
 
 /* Le chat Tyler sur l'écran des pièces.
  *
@@ -37,7 +47,9 @@ type Line =
   | { id: number; kind: 'fallback' }
   /* Tyler ne répond pas sur ce fil (Tommy l'a, ou le chat est arrêté) : le message du
      visiteur est gardé côté Tyler et Tommy est prévenu. */
-  | { id: number; kind: 'tommy' };
+  | { id: number; kind: 'tommy' }
+  /* Une ligne de l'équipe (pas de Tyler) : l'accueil du mode « human ». */
+  | { id: number; kind: 'note'; text: string };
 
 /* Une ligne sans son id (Omit distribué sur chaque membre de l'union). */
 type NewLine = Line extends infer L ? (L extends Line ? Omit<L, 'id'> : never) : never;
@@ -128,6 +140,13 @@ function readSlots(raw: unknown): Slot[] | null {
 
 export default function TylerChat({ firstName: firstNameProp, model, make, modelKey, year, shop }: Props) {
   const [enabled, setEnabled] = useState(false);
+  const [mode, setMode] = useState<Mode>('tyler');
+  const modeRef = useRef<Mode>('tyler');
+  /* Formulaire du mode identify : prénom, courriel, téléphone. */
+  const [who, setWho] = useState({ name: '', email: '', phone: '' });
+  const [whoBusy, setWhoBusy] = useState(false);
+  const [whoErr, setWhoErr] = useState('');
+  const formShownAt = useRef(0);
   const [firstName, setFirstName] = useState(bubbleName(firstNameProp));
   const [bubble, setBubble] = useState(false);
   const [open, setOpen] = useState(false);
@@ -166,24 +185,60 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
     setLines((prev) => [...prev, { ...l, id } as Line]);
   }, []);
 
-  /* ── statut : le chat est-il offert à ce visiteur ? ─────────────────────── */
+  /* ── statut : quel chat pour ce visiteur ? ──────────────────────────────── */
+  const applyMode = useCallback((m: Mode) => {
+    modeRef.current = m;
+    setMode(m);
+    /* Tyler ne répondra pas : pas de « typing… » qui ferait croire qu'il écrit. */
+    stopped.current = m === 'human';
+  }, []);
+
+  const loadStatus = useCallback(async (): Promise<Mode | null> => {
+    try {
+      const r = await fetch('/api/chat/status', { credentials: 'same-origin', cache: 'no-store' });
+      const d = (r.ok ? await r.json() : null) as { enabled?: boolean; mode?: Mode; firstName?: string } | null;
+      if (!d?.enabled) return null;
+      const name = bubbleName(d.firstName);
+      if (name) setFirstName(name);
+      const m: Mode = d.mode === 'human' || d.mode === 'identify' ? d.mode : 'tyler';
+      applyMode(m);
+      setEnabled(true);
+      return m;
+    } catch {
+      return null;
+    }
+  }, [applyMode]);
+
   useEffect(() => {
     let alive = true;
-    fetch('/api/chat/status', { credentials: 'same-origin', cache: 'no-store' })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d: { enabled?: boolean; firstName?: string } | null) => {
-        if (!alive || !d?.enabled) return;
-        const name = bubbleName(d.firstName);
-        if (name) setFirstName(name);
-        setEnabled(true);
-      })
-      .catch(() => { /* 401, réseau : pas de chat, sans bruit */ });
+    (async () => {
+      const m = await loadStatus();
+      if (!alive || m !== 'identify') return;
+      /* Vieux lead : ses coordonnées sont gardées par sendLead (localStorage azm_lead).
+         On retrouve SON contact sans rien écrire dans GHL, puis on relit le statut. */
+      let saved: { name?: string; email?: string; phone?: string } | null = null;
+      try { saved = JSON.parse(localStorage.getItem('azm_lead') || 'null'); } catch { saved = null; }
+      if (!saved?.email || !saved.phone) return;
+      const name = bubbleName(saved.name);
+      if (name) setFirstName(name);
+      setWho({ name: saved.name || '', email: saved.email, phone: saved.phone });
+      try {
+        const r = await fetch('/api/chat/identify', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: saved.email, phone: saved.phone })
+        });
+        const d = (r.ok ? await r.json() : null) as { ok?: boolean } | null;
+        if (alive && d?.ok) await loadStatus();
+      } catch { /* reste en identify : le formulaire prendra le relais */ }
+    })();
     return () => { alive = false; };
-  }, []);
+  }, [loadStatus]);
 
   /* ── présence : toutes les 30 s tant que l'onglet est visible ───────────── */
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || mode === 'identify') return;
     const ping = () => {
       if (document.visibilityState !== 'visible') return;
       fetch('/api/chat/presence', { method: 'POST', credentials: 'same-origin', keepalive: true })
@@ -202,7 +257,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
       document.removeEventListener('visibilitychange', onVis);
       window.removeEventListener('pagehide', onHide);
     };
-  }, [enabled]);
+  }, [enabled, mode]);
 
   /* ── la bulle : 15 s sans interaction, une fois par session ─────────────── */
   useEffect(() => {
@@ -432,15 +487,69 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
   }, [add, runTurn]);
 
   /* ── ouvrir, fermer ─────────────────────────────────────────────────────── */
+  /* Le premier geste du fil, selon le mode : Tyler ouvre la conversation (il connaît
+     l'auto, les pièces et l'historique du contact) ; en « human », une ligne d'accueil
+     de l'équipe ; en « identify », rien tant que le contact n'est pas connu. */
+  const startThread = useCallback((m: Mode) => {
+    if (started.current || m === 'identify') return;
+    started.current = true;
+    if (m === 'tyler') void runTurn(null);
+    else add({
+      kind: 'note',
+      text: `Hey${firstName ? ` ${firstName}` : ''}! Ask us anything about parts for your ${model}. Tommy, our founder, gets your message and replies shortly.`
+    });
+  }, [runTurn, add, firstName, model]);
+
   const openChat = useCallback(() => {
     setBubble(false);
     setOpen(true);
     clarity('open');
-    if (!started.current) {
-      started.current = true;
-      void runTurn(null);
+    if (modeRef.current === 'identify') formShownAt.current = formShownAt.current || Date.now();
+    startThread(modeRef.current);
+  }, [startThread]);
+
+  /* Mode identify : le visiteur donne ses coordonnées dans le chat. Même chemin que le
+     formulaire de la page (/api/lead) : GHL retrouve le contact s'il existe déjà
+     (courriel ou téléphone), l'opportunité ouverte est mise à jour au lieu d'être
+     doublée, et la réponse pose le cookie du chat. */
+  const submitWho = useCallback(async () => {
+    const name = who.name.trim();
+    const email = who.email.trim();
+    const phone = who.phone.trim();
+    if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || phone.replace(/\D/g, '').length < 10) {
+      setWhoErr('Add your first name, email and phone number.');
+      return;
     }
-  }, [runTurn]);
+    setWhoErr('');
+    setWhoBusy(true);
+    const elapsed = Date.now() - (formShownAt.current || Date.now());
+    const ok = await sendLead({
+      source: 'fitment_lp',
+      name,
+      email,
+      phone,
+      car: `${make} ${model}${year ? ` ${year}` : ''}`,
+      make,
+      model,
+      generation: year ?? null,
+      parts: [],
+      page: window.location.href,
+      elapsedMs: Math.max(elapsed, MIN_FILL_MS),
+      company: '',
+      smsConsent: false
+    });
+    setWhoBusy(false);
+    if (!ok) {
+      setWhoErr('');
+      add({ kind: 'fallback' });
+      return;
+    }
+    const bn = bubbleName(name);
+    if (bn) setFirstName(bn);
+    const m = await loadStatus();
+    if (m && m !== 'identify') startThread(m);
+    else add({ kind: 'fallback' });
+  }, [who, make, model, year, add, loadStatus, startThread]);
 
   const closeChat = useCallback(() => setOpen(false), []);
 
@@ -553,7 +662,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
             aria-haspopup="dialog"
             onClick={openChat}
           >
-            💬 Ask Tyler
+            {mode === 'tyler' ? '💬 Ask Tyler' : '💬 Chat with us'}
           </button>
         </div>
       ) : null}
@@ -563,10 +672,10 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
       {open ? <div className="tchat__scrim" aria-hidden="true" onClick={closeChat} /> : null}
 
       {open ? (
-        <div ref={panelRef} className="tchat__panel" role="dialog" aria-label="Chat with Tyler">
+        <div ref={panelRef} className="tchat__panel" role="dialog" aria-label={mode === 'tyler' ? 'Chat with Tyler' : 'Chat with AZ Motorsport'}>
           <div className="tchat__head">
             <div>
-              <b>Tyler · AZ Motorsport</b>
+              <b>{mode === 'tyler' ? 'Tyler · AZ Motorsport' : 'AZ Motorsport'}</b>
               <span className={`tchat__online${offline ? ' is-off' : ''}`}><i aria-hidden="true" />{offline ? 'Offline' : 'Online'}</span>
             </div>
             <button type="button" className="tchat__close" aria-label="Close chat" onClick={closeChat}>
@@ -578,6 +687,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
             {lines.map((l) => {
               if (l.kind === 'tyler') return <p key={l.id} className="tchat__msg">{linkify(l.text, shop)}</p>;
               if (l.kind === 'me') return <p key={l.id} className="tchat__msg tchat__msg--me">{l.text}</p>;
+              if (l.kind === 'note') return <p key={l.id} className="tchat__msg">{l.text}</p>;
               if (l.kind === 'fallback') {
                 return (
                   <p key={l.id} className="tchat__msg tchat__msg--fail">
@@ -657,9 +767,36 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
               );
             })}
             {typing ? <p className="tchat__typing">typing…</p> : null}
+            {mode === 'identify' ? (
+              <form
+                className="tchat__who"
+                onSubmit={(e) => { e.preventDefault(); void submitWho(); }}
+              >
+                <p className="tchat__msg">
+                  Hey! Tell us who you are and we'll pick up right where you left off with your {model}.
+                </p>
+                <input
+                  type="text" autoComplete="given-name" placeholder="First name" aria-label="First name"
+                  value={who.name} onChange={(e) => setWho({ ...who, name: e.target.value })}
+                />
+                <input
+                  type="email" autoComplete="email" placeholder="Email" aria-label="Email"
+                  value={who.email} onChange={(e) => setWho({ ...who, email: e.target.value })}
+                />
+                <input
+                  type="tel" autoComplete="tel" placeholder="Phone" aria-label="Phone"
+                  value={who.phone} onChange={(e) => setWho({ ...who, phone: e.target.value })}
+                />
+                {whoErr ? <p className="tchat__msg tchat__msg--fail" role="alert">{whoErr}</p> : null}
+                <button type="submit" className="btn btn--wide" disabled={whoBusy}>
+                  {whoBusy ? 'One sec…' : 'Start chat'}
+                </button>
+              </form>
+            ) : null}
           </div>
 
           <form
+            hidden={mode === 'identify'}
             className="tchat__form"
             onSubmit={(e) => {
               e.preventDefault();

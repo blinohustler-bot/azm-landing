@@ -155,16 +155,29 @@ await snd('Page.addScriptToEvaluateOnNewDocument', { source: `(() => {
   Object.defineProperty(window, 'clarity', { configurable: false, get() { return rec; }, set() {} });
 })()` });
 
-/* ── 1. sans jeton, pas de widget ────────────────────────────────────────── */
-console.log('\n=== no token, no widget ===');
+/* ── 1. sans jeton : le bouton est quand même là (Sam, 12 nov. 2026) ────────
+   Vieux lead ou cookie expiré : mode identify. Sans coordonnées gardées, l'ouverture
+   montre le petit formulaire, et aucun tour ne part vers Tyler. */
+console.log('\n=== no token: the button is still there, identify form ===');
 await snd('Network.clearBrowserCookies');
 await stub('/__mode');
 jsErrors.length = 0;
 await goto();
+await ev(`localStorage.removeItem('azm_lead'), sessionStorage.clear()`);
+await goto();
 await sleep(2000);
 check('les pièces sont affichées', (await ev(`document.querySelectorAll('.card').length`)) > 0, 'aucune carte');
-check('aucun .tchat dans le DOM', !(await exists('.tchat')), 'le widget est là sans jeton');
+check('le bouton flottant est là sans jeton', await waitFor(`!!document.querySelector('.tchat__fab')`, 5000), 'pas de .tchat__fab');
+check('il dit « 💬 Chat with us »', (await text('.tchat__fab')).trim() === '💬 Chat with us', await text('.tchat__fab'));
+const turnsBefore = JSON.stringify(await stub('/__log')).length;
+await click('.tchat__fab');
+check('le formulaire prénom / courriel / téléphone', await waitFor(`document.querySelectorAll('.tchat__who input').length === 3`, 3000), 'pas de formulaire');
+check("la barre d'envoi est cachée", await ev(`getComputedStyle(document.querySelector('.tchat__form')).display === 'none'`), 'barre visible');
+await sleep(1500);
+check('aucun tour envoyé à Tyler sans contact', JSON.stringify(await stub('/__log')).length === turnsBefore, 'un tour est parti');
+await shot('chat-identify-390');
 check('console sans erreur', jsErrors.length === 0, jsErrors.join(' | '));
+await click('.tchat__close');
 
 /* ── 2. la bulle après 15 s, une fois par session ────────────────────────── */
 console.log('\n=== bubble after 15s ===');

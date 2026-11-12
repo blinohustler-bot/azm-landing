@@ -68,24 +68,29 @@ test('screenFor rebuilds the screen from the catalog', () => {
   assert.equal(screenFor(CAR.make, 'nope'), null);
 });
 
-test('status without cookie is 401', async () => {
+test('status without cookie: the bubble still shows, in identify mode', async () => {
   const r = await status.GET(get('/api/chat/status'));
-  assert.equal(r.status, 401);
+  assert.equal(r.status, 200);
+  assert.deepEqual(await r.json(), { enabled: true, mode: 'identify' });
   assert.equal(calls.length, 0);
 });
 
-test('status with a valid cookie relays enabled + firstName', async () => {
+test('status with a valid cookie: Tyler mode + firstName, nothing else leaks', async () => {
   upstream = () => Response.json({ enabled: true, firstName: 'Alex', reason: 'secret' });
   const r = await status.GET(get('/api/chat/status', { cookie: cookie() }));
   assert.equal(r.status, 200);
-  assert.deepEqual(await r.json(), { enabled: true, firstName: 'Alex' });
+  assert.deepEqual(await r.json(), { enabled: true, mode: 'tyler', firstName: 'Alex' });
   assert.equal(calls[0].url, 'http://tyler.test/api/webchat/status?contactId=ct_abc123');
   assert.equal(calls[0].headers.get('x-tyler-key'), 'tyler-secret-0000');
 });
 
-test('status is disabled when the gate is off or Tyler is not configured', async () => {
-  /* « Interrupteur éteint » ne se teste que si CONFIG.TYLER_CHAT est false : une fois
-     le chat allumé en production, seul « Tyler non configuré » reste vérifiable ici. */
+test('status: Tyler refuses the thread (handoff, pause) = human mode, bubble kept', async () => {
+  upstream = () => Response.json({ enabled: false, firstName: 'Alex', reason: 'status:handoff' });
+  assert.deepEqual(await (await status.GET(get('/api/chat/status', { cookie: cookie() }))).json(), { enabled: true, mode: 'human', firstName: 'Alex' });
+});
+
+test('status is off only with the switch; Tyler not configured = human mode', async () => {
+  /* « Interrupteur éteint » ne se teste que si CONFIG.TYLER_CHAT est false. */
   const { CONFIG } = await import('@/lib/config.ts');
   if (!CONFIG.TYLER_CHAT) {
     delete process.env.TYLER_CHAT_FORCE;
@@ -93,13 +98,13 @@ test('status is disabled when the gate is off or Tyler is not configured', async
   }
   process.env.TYLER_CHAT_FORCE = '1';
   delete process.env.TYLER_URL;
-  assert.deepEqual(await (await status.GET(get('/api/chat/status', { cookie: cookie() }))).json(), { enabled: false });
+  assert.deepEqual(await (await status.GET(get('/api/chat/status', { cookie: cookie() }))).json(), { enabled: true, mode: 'human' });
   assert.equal(calls.length, 0);
 });
 
-test('status is disabled when Tyler fails', async () => {
+test('status: Tyler down = Tyler mode kept (the first turn shows the phone fallback)', async () => {
   upstream = () => new Response('boom', { status: 500 });
-  assert.deepEqual(await (await status.GET(get('/api/chat/status', { cookie: cookie() }))).json(), { enabled: false });
+  assert.deepEqual(await (await status.GET(get('/api/chat/status', { cookie: cookie() }))).json(), { enabled: true, mode: 'tyler' });
 });
 
 test('presence relays and answers 204; 401 without cookie; 503 unconfigured', async () => {
