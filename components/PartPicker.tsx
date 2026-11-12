@@ -109,7 +109,7 @@ export default function PartPicker({ parts, shop }: { parts: PickerPart[]; shop:
             <span>{lines.length === 1 ? 'part selected' : 'parts selected'}</span>
             <em>{money(total)}</em>
           </p>
-          <p className="bundle__ship">
+          <p className="bundle__ship shipfree">
             {total >= CONFIG.FREE_SHIP_MIN
               ? 'Free shipping included · Canada & US'
               : `Add ${money(CONFIG.FREE_SHIP_MIN - total)} for free shipping · Canada & US`}

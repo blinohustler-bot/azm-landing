@@ -1280,3 +1280,8 @@ footer p{margin:0 0 6px}
   .tchat__dock{transition:none}
   .tchat__bubble,.tchat__panel,.tchat__typing,.tchat__scrim{animation:none}
 }
+
+/* Livraison gratuite : Canada et USA seulement (Sam, 12 nov. 2026). Hors de ces pays,
+   app/layout.tsx pose data-ship="no" sur <body> et aucune mention ne s'affiche
+   (bandeau, étiquette « Ships free », ligne des cartes, total, carte du chat). */
+body[data-ship="no"] .shipfree{display:none !important}

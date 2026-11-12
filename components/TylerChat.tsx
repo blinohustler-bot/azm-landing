@@ -754,7 +754,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
                   </ul>
                   <p className="tchat__price">
                     <b>{money(l.totalCAD)}</b>
-                    {l.totalCAD >= CONFIG.FREE_SHIP_MIN ? <span>ships free</span> : null}
+                    {l.totalCAD >= CONFIG.FREE_SHIP_MIN ? <span className="shipfree">ships free</span> : null}
                   </p>
                   <a
                     className="btn btn--wide"

@@ -166,7 +166,7 @@ export default function ProductCard({
         {tags.length ? (
           <ul className="chips" aria-label="Highlights">
             {tags.map((t) => (
-              <li key={t} className="chip">{t}</li>
+              <li key={t} className={t === 'Ships free' ? 'chip shipfree' : 'chip'}>{t}</li>
             ))}
           </ul>
         ) : null}
@@ -352,7 +352,7 @@ export default function ProductCard({
               ? 'Ships from Brossard, QC in 1–2 business days'
               : 'Built and shipped from Brossard, QC'}
           </li>
-          <li>
+          <li className="shipfree">
             {current.price >= CONFIG.FREE_SHIP_MIN
               ? 'Free shipping to Canada & the US'
               : `Free shipping to Canada & the US on orders over ${money(CONFIG.FREE_SHIP_MIN)}`}

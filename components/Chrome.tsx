@@ -24,7 +24,7 @@ export function Header({ backHref }: { backHref: string | null }) {
     <header className="top">
       {/* Le bandeau de livraison est dans l'en-tête collant : il reste visible à chaque
           étape, y compris sur l'écran des pièces où se décide le checkout. */}
-      <p className="shipbar">
+      <p className="shipbar shipfree">
         <b>Free shipping</b> over ${CONFIG.FREE_SHIP_MIN.toLocaleString('en-US')} · Canada &amp; US
       </p>
       <div className="wrap top__in">

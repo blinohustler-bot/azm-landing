@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Archivo } from 'next/font/google';
 import Script from 'next/script';
+import { headers } from 'next/headers';
 import { CONFIG } from '@/lib/config';
 import { AB_COOKIE } from '@/lib/experiment';
 import LandingCapture from '@/components/LandingCapture';
@@ -33,10 +34,16 @@ export const viewport: Viewport = {
   themeColor: '#000000'
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  /* La livraison gratuite n'existe qu'au Canada et aux USA (Sam, 12 nov. 2026) : un visiteur
+     d'ailleurs ne doit la voir nulle part. Le pays vient de la bordure Vercel ; sans en-tête
+     (dev local, pays inconnu), on l'affiche. Chaque mention porte la classe .shipfree, cachée
+     par globals.css quand data-ship="no". */
+  const country = ((await headers()).get('x-vercel-ip-country') || '').toUpperCase();
+  const ship = !country || country === 'CA' || country === 'US' ? 'yes' : 'no';
   return (
     <html lang="en" className={archivo.variable}>
-      <body>
+      <body data-ship={ship}>
         {/* Retient l'URL d'arrivée avant que le parcours ne la remplace. */}
         <LandingCapture />
         {children}
