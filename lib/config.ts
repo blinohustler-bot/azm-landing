@@ -87,7 +87,7 @@ export const CONFIG: Config = {
   /* Le chat Tyler sur l'écran des résultats. false = éteint partout : /api/chat/status
      répond { enabled: false } et le widget ne s'affiche pas. À passer à true quand
      TYLER_URL et TYLER_WEBCHAT_SECRET sont posés et que Tyler est prêt en direct. */
-  TYLER_CHAT: false
+  TYLER_CHAT: true
 };
 
 /* La photo qui ouvre la page.
