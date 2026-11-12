@@ -8,13 +8,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "tsc --noEmit",
-    "test": "node --conditions=react-server --import ./tools/alias-hook.mjs tools/lead.test.mjs && node --conditions=react-server --import ./tools/alias-hook.mjs tools/media.test.mjs",
+    "test": "node --conditions=react-server --import ./tools/alias-hook.mjs tools/lead.test.mjs && node --conditions=react-server --import ./tools/alias-hook.mjs tools/media.test.mjs && node --conditions=react-server --import ./tools/alias-hook.mjs tools/chat.test.mjs && node --conditions=react-server --import ./tools/alias-hook.mjs tools/chatRelay.test.mjs",
     "ghl:check": "node tools/ghl-check.mjs",
     "catalog": "node build-index.mjs",
     "reviews": "node build-reviews.mjs",
     "shot": "node tools/shot.mjs",
     "audit": "node tools/audit.mjs",
-    "e2e": "node tools/e2e.mjs && node tools/e2e-touch.mjs && node tools/e2e-bundle.mjs && node tools/e2e-media.mjs",
+    "e2e": "node tools/e2e.mjs && node tools/e2e-touch.mjs && node tools/e2e-bundle.mjs && node tools/e2e-media.mjs && node tools/e2e-chat.mjs",
     "videos": "node build-videos.mjs"
   },
   "engines": {

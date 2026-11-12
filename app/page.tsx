@@ -12,6 +12,8 @@ import Track from '@/components/Track';
 import ScrollTop from '@/components/ScrollTop';
 import ReviewsFooter from '@/components/ReviewsFooter';
 import { CONFIG, LEAD_COOKIE, type StepName } from '@/lib/config';
+import { CHAT_COOKIE } from '@/lib/chatToken';
+import { chatEnabled } from '@/lib/tyler';
 import {
   SHOP, findMake, findModel, findGeneration, partsFor, carName, generationLabel
 } from '@/lib/catalog';
@@ -71,7 +73,13 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
      client revient directement sur ses pièces, sans voir le formulaire clignoter le
      temps que le navigateur lise son localStorage. Ce n'est pas une barrière de
      sécurité — le gate est un dispositif de conversion, et l'a toujours été. */
-  const known = (await cookies()).get(LEAD_COOKIE)?.value === '1';
+  const jar = await cookies();
+  const known = jar.get(LEAD_COOKIE)?.value === '1';
+
+  /* Le chat Tyler : allumé (CONFIG.TYLER_CHAT, ou TYLER_CHAT_FORCE en essai) ET un
+     jeton de contact présent. Sa validité est vérifiée par /api/chat/status ; ici on
+     évite seulement de charger le widget pour qui n'a jamais laissé ses coordonnées. */
+  const chat = chatEnabled() && Boolean(jar.get(CHAT_COOKIE)?.value);
 
   const needsGeneration = Boolean(model && model.generations.length > 1);
   const parts = partsFor(model, gen);
@@ -195,6 +203,12 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
               screen={make && model
                 ? screenKey(make.make, model.key, needsGeneration ? gen?.from ?? null : null)
                 : null}
+              chat={chat && make && model ? {
+                make: make.make,
+                model: model.label,
+                modelKey: model.key,
+                ...(gen ? { year: String(gen.from) } : {})
+              } : null}
             />
           </>
         ) : null}

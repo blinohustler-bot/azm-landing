@@ -38,6 +38,18 @@ registerHooks({
       const target = withExtension(resolve(ROOT, specifier.slice(2)));
       return nextResolve(pathToFileURL(target).href, context);
     }
+    /* Import relatif sans extension (lib/catalog.ts → './catalogTypes'). */
+    if (specifier.startsWith('.') && !/\.[a-z]+$/.test(specifier) && context.parentURL?.startsWith('file:')) {
+      const target = withExtension(resolve(dirname(fileURLToPath(context.parentURL)), specifier));
+      return nextResolve(pathToFileURL(target).href, context);
+    }
     return nextResolve(specifier, context);
+  },
+  /* Next accepte `import raw from '@/catalog.json'` ; Node veut l'attribut de type. */
+  load(url, context, nextLoad) {
+    if (url.endsWith('.json')) {
+      return nextLoad(url, { ...context, importAttributes: { ...context.importAttributes, type: 'json' } });
+    }
+    return nextLoad(url, context);
   }
 });

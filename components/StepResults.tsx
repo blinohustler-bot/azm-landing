@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import PartPicker from './PartPicker';
 import Track from './Track';
+import TylerChat from './TylerChatMount';
 import { CONFIG } from '@/lib/config';
 import { partLabel, type Product } from '@/lib/catalog';
 import { proofFor } from '@/lib/reviews';
@@ -24,12 +25,17 @@ import { isBestSeller } from '@/lib/bestsellers';
  * catalogue. C'est aussi ce qui permet de n'envoyer au navigateur que les deux ou
  * trois avis affichés plutôt que les 74 du fichier.
  */
+/* Le chat Tyler : présent seulement quand page.tsx l'a permis (chat allumé + cookie de
+   contact). make / modelKey / year sont les valeurs de l'URL ; model est le nom affiché. */
+export type ResultsChat = { make: string; model: string; modelKey: string; year?: string };
+
 export default function StepResults({
   carName,
   parts,
   shop,
   modelKey,
-  screen
+  screen,
+  chat = null
 }: {
   carName: string;
   parts: Product[];
@@ -39,6 +45,7 @@ export default function StepResults({
   modelKey: string | null;
   /* L'écran affiché (marque | modèle | génération), pour « Best seller ». */
   screen: string | null;
+  chat?: ResultsChat | null;
 }) {
   const n = parts.length;
 
@@ -105,6 +112,8 @@ export default function StepResults({
           </p>
         </div>
       </div>
+
+      {chat ? <TylerChat {...chat} shop={shop} /> : null}
     </section>
   );
 }
