@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CONFIG, STEP_INDEX, TOTAL_STEPS, type StepName } from '@/lib/config';
+import { BFCM, freeShipMin, isBfcm } from '@/lib/promo';
 
 /* La barre du haut et la barre de progression.
  *
@@ -24,9 +25,19 @@ export function Header({ backHref }: { backHref: string | null }) {
     <header className="top">
       {/* Le bandeau de livraison est dans l'en-tête collant : il reste visible à chaque
           étape, y compris sur l'écran des pièces où se décide le checkout. */}
-      <p className="shipbar shipfree">
-        <b>Free shipping</b> over ${CONFIG.FREE_SHIP_MIN.toLocaleString('en-US')} · Canada &amp; US
-      </p>
+      {/* Pendant le Black Friday (lib/promo.ts), le bandeau annonce la vente à tout le
+          monde ; seule la partie livraison garde .shipfree (cachée hors Canada/USA). */}
+      {isBfcm() ? (
+        <p className="shipbar shipbar--bf">
+          <b>Black Friday</b> 10% off everything · 15% off $2,000+ · 20% off $5,000+
+          <span className="shipfree"> · Free shipping over ${freeShipMin().toLocaleString('en-US')} Canada &amp; US</span>
+          {' '}· Ends {BFCM.END_LABEL}
+        </p>
+      ) : (
+        <p className="shipbar shipfree">
+          <b>Free shipping</b> over ${freeShipMin().toLocaleString('en-US')} · Canada &amp; US
+        </p>
+      )}
       <div className="wrap top__in">
         <div className="brand">
           {/* Le monogramme est décoratif : le nom est écrit juste à côté. */}

@@ -6,6 +6,7 @@ import Stars from './Stars';
 import CardGallery from './CardGallery';
 import HearIt from './HearIt';
 import { CONFIG } from '@/lib/config';
+import { freeShipMin } from '@/lib/promo';
 import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
 /* catalogTypes, jamais catalog : ce fichier est 'use client', et lib/catalog importe
@@ -125,7 +126,7 @@ export default function ProductCard({
     part: product.part,
     selected: opts.map((o) => current?.options[o.i] ?? ''),
     price: current.price,
-    freeShipMin: CONFIG.FREE_SHIP_MIN
+    freeShipMin: freeShipMin()
   });
   const sizes = '(min-width:760px) 50vw, 100vw';
   const fits = fitmentRows(product);
@@ -353,9 +354,9 @@ export default function ProductCard({
               : 'Built and shipped from Brossard, QC'}
           </li>
           <li className="shipfree">
-            {current.price >= CONFIG.FREE_SHIP_MIN
+            {current.price >= freeShipMin()
               ? 'Free shipping to Canada & the US'
-              : `Free shipping to Canada & the US on orders over ${money(CONFIG.FREE_SHIP_MIN)}`}
+              : `Free shipping to Canada & the US on orders over ${money(freeShipMin())}`}
           </li>
         </ul>
 

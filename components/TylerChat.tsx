@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { CONFIG } from '@/lib/config';
+import { freeShipMin } from '@/lib/promo';
 import { money } from '@/lib/catalogTypes';
 import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
@@ -754,7 +755,7 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
                   </ul>
                   <p className="tchat__price">
                     <b>{money(l.totalCAD)}</b>
-                    {l.totalCAD >= CONFIG.FREE_SHIP_MIN ? <span className="shipfree">ships free</span> : null}
+                    {l.totalCAD >= freeShipMin() ? <span className="shipfree">ships free</span> : null}
                   </p>
                   <a
                     className="btn btn--wide"

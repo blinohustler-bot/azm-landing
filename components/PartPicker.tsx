@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import ProductCard from './ProductCard';
 import { CONFIG } from '@/lib/config';
+import { freeShipMin } from '@/lib/promo';
 import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
 import { money, type Product } from '@/lib/catalogTypes';
@@ -110,9 +111,9 @@ export default function PartPicker({ parts, shop }: { parts: PickerPart[]; shop:
             <em>{money(total)}</em>
           </p>
           <p className="bundle__ship shipfree">
-            {total >= CONFIG.FREE_SHIP_MIN
+            {total >= freeShipMin()
               ? 'Free shipping included · Canada & US'
-              : `Add ${money(CONFIG.FREE_SHIP_MIN - total)} for free shipping · Canada & US`}
+              : `Add ${money(freeShipMin() - total)} for free shipping · Canada & US`}
           </p>
           <a
             className="btn"
