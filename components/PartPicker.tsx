@@ -3,7 +3,7 @@
 import { useCallback, useState } from 'react';
 import ProductCard from './ProductCard';
 import { CONFIG } from '@/lib/config';
-import { freeShipMin } from '@/lib/promo';
+import { bfTier, freeShipMin, isBfcm } from '@/lib/promo';
 import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
 import { money, type Product } from '@/lib/catalogTypes';
@@ -110,6 +110,17 @@ export default function PartPicker({ parts, shop }: { parts: PickerPart[]; shop:
             <span>{lines.length === 1 ? 'part selected' : 'parts selected'}</span>
             <em>{money(total)}</em>
           </p>
+          {isBfcm() ? (() => {
+            const t = bfTier(total);
+            return (
+              <p className="bundle__bf">
+                <b>Black Friday {t.pct}% off</b>
+                {t.next
+                  ? ` · Add ${money(t.next.min - total)} for ${t.next.pct}% off`
+                  : ' · Best tier unlocked'}
+              </p>
+            );
+          })() : null}
           <p className="bundle__ship shipfree">
             {total >= freeShipMin()
               ? 'Free shipping included · Canada & US'

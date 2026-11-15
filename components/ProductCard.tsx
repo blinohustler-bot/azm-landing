@@ -6,7 +6,7 @@ import Stars from './Stars';
 import CardGallery from './CardGallery';
 import HearIt from './HearIt';
 import { CONFIG } from '@/lib/config';
-import { freeShipMin } from '@/lib/promo';
+import { freeShipMin, isBfcm } from '@/lib/promo';
 import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
 /* catalogTypes, jamais catalog : ce fichier est 'use client', et lib/catalog importe
@@ -272,8 +272,17 @@ export default function ProductCard({
           </div>
         ) : null}
 
+        {/* Black Friday : le prix après le 10 % que Shopify applique sur tout au
+            checkout, l'ancien barré. Les paliers 15/20 % dépendent du panier entier :
+            on ne les promet pas sur une carte seule. */}
+        {isBfcm() ? (
+          <p className="bfprice">
+            <span className="bfprice__tag">Black Friday −10%</span>
+            <s>{money(current.price)}</s>
+          </p>
+        ) : null}
         <div className="price">
-          <b>{money(current.price)}</b>
+          <b>{money(isBfcm() ? Math.round(current.price * 0.9) : current.price)}</b>
           <small>CAD</small>
           <span className={`stock ${current.available ? 'stock--in' : 'stock--out'}`}>
             {current.available ? 'In stock' : 'Built to order'}

@@ -1285,3 +1285,67 @@ footer p{margin:0 0 6px}
    app/layout.tsx pose data-ship="no" sur <body> et aucune mention ne s'affiche
    (bandeau, étiquette « Ships free », ligne des cartes, total, carte du chat). */
 body[data-ship="no"] .shipfree{display:none !important}
+
+/* ── Black Friday (15 nov. → 5 déc. 2026, lib/promo.ts) ───────────────────
+   Sam, 15 nov. : « ça ne sort pas aux yeux ». Le bandeau passe en aplat lime, le
+   hero porte les paliers et le compte à rebours, les cartes montrent le prix −10 %.
+   C'est l'exception assumée au plafond du lime de DESIGN.md §3, le temps de la vente. */
+.shipbar--bf{
+  background:var(--lime); color:#000; border-bottom:0;
+  padding:9px 16px; font-size:.86rem; font-weight:600; letter-spacing:.01em;
+  display:flex; flex-wrap:wrap; justify-content:center; align-items:center; gap:4px 16px;
+}
+.shipbar--bf b{
+  color:#000; font-style:italic; font-weight:900; font-size:1rem; letter-spacing:-.01em;
+}
+.bfbar__deal{font-weight:800; text-transform:uppercase; letter-spacing:.03em}
+.bfbar__ends{font-variant-numeric:tabular-nums}
+.shipbar--bf .cd{font-weight:800}
+.bfbar__ship{opacity:.78}
+@media(max-width:699px){
+  .shipbar--bf{font-size:.8rem; padding:7px 12px; gap:2px 10px}
+  .shipbar--bf b{font-size:.92rem}
+  .bfbar__ship{font-size:.74rem}
+  .bfbar__ends{font-size:.76rem}
+}
+
+.cd{font-variant-numeric:tabular-nums; white-space:nowrap}
+
+/* Le bloc du hero : coupe d'angle, comme le monogramme. */
+.bfo{
+  background:#000000b8; border-left:3px solid var(--lime);
+  padding:14px 18px 13px; backdrop-filter:blur(6px);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - var(--cut)),calc(100% - var(--cut)) 100%,0 100%);
+}
+.bfo__title{
+  margin:0 0 10px; font-style:italic; font-weight:900; text-transform:uppercase;
+  font-size:clamp(1.35rem,2.4vw,1.8rem); letter-spacing:-.02em; line-height:1.05; color:#fff;
+}
+.bfo__title b{display:block; color:var(--lime); font-weight:900}
+.bfo__tiers{list-style:none; margin:0; padding:0; display:flex; gap:20px; flex-wrap:wrap}
+.bfo__tiers li{display:flex; flex-direction:column; line-height:1.15}
+.bfo__tiers b{font-size:1.5rem; font-weight:900; font-style:italic; color:#fff; font-variant-numeric:tabular-nums}
+.bfo__tiers span{font-size:.78rem; color:#c9ced2}
+.bfo__ends{margin:11px 0 0; font-size:.82rem; color:#c9ced2}
+.bfo__ends .cd{color:#fff; font-weight:700}
+@media(max-width:699px){
+  .bfo{padding:11px 14px 10px; width:100%}
+  .bfo__title{font-size:1.2rem; margin-bottom:7px}
+  .bfo__tiers{gap:14px}
+  .bfo__tiers b{font-size:1.2rem}
+  .bfo__tiers span{font-size:.72rem}
+  .bfo__ends{font-size:.76rem; margin-top:8px}
+}
+
+/* Carte produit : prix −10 % et ancien prix barré. */
+.bfprice{display:flex; align-items:center; gap:10px; margin:auto 0 -2px; padding-top:4px}
+.bfprice + .price{margin-top:0}
+.bfprice__tag{
+  background:var(--orange); color:#fff; font-weight:800; font-size:.72rem;
+  text-transform:uppercase; letter-spacing:.06em; padding:3px 7px;
+}
+.bfprice s{color:var(--muted); font-size:.95rem; font-variant-numeric:tabular-nums}
+
+/* Barre de commande : le palier suivant. */
+.bundle__bf{margin:0; flex:1 0 100%; order:3; font-size:.84rem; color:var(--text)}
+.bundle__bf b{color:var(--lime); font-weight:800}

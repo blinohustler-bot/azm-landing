@@ -27,6 +27,21 @@ export function isBfcm(now: number = Date.now()): boolean {
   return now >= BFCM.START && now < BFCM.END;
 }
 
+/* Les paliers que Shopify applique au checkout (sous-total CAD avant rabais). La page
+   s'en sert pour dire « ajoute X $ pour 15 % », jamais pour calculer le prix payé. */
+export const BF_TIERS = [
+  { min: 0, pct: 10 },
+  { min: 2000, pct: 15 },
+  { min: 5000, pct: 20 }
+] as const;
+
+export function bfTier(subtotal: number) {
+  let i = 0;
+  for (let k = 0; k < BF_TIERS.length; k++) if (subtotal >= BF_TIERS[k].min) i = k;
+  const next = BF_TIERS[i + 1] ?? null;
+  return { pct: BF_TIERS[i].pct, next };
+}
+
 export function freeShipMin(now: number = Date.now()): number {
   return isBfcm(now) ? BFCM.FREE_SHIP_MIN : CONFIG.FREE_SHIP_MIN;
 }

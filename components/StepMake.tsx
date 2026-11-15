@@ -4,6 +4,8 @@ import Stars from './Stars';
 import { makeCards, partCount, modelCount } from '@/lib/catalog';
 import { formatRating } from '@/lib/reviews';
 import { CONFIG, HERO, TOTAL_STEPS } from '@/lib/config';
+import { isBfcm } from '@/lib/promo';
+import BfOffer from './BfOffer';
 
 /* 01 — la marque.
  *
@@ -98,6 +100,11 @@ export default function StepMake() {
             the downpipes and exhaust systems built for your exact chassis, with the years they
             fit printed on every part.
           </p>
+
+          {/* La vente, dans le hero et pas seulement dans le bandeau : la question
+              « What are you driving? » reste le titre (l'auto d'abord), l'offre se lit
+              juste en dessous, avant la grille. */}
+          {isBfcm() ? <BfOffer /> : null}
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { CONFIG, STEP_INDEX, TOTAL_STEPS, type StepName } from '@/lib/config';
-import { BFCM, freeShipMin, isBfcm } from '@/lib/promo';
+import { freeShipMin, isBfcm } from '@/lib/promo';
+import BfCountdown from './BfCountdown';
 
 /* La barre du haut et la barre de progression.
  *
@@ -27,11 +28,19 @@ export function Header({ backHref }: { backHref: string | null }) {
           étape, y compris sur l'écran des pièces où se décide le checkout. */}
       {/* Pendant le Black Friday (lib/promo.ts), le bandeau annonce la vente à tout le
           monde ; seule la partie livraison garde .shipfree (cachée hors Canada/USA). */}
+      {/* Le bandeau BF est un aplat lime : c'est voulu, et c'est la seule exception au
+          plafond du lime (DESIGN.md §3). Une ligne grise de 12 px ne se voyait pas
+          (Sam, 15 nov. 2026) : pendant trois semaines, la vente EST le message. */}
       {isBfcm() ? (
         <p className="shipbar shipbar--bf">
-          <b>Black Friday</b> 10% off everything · 15% off $2,000+ · 20% off $5,000+
-          <span className="shipfree"> · Free shipping over ${freeShipMin().toLocaleString('en-US')} Canada &amp; US</span>
-          {' '}· Ends {BFCM.END_LABEL}
+          <b>Black Friday</b>
+          <span className="bfbar__deal">Up to 20% off</span>
+          <span className="bfbar__ends">
+            Ends in <BfCountdown />
+          </span>
+          <span className="shipfree bfbar__ship">
+            Free shipping over ${freeShipMin().toLocaleString('en-US')} CA &amp; US
+          </span>
         </p>
       ) : (
         <p className="shipbar shipfree">
