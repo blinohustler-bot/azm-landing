@@ -6,7 +6,7 @@ import Stars from './Stars';
 import CardGallery from './CardGallery';
 import HearIt from './HearIt';
 import { CONFIG } from '@/lib/config';
-import { freeShipMin, isBfcm } from '@/lib/promo';
+import { bfTier, freeShipMin, isBfcm } from '@/lib/promo';
 import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
 /* catalogTypes, jamais catalog : ce fichier est 'use client', et lib/catalog importe
@@ -272,17 +272,21 @@ export default function ProductCard({
           </div>
         ) : null}
 
-        {/* Black Friday : le prix après le 10 % que Shopify applique sur tout au
-            checkout, l'ancien barré. Les paliers 15/20 % dépendent du panier entier :
-            on ne les promet pas sur une carte seule. */}
+        {/* Black Friday : le prix après le rabais que Shopify applique au checkout
+            pour CETTE pièce seule (palier atteint par son propre prix : 10 %, 15 % dès
+            2 000 $, 20 % dès 5 000 $), l'ancien barré. Vérifié au checkout le 15 nov. :
+            échappement 4 448 $ → « 15% DÈS 2 000 $ ». Un panier plus gros peut monter
+            d'un palier ; la barre de commande le dit. */}
         {isBfcm() ? (
           <p className="bfprice">
-            <span className="bfprice__tag">Black Friday −10%</span>
+            <span className="bfprice__tag">Black Friday −{bfTier(current.price).pct}%</span>
             <s>{money(current.price)}</s>
           </p>
         ) : null}
         <div className="price">
-          <b>{money(isBfcm() ? Math.round(current.price * 0.9) : current.price)}</b>
+          <b>{money(isBfcm()
+            ? Math.round(current.price * (1 - bfTier(current.price).pct / 100))
+            : current.price)}</b>
           <small>CAD</small>
           <span className={`stock ${current.available ? 'stock--in' : 'stock--out'}`}>
             {current.available ? 'In stock' : 'Built to order'}
