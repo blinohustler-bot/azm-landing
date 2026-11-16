@@ -96,17 +96,27 @@ export default function ProductCard({
     [product.optionNames]
   );
 
+  /* Variante affichée par défaut : High Flow (Catted) quand elle existe, pas la
+     première de Shopify (souvent Race/Catless). Sam, 15 nov. 2026 : on n'affiche
+     jamais le prix catless en premier. Le client peut toujours passer à Race. */
+  const initial = useMemo(
+    () =>
+      product.variants.find((v) => v.options.some((o) => /catted/i.test(o))) ??
+      product.variants[0],
+    [product.variants]
+  );
+
   const [chosen, setChosen] = useState<string[]>(() =>
-    product.optionNames.map((_, i) => product.variants[0]?.options[i] ?? '')
+    product.optionNames.map((_, i) => initial?.options[i] ?? '')
   );
 
   const current = useMemo(() => {
-    if (!opts.length) return product.variants[0];
+    if (!opts.length) return initial;
     return (
       product.variants.find((v) => opts.every((o) => v.options[o.i] === chosen[o.i])) ??
-      product.variants[0]
+      initial
     );
-  }, [chosen, opts, product.variants]);
+  }, [chosen, opts, product.variants, initial]);
 
   /* On annonce la variante courante au parent, qui construit le panier combiné.
      L'effet ne se déclenche que sur un vrai changement d'identifiant ou de prix ;
