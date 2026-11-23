@@ -51,6 +51,44 @@ const pretty = (variants, key) => {
   return (full[0] || pool[0] || variants[0]).split(' ').map(caseWord).join(' ');
 };
 
+// Millésimes que le client a confirmés et que les tags Shopify ne portent pas encore.
+//
+// Les années viennent des tags `year_*` du produit. Quand AZM vend déjà pour une année
+// plus récente sans avoir ajouté le tag, la landing annonce une plage trop courte et dit
+// « on ne construit pas pour ce char » à un client qui pourrait acheter. On corrige ici
+// plutôt que dans catalog.json, qui est régénéré à chaque `npm run catalog`.
+//
+// Clé : « Marque/cléModèle » — donc la correction ne touche QUE ce modèle. Le downpipe
+// RS Q8 est aussi tagué SQ7 et SQ8 ; les étendre tous les trois parce qu'ils partagent
+// une pièce serait inventer une compatibilité que personne n'a confirmée.
+//
+// À retirer dès que les tags Shopify sont à jour : cette table doit rester courte, et
+// chaque ligne porte qui l'a confirmée et quand.
+const YEAR_OVERRIDE = {
+  'Audi/rsq8': [2019, 2026],   // confirmé par AZM, 23 nov. 2026 ; Shopify s'arrête à year_2024
+};
+
+// Lignes de fitment à corriger, quand la description Shopify contredit YEAR_OVERRIDE.
+//
+// L'encadré « Built for these exact cars » est l'élément sur lequel repose tout
+// l'argument de la page. Étirer la plage d'un modèle sans toucher à cet encadré donne
+// le pire des deux : la liste annonce 2019-2026, puis la fiche imprime 2020-2024 et dit
+// à un propriétaire de 2025 que ce n'est pas son char.
+//
+// Clé : le handle du produit. Chaque remplacement est littéral et ciblé : sur le
+// downpipe, seule la part « RS Q8 » bouge — il est aussi tagué SQ7 et SQ8, et les
+// étendre parce qu'ils partagent la pièce serait inventer une compatibilité.
+// Attention aux tirets : les descriptions mélangent le demi-cadratin (–) et le trait
+// d'union (-). Le remplacement doit reprendre le caractère exact de la source.
+const FITMENT_OVERRIDE = {
+  'azm-audi-rsq8-exhaust': [
+    ['2020–2024 Audi RSQ8', '2019–2026 Audi RSQ8'],
+  ],
+  '3818-azm-rsq8-sq8-downpipe-catless-2018': [
+    ['2020–2024 Audi RS Q8', '2019–2026 Audi RS Q8'],
+  ],
+};
+
 // Noms commerciaux que les tags n'écrivent nulle part correctement (vérifié sur les titres produits).
 const LABEL = {
   Audi: { ttrs: 'TT RS' },
@@ -145,9 +183,35 @@ for (const p of raw) {
     return m ? m[1].split('\n').map((l) => l.trim()).filter((l) => l.length > 3) : [];
   };
 
+  // Les corrections de fitment s'appliquent ici, sur les lignes extraites.
+  // Un remplacement qui ne trouve plus sa cible AVERTIT au lieu de passer en silence :
+  // le jour où AZM réécrit la description, la correction cesse d'agir et la fiche se
+  // remet à contredire la plage d'années. Une correction muette qui ne corrige plus
+  // est pire que pas de correction du tout.
+  const fixFitments = (lignes) => {
+    const regles = FITMENT_OVERRIDE[p.handle];
+    if (!regles) return lignes;
+    return regles.reduce((acc, [avant, apres]) => {
+      /* Chaque blanc de la cible accepte n'importe quel blanc de la source. Les
+         descriptions sont collées depuis un traitement de texte : « 2024 Audi » porte
+         ici une espace insécable (U+00A0), pas une espace ordinaire, et une
+         correspondance littérale échouait sur un caractère invisible. */
+      const motif = new RegExp(
+        avant.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '[\\s\\u00a0]+'),
+        'g'
+      );
+      if (!acc.some((l) => motif.test(l))) {
+        console.log(`  ⚠ FITMENT_OVERRIDE sans effet sur ${p.handle} : « ${avant} » introuvable`);
+        console.log('    La description Shopify a changé — vérifier et mettre la table à jour.');
+        return acc;
+      }
+      return acc.map((l) => l.replace(motif, apres));
+    }, lignes);
+  };
+
   products[p.id] = {
     id: p.id, title: p.title, handle: p.handle, make, part,
-    fitments: section('Fitments?\\s*:', '(?:Key )?Features?\\s*:').slice(0, 12),
+    fitments: fixFitments(section('Fitments?\\s*:', '(?:Key )?Features?\\s*:').slice(0, 12)),
     features: section('(?:Key )?Features?\\s*:', 'Product Overview|Disclaimer|Note\\s*:').slice(0, 6),
     offroad: /emissions regulations/i.test(plain),
     years: years.length ? [years[0], years[years.length - 1]] : null,
@@ -249,6 +313,20 @@ const catalog = {
               .map((f) => (f.match(/\(([^)]+)\)/) || [])[1])
               .filter(Boolean)))].join(' / ');
           });
+
+          // Correction client : on étire la plage affichée et la génération qui la porte.
+          // Les deux, sinon le modèle annonce 2019-2026 dans la liste et la génération
+          // continue de dire 2024 une ligne plus bas.
+          const fix = YEAR_OVERRIDE[`${make}/${key}`];
+          if (fix) {
+            const [low, high] = fix;
+            if (years.length) { years[0] = Math.min(years[0], low); years[years.length - 1] = Math.max(years[years.length - 1], high); }
+            else years.push(low, high);
+            if (gens.length) {
+              gens[0].from = Math.min(gens[0].from, low);
+              gens[gens.length - 1].to = Math.max(gens[gens.length - 1].to, high);
+            }
+          }
 
           return {
             key, label: (LABEL[make] || {})[key] || pretty(slot.variants, key),
