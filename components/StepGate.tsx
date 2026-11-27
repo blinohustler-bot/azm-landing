@@ -8,6 +8,10 @@ import { track } from '@/lib/track';
 
 const blank: FieldState = { value: '', bad: false };
 
+/* L'avis d'un client qui a le même char, calculé côté serveur par app/page.tsx
+   (reviews.json ne descend jamais dans le navigateur : seule cette citation passe). */
+export type GateProof = { text: string; name: string; product: string; rating: number };
+
 /* 04 — les coordonnées.
  *
  * Elles viennent après le choix du char, pas avant. Un formulaire placé avant la
@@ -22,7 +26,8 @@ export default function StepGate({
   parts,
   make,
   model,
-  generation
+  generation,
+  proof = null
 }: {
   carName: string;
   partCount: number;
@@ -31,6 +36,7 @@ export default function StepGate({
   make: string | null;
   model: string | null;
   generation: string | null;
+  proof?: GateProof | null;
 }) {
   const router = useRouter();
   const [name, setName] = useState(blank);
@@ -104,6 +110,19 @@ export default function StepGate({
       <div className="vehicle-chip">
         Your car <b>{carName}</b>
       </div>
+
+      {proof ? (
+        <figure className="gate-proof">
+          <p className="gate-proof__stars" aria-label={`Rated ${proof.rating} out of 5`}>
+            {'★'.repeat(Math.round(proof.rating))}
+            <span>Same car, real customer</span>
+          </p>
+          <blockquote>{proof.text}</blockquote>
+          <figcaption>
+            <b>{proof.name}</b> · {proof.product}
+          </figcaption>
+        </figure>
+      ) : null}
 
       <form className="form" onSubmit={submit} noValidate>
         <Field

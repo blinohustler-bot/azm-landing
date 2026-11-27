@@ -104,7 +104,7 @@ export default function StepMake() {
           {/* La vente, dans le hero et pas seulement dans le bandeau : la question
               « What are you driving? » reste le titre (l'auto d'abord), l'offre se lit
               juste en dessous, avant la grille. */}
-          {isBfcm() ? <BfOffer /> : null}
+          {isBfcm() ? <div className="bfo-slot bfo-slot--hero"><BfOffer /></div> : null}
         </div>
       </div>
 
@@ -157,6 +157,16 @@ export default function StepMake() {
           </Link>
         ))}
       </div>
+
+      {/* TÉLÉPHONE : L'OFFRE PASSE SOUS LA GRILLE.
+       *
+       * Ajouté dans le hero le 15 nov., le bloc Black Friday (≈170 px) a repoussé la
+       * première tuile de marque sous la ligne de flottaison : à 375x812 elle
+       * commençait vers 870 px. Clarity, 20-26 nov. : 18 s d'activité, 54 % de
+       * défilement. Le bandeau lime du haut porte déjà « up to 20 % off » et le compte
+       * à rebours ; le détail des paliers se lit juste après le choix de la marque.
+       * Au-dessus de 700 px, rien ne change : l'offre reste dans le hero. */}
+      {isBfcm() ? <div className="bfo-slot bfo-slot--after"><BfOffer /></div> : null}
 
       {/* La barre de chiffres est passée APRÈS la grille. Entre le titre et les tuiles
           elle coûtait 130 px de hauteur au-dessus de la ligne de flottaison, et elle

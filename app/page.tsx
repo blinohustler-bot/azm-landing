@@ -3,7 +3,7 @@ import { Header, Progress } from '@/components/Chrome';
 import StepMake from '@/components/StepMake';
 import StepModel, { type ModelChoice } from '@/components/StepModel';
 import StepGeneration from '@/components/StepGeneration';
-import StepGate from '@/components/StepGate';
+import StepGate, { type GateProof } from '@/components/StepGate';
 import StepResults from '@/components/StepResults';
 import StepMissing from '@/components/StepMissing';
 import StepThanks from '@/components/StepThanks';
@@ -11,6 +11,7 @@ import LeadRetry from '@/components/LeadRetry';
 import Track from '@/components/Track';
 import ScrollTop from '@/components/ScrollTop';
 import ReviewsFooter from '@/components/ReviewsFooter';
+import { proofFor, trimQuote } from '@/lib/reviews';
 import { CONFIG, LEAD_COOKIE, type StepName } from '@/lib/config';
 import { chatEnabled } from '@/lib/tyler';
 import {
@@ -177,6 +178,7 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
               partCount={parts.length}
               resultsHref={`${gen ? `${modelHref}&year=${gen.from}` : modelHref}&step=results`}
               parts={parts.map((p) => ({ title: p.title, price: p.price }))}
+              proof={carProof(parts)}
               /* Sans ces trois-là, l'opportunité arrivait dans GHL sans marque : pas de
                  tag de marque sur le contact, et une note qui disait « Marque : — ». */
               make={make?.make ?? null}
@@ -226,4 +228,33 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
       </main>
     </>
   );
+}
+
+/* L'avis d'un client qui a CE char, juste au-dessus du formulaire.
+ *
+ * La peur n° 1 de l'acheteur est le fitment (recherche ICP, 14 oct.) : au moment où on
+ * lui demande ses coordonnées, un client qui roule la même voiture vaut plus que la
+ * note générale. On prend, parmi les pièces de l'écran, l'avis citable le plus long
+ * (proofFor écarte déjà les avis courts et ceux qui disent « catless »). Aucun avis
+ * pour ces pièces : rien ne s'affiche, on n'emprunte jamais l'avis d'un autre char. */
+function carProof(parts: { handle: string; title: string }[]): GateProof | null {
+  let best: GateProof | null = null;
+  for (const p of parts) {
+    const proof = proofFor(p.handle);
+    const q = proof?.quote;
+    if (!q || q.rate < 4) continue;
+    if (!best || q.text.length > best.text.length) {
+      best = { text: sentenceCut(q.text, 150), name: q.name, product: p.title, rating: q.rate };
+    }
+  }
+  return best;
+}
+
+/* Coupe à la dernière phrase complète qui tient dans max ; sinon au mot (trimQuote).
+   « Cold starts are… » au milieu d'une idée se lisait comme un bogue. */
+function sentenceCut(text: string, max: number): string {
+  if (text.length <= max) return text;
+  const head = text.slice(0, max);
+  const end = Math.max(head.lastIndexOf('. '), head.lastIndexOf('! '), head.lastIndexOf('? '));
+  return end >= 60 ? head.slice(0, end + 1) : trimQuote(text, max);
 }

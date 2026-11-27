@@ -1349,3 +1349,26 @@ body[data-ship="no"] .shipfree{display:none !important}
 /* Barre de commande : le palier suivant. */
 .bundle__bf{margin:0; flex:1 0 100%; order:3; font-size:.84rem; color:var(--text)}
 .bundle__bf b{color:var(--lime); font-weight:800}
+
+/* ── l'avis du même char, au-dessus du formulaire ──────────────────────────
+   Pas de cadre (DESIGN.md §6) : le fond panel groupe, l'étoile reste blanche pour ne
+   pas dépenser un emploi de lime sur un écran qui en porte déjà deux. */
+.gate-proof{margin:16px 0 0; padding:13px 15px; background:var(--panel)}
+.gate-proof__stars{
+  margin:0 0 7px; display:flex; align-items:center; gap:10px;
+  color:#fff; font-size:.8rem; letter-spacing:.12em;
+}
+.gate-proof__stars span{
+  color:var(--muted); font-size:.68rem; letter-spacing:.1em; text-transform:uppercase; font-weight:600;
+}
+.gate-proof blockquote{margin:0; font-size:.9rem; line-height:1.5; color:var(--text)}
+.gate-proof blockquote::before{content:"\201C"}
+.gate-proof blockquote::after{content:"\201D"}
+.gate-proof figcaption{margin-top:7px; font-size:.74rem; color:var(--muted)}
+.gate-proof figcaption b{color:var(--text); font-weight:700}
+
+/* L'offre BF : dans le hero au-dessus de 700 px, sous la grille des marques en dessous
+   (voir StepMake). Un seul des deux emplacements est visible à la fois. */
+.bfo-slot--after{margin-top:16px}
+@media(max-width:699px){ .bfo-slot--hero{display:none} }
+@media(min-width:700px){ .bfo-slot--after{display:none} }

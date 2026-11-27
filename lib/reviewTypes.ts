@@ -79,7 +79,13 @@ export function shoutRatio(text: string): number {
    dans la note mais ne convainquent personne, et occupent la même place à l'écran
    qu'une phrase utile. 40 caractères écarte les 10 avis trop courts sur 74 sans
    toucher aux autres (mesuré sur reviews.json). */
-export const isQuotable = (r: Review) => r.text.length >= 40;
+export const isQuotable = (r: Review) => r.text.length >= 40 && !mentionsCatless(r.text);
+
+/* « Catless » ne s'affiche jamais, même dans la bouche d'un client (règle de Sam,
+   27 nov. 2026) : la page reçoit le trafic des pubs Meta et AZM ne pousse que les
+   versions catted. L'avis compte toujours dans la note, il n'est juste pas cité. */
+export const mentionsCatless = (text: string) =>
+  /\bcat\s*-?\s*less\b|\bde-?cat\b|\bcat\s+delete/i.test(text);
 
 /* « 2026-08-15 » → « Aug 2026 ». Le jour exact n'apporte rien et donne à la ligne
    l'allure d'un reçu ; le mois suffit à dire que l'avis est récent.

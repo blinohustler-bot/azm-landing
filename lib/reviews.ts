@@ -25,10 +25,10 @@ import raw from '@/reviews.json';
 import catalog from '@/catalog.json';
 
 export type { Review, ProductReviews, ReviewIndex, Proof, FeaturedReview } from './reviewTypes';
-export { starFill, formatRating, formatMonth, isQuotable, trimQuote, shoutRatio } from './reviewTypes';
+export { starFill, formatRating, formatMonth, isQuotable, trimQuote, shoutRatio, mentionsCatless } from './reviewTypes';
 
 import type { FeaturedReview, Proof, Review, ReviewIndex } from './reviewTypes';
-import { isQuotable, shoutRatio } from './reviewTypes';
+import { isQuotable, shoutRatio, mentionsCatless } from './reviewTypes';
 
 const index = raw as unknown as ReviewIndex;
 
@@ -120,6 +120,7 @@ export function featuredReviews(max = 24, maxPerMake = 2): FeaturedReview[] {
     for (const review of p.reviews) {
       if (review.rate < 4) continue;
       if (review.text.length < 60 || review.text.length > 240) continue;
+      if (mentionsCatless(review.text)) continue;
       pool.push({ review, product: product.title, make: product.make });
     }
   }
