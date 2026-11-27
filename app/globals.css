@@ -33,7 +33,8 @@ a{color:inherit}
 /* Les cartes et les choix sont des liens depuis que chaque étape a son URL, mais ils
    se lisent comme des contrôles : pas de soulignement. Les vrais liens de texte
    (.callout, le pied de page) gardent le leur. */
-.brand-card,.choice,.back{text-decoration:none}
+.brand-card,.choice,.back,.brand{text-decoration:none}
+.brand{color:inherit}
 .wrap{width:min(1120px,100%); margin-inline:auto; padding-inline:20px}
 .wrap--narrow{width:min(880px,100%)}
 

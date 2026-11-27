@@ -48,12 +48,14 @@ export function Header({ backHref }: { backHref: string | null }) {
         </p>
       )}
       <div className="wrap top__in">
-        <div className="brand">
+        {/* Le logo ramène au choix de la marque (écran 01). Clarity montrait des clics
+            morts dessus : on s'attend à ce qu'un logo ramène au début (Sam, 27 nov. 2026). */}
+        <Link className="brand" href="/">
           {/* Le monogramme est décoratif : le nom est écrit juste à côté. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/assets/azm-mark.png" alt="" width={28} height={28} />
           AZ Motorsport
-        </div>
+        </Link>
         <span className="top__spacer" />
         <a className="phone" href={CONFIG.PHONE_HREF}>
           <PhoneIcon />
