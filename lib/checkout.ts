@@ -1,6 +1,7 @@
 'use client';
 
 import { currentAb } from './sendLead';
+import { checkoutCountry } from './useCurrency';
 
 /* Ce que le lien d'achat ajoute au panier Shopify, au moment du clic.
  *
@@ -48,6 +49,11 @@ export function withCheckout(href: string): string {
   if (lead.car) extra.set('attributes[car]', lead.car);
   const ab = currentAb();
   if (ab) extra.set('attributes[ab]', ab);
+
+  /* La monnaie choisie dans l'en-tête : Shopify ouvre le checkout dans la monnaie du
+     marché de ce pays (lib/currency.ts), CAD compris. */
+  const country = checkoutCountry();
+  if (country) extra.set('country', country);
 
   return `${href}${href.includes('?') ? '&' : '?'}${extra.toString()}`;
 }

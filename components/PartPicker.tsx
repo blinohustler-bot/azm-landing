@@ -7,6 +7,8 @@ import { bfTier, freeShipMin, isBfcm } from '@/lib/promo';
 import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
 import { money, type Product } from '@/lib/catalogTypes';
+import { BASE } from '@/lib/currency';
+import { afterPct, show, useLocalPrices } from '@/lib/useCurrency';
 import type { Proof } from '@/lib/reviewTypes';
 import type { CardVideo } from '@/lib/cardMedia';
 
@@ -97,6 +99,23 @@ export default function PartPicker({ parts, shop }: { parts: PickerPart[]; shop:
   const setupReady = setupParts.length > 1 && setupLines.length === setupParts.length;
   const setupTotal = setupLines.reduce((s, l) => s + l.price, 0);
   const setupTier = bfTier(setupTotal);
+
+  /* Les totaux dans la monnaie choisie : somme des prix Shopify locaux des lignes. Un
+     seul prix manquant et on garde le total en CAD plutôt qu'un total à moitié faux.
+     Les seuils (paliers BF, livraison gratuite) restent en CAD, comme chez Shopify. */
+  const local = useLocalPrices(parts.flatMap((p) => p.product.variants.map((v) => v.id)));
+  const cur = local.cur;
+  const localSum = (ls: Chosen[]): number | null => {
+    if (cur === BASE) return null;
+    let t = 0;
+    for (const l of ls) {
+      const v = local.price(l.variantId);
+      if (v == null) return null;
+      t += v;
+    }
+    return Math.round(t * 100) / 100;
+  };
+  const setupLocal = localSum(setupLines);
   const setupHref = setupReady
     ? `${shop}/cart/${setupLines.map((l) => `${l.variantId}:1`).join(',')}?${CONFIG.UTM}`
       + `&utm_content=${encodeURIComponent(`full-setup-${setupLines.length}`)}`
@@ -111,15 +130,16 @@ export default function PartPicker({ parts, shop }: { parts: PickerPart[]; shop:
           <p className="setup__price">
             {isBfcm() ? (
               <>
-                <s>{money(setupTotal)}</s>
-                <b>{money(Math.round(setupTotal * (1 - setupTier.pct / 100)))}</b>
-                <small>CAD</small>
+                <s>{show(setupTotal, setupLocal, cur)}</s>
+                <b>{show(afterPct(setupTotal, setupTier.pct, BASE),
+                  setupLocal == null ? null : afterPct(setupLocal, setupTier.pct, cur), cur)}</b>
+                <small>{setupLocal == null ? 'CAD' : cur}</small>
                 <span className="setup__tag">Black Friday −{setupTier.pct}%</span>
               </>
             ) : (
               <>
-                <b>{money(setupTotal)}</b>
-                <small>CAD</small>
+                <b>{show(setupTotal, setupLocal, cur)}</b>
+                <small>{setupLocal == null ? 'CAD' : cur}</small>
               </>
             )}
           </p>
@@ -169,7 +189,7 @@ export default function PartPicker({ parts, shop }: { parts: PickerPart[]; shop:
           <p className="bundle__sum">
             <b>{lines.length}</b>
             <span>{lines.length === 1 ? 'part selected' : 'parts selected'}</span>
-            <em>{money(total)}</em>
+            <em>{show(total, localSum(lines), cur)}</em>
           </p>
           {isBfcm() ? (() => {
             const t = bfTier(total);
@@ -177,7 +197,7 @@ export default function PartPicker({ parts, shop }: { parts: PickerPart[]; shop:
               <p className="bundle__bf">
                 <b>Black Friday {t.pct}% off</b>
                 {t.next
-                  ? ` · Add ${money(t.next.min - total)} for ${t.next.pct}% off`
+                  ? ` · Add ${money(t.next.min - total)} CAD for ${t.next.pct}% off`
                   : ' · Best tier unlocked'}
               </p>
             );
@@ -185,7 +205,7 @@ export default function PartPicker({ parts, shop }: { parts: PickerPart[]; shop:
           <p className="bundle__ship shipfree">
             {total >= freeShipMin()
               ? 'Free shipping included · Canada & US'
-              : `Add ${money(freeShipMin() - total)} for free shipping · Canada & US`}
+              : `Add ${money(freeShipMin() - total)} CAD for free shipping · Canada & US`}
           </p>
           <a
             className="btn"

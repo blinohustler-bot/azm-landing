@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { CONFIG, STEP_INDEX, TOTAL_STEPS, type StepName } from '@/lib/config';
 import { freeShipMin, isBfcm } from '@/lib/promo';
 import BfCountdown from './BfCountdown';
+import CurrencySelect from './CurrencySelect';
 
 /* La barre du haut et la barre de progression.
  *
@@ -57,9 +58,12 @@ export function Header({ backHref }: { backHref: string | null }) {
           AZ Motorsport
         </Link>
         <span className="top__spacer" />
+        <CurrencySelect />
         <a className="phone" href={CONFIG.PHONE_HREF}>
           <PhoneIcon />
-          {CONFIG.PHONE}
+          {/* Sur téléphone, l'icône seule : le sélecteur de monnaie prend la place du
+              numéro, et le lien appelle toujours au toucher. */}
+          <span className="phone__n">{CONFIG.PHONE}</span>
         </a>
         {backHref ? (
           <Link className="back" href={backHref} scroll={false}>

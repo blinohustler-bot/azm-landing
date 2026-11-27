@@ -9,6 +9,8 @@ import { CONFIG } from '@/lib/config';
 import { bfTier, freeShipMin, isBfcm } from '@/lib/promo';
 import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
+import { BASE } from '@/lib/currency';
+import { afterPct, show, useLocalPrices } from '@/lib/useCurrency';
 /* catalogTypes, jamais catalog : ce fichier est 'use client', et lib/catalog importe
    catalog.json — 360 ko qui partiraient dans le bundle du navigateur. La même règle
    vaut pour reviewTypes / reviews : la note arrive en propriété depuis StepResults,
@@ -117,6 +119,12 @@ export default function ProductCard({
       initial
     );
   }, [chosen, opts, product.variants, initial]);
+
+  /* Les prix de TOUTES les variantes dans la monnaie choisie : changer d'option ne
+     relance pas de requête. */
+  const local = useLocalPrices(product.variants.map((v) => v.id));
+  const cur = local.cur;
+  const localNow = local.price(current.id);
 
   /* On annonce la variante courante au parent, qui construit le panier combiné.
      L'effet ne se déclenche que sur un vrai changement d'identifiant ou de prix ;
@@ -237,17 +245,23 @@ export default function ProductCard({
             2 000 $, 20 % dès 5 000 $), l'ancien barré. Vérifié au checkout le 15 nov. :
             échappement 4 448 $ → « 15% DÈS 2 000 $ ». Un panier plus gros peut monter
             d'un palier ; la barre de commande le dit. */}
+        {/* Monnaie choisie dans l'en-tête : le prix Shopify exact de la variante dans
+            cette monnaie (lib/useCurrency). Le palier BF se calcule toujours sur le prix
+            en CAD, comme les rabais automatiques de Shopify. */}
         {isBfcm() ? (
           <p className="bfprice">
             <span className="bfprice__tag">Black Friday −{bfTier(current.price).pct}%</span>
-            <s>{money(current.price)}</s>
+            <s>{show(current.price, localNow, cur)}</s>
           </p>
         ) : null}
         <div className="price">
-          <b>{money(isBfcm()
-            ? Math.round(current.price * (1 - bfTier(current.price).pct / 100))
-            : current.price)}</b>
-          <small>CAD</small>
+          <b>{show(
+            isBfcm() ? afterPct(current.price, bfTier(current.price).pct, BASE) : current.price,
+            localNow == null ? null
+              : isBfcm() ? afterPct(localNow, bfTier(current.price).pct, cur) : localNow,
+            cur
+          )}</b>
+          <small>{localNow == null ? 'CAD' : cur}</small>
           {/* PLUS DE « IN STOCK » (Sam, 27 nov. 2026). Shopify met ~200 unités fictives
               sur les 443 variantes : `available` est toujours vrai, et la carte promettait
               un envoi en 1-2 jours pour des pièces fabriquées sur commande en 4 à 8

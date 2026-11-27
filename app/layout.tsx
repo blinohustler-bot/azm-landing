@@ -43,14 +43,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const ship = !country || country === 'CA' || country === 'US' ? 'yes' : 'no';
   return (
     <html lang="en" className={archivo.variable}>
-      <body data-ship={ship}>
+      {/* data-geo : le pays de la bordure, pour la monnaie par défaut (lib/useCurrency). */}
+      <body data-ship={ship} data-geo={country}>
         {/* Retient l'URL d'arrivée avant que le parcours ne la remplace. */}
         <LandingCapture />
         {children}
 
         <footer>
           <div className="wrap">
-            <p>Prices in CAD, pulled live from azmotorsport.ca · checkout happens on azmotorsport.ca</p>
+            <p>Prices pulled live from azmotorsport.ca, in the currency you pick at the top · checkout happens on azmotorsport.ca</p>
             {/* Mention d'usage des marques : obligatoire dès qu'on affiche les logos des
                 constructeurs. C'est la formule que le créneau utilise (Fabspeed, ECS). */}
             <p>

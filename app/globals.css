@@ -1405,3 +1405,29 @@ body[data-ship="no"] .shipfree{display:none !important}
 
 /* « Built to order » : une information, pas une alerte. Ni lime ni orange. */
 .stock--made{color:#c9ced2}
+
+/* ── le choix de la monnaie, dans l'en-tête ───────────────────────────────
+   Un <select> natif habillé comme le bouton « Back » : même filet, même hauteur
+   de cible. Compact, pour tenir à côté du téléphone sur un écran de 375 px. */
+.cursel{position:relative; display:inline-flex; align-items:center; flex:none}
+.cursel select{
+  appearance:none; -webkit-appearance:none; cursor:pointer;
+  background:transparent; color:var(--text); font:inherit;
+  font-weight:700; font-size:.78rem; letter-spacing:.04em;
+  border:1px solid var(--line2); padding:8px 24px 8px 10px; min-height:36px;
+}
+.cursel::after{
+  content:""; position:absolute; right:9px; top:50%; width:6px; height:6px; margin-top:-5px;
+  border-right:1.5px solid var(--muted); border-bottom:1.5px solid var(--muted);
+  transform:rotate(45deg); pointer-events:none;
+}
+.cursel select:focus-visible{outline:2px solid var(--lime); outline-offset:2px}
+.cursel select option{color:#000}
+@media(max-width:560px){
+  .phone__n{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+  .phone{min-width:44px; justify-content:center}
+  .top__in{gap:10px}
+}
+@media(max-width:560px){ .brand{font-size:.82rem; white-space:nowrap; gap:8px} .brand img{width:24px; height:24px} }
+@media(max-width:400px){ .top__in{gap:6px} .cursel select{padding:8px 20px 8px 8px} .cursel::after{right:8px} .back{padding-inline:9px} }
+@media(max-width:400px){ .brand{font-size:.76rem; gap:6px} .brand img{width:22px; height:22px} .back{letter-spacing:.05em; padding-inline:8px} }
