@@ -1431,3 +1431,16 @@ body[data-ship="no"] .shipfree{display:none !important}
 @media(max-width:560px){ .brand{font-size:.82rem; white-space:nowrap; gap:8px} .brand img{width:24px; height:24px} }
 @media(max-width:400px){ .top__in{gap:6px} .cursel select{padding:8px 20px 8px 8px} .cursel::after{right:8px} .back{padding-inline:9px} }
 @media(max-width:400px){ .brand{font-size:.76rem; gap:6px} .brand img{width:22px; height:22px} .back{letter-spacing:.05em; padding-inline:8px} }
+
+/* « Get an invoice · Text Tommy » : la 3e action de la carte, en contour. Ni lime ni
+   blanc plein : « Buy now » reste le geste principal. */
+.invoice{
+  display:flex; align-items:center; justify-content:center; width:100%;
+  margin-top:10px; min-height:48px; padding:12px 18px; cursor:pointer;
+  background:transparent; color:var(--text); border:1px solid var(--line2);
+  font:inherit; font-weight:800; font-size:.86rem; font-style:italic;
+  text-transform:uppercase; letter-spacing:.02em;
+  transition:border-color .15s ease, background .15s ease;
+}
+.invoice:hover{border-color:#ffffff66; background:#ffffff0a}
+.invoice:focus-visible{outline:2px solid var(--lime); outline-offset:2px}

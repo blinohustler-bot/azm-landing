@@ -9,6 +9,7 @@ import { CONFIG } from '@/lib/config';
 import { bfTier, freeShipMin, isBfcm } from '@/lib/promo';
 import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
+import { requestInvoice } from '@/lib/invoice';
 import { BASE } from '@/lib/currency';
 import { afterPct, show, useLocalPrices } from '@/lib/useCurrency';
 /* catalogTypes, jamais catalog : ce fichier est 'use client', et lib/catalog importe
@@ -331,6 +332,20 @@ export default function ProductCard({
             <span>{picked ? 'Added to cart' : 'Add to cart'}</span>
           </label>
         ) : null}
+
+        {/* La porte « conversation » à côté du checkout (lib/invoice.ts) : ouvre le chat
+            avec la demande de facture pour CETTE variante. */}
+        <button
+          type="button"
+          className="invoice"
+          onClick={() => {
+            const opt = (current?.options ?? []).filter(Boolean).join(' / ');
+            track('Contact', { content_name: product.title, content_ids: [String(current.id)] });
+            requestInvoice(`I'd like an invoice for the ${product.title}${opt ? ` (${opt})` : ''}.`);
+          }}
+        >
+          Get an invoice · Text Tommy
+        </button>
 
         {/* Rassurance au moment du clic. Aucune ligne de délai (Sam, 27 nov. 2026) :
             le badge « Built to order » à côté du prix suffit. */}

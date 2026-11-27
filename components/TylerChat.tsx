@@ -9,6 +9,7 @@ import { track } from '@/lib/track';
 import { withCheckout } from '@/lib/checkout';
 import { isChatLinkUrl, isShopUrl } from '@/lib/shopHost';
 import { sendLead } from '@/lib/sendLead';
+import { INVOICE_EVENT } from '@/lib/invoice';
 import { MIN_FILL_MS } from '@/lib/config';
 
 /* Quel chat ce visiteur voit (réponse de /api/chat/status) :
@@ -507,15 +508,27 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
   /* Le premier geste du fil, selon le mode : Tyler ouvre la conversation (il connaît
      l'auto, les pièces et l'historique du contact) ; en « human », une ligne d'accueil
      de l'équipe ; en « identify », rien tant que le contact n'est pas connu. */
+  /* Une demande arrivée par le bouton « Get an invoice » d'une carte (lib/invoice.ts) :
+     gardée ici tant que le fil n'a pas commencé (mode identify), puis envoyée comme
+     premier message du visiteur, à la place de l'ouverture de Tyler. */
+  const pendingText = useRef<string | null>(null);
+
   const startThread = useCallback((m: Mode) => {
     if (started.current || m === 'identify') return;
     started.current = true;
-    if (m === 'tyler') void runTurn(null);
-    else add({
+    const pending = pendingText.current;
+    pendingText.current = null;
+    if (m === 'tyler') {
+      if (pending) send(pending);
+      else void runTurn(null);
+      return;
+    }
+    add({
       kind: 'note',
       text: `Hey${firstName ? ` ${firstName}` : ''}! Ask us anything about parts for your ${model}. Tommy, our founder, gets your message and replies shortly.`
     });
-  }, [runTurn, add, firstName, model]);
+    if (pending) send(pending);
+  }, [runTurn, send, add, firstName, model]);
 
   const openChat = useCallback(() => {
     setBubble(false);
@@ -524,6 +537,29 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
     if (modeRef.current === 'identify') formShownAt.current = formShownAt.current || Date.now();
     startThread(modeRef.current);
   }, [startThread]);
+
+  /* Le bouton « Get an invoice · Text Tommy » des cartes ouvre ce chat avec sa demande. */
+  useEffect(() => {
+    window.__azmChatReady = true;
+    const onInvoice = (e: Event) => {
+      const text = (e as CustomEvent<{ text?: string }>).detail?.text?.trim();
+      if (!text) return;
+      if (started.current) {
+        setBubble(false);
+        setOpen(true);
+        clarity('open');
+        send(text);
+        return;
+      }
+      pendingText.current = text;
+      openChat();
+    };
+    window.addEventListener(INVOICE_EVENT, onInvoice);
+    return () => {
+      window.__azmChatReady = false;
+      window.removeEventListener(INVOICE_EVENT, onInvoice);
+    };
+  }, [openChat, send]);
 
   /* Mode identify : le visiteur donne ses coordonnées dans le chat. Même chemin que le
      formulaire de la page (/api/lead) : GHL retrouve le contact s'il existe déjà
