@@ -11,6 +11,9 @@ const GOOGLE = [
   'https://www.googletagmanager.com',
   'https://*.google-analytics.com',
   'https://*.analytics.google.com',
+  /* Le joker ne couvre pas le domaine nu : GA4 envoie ses hits à
+     analytics.google.com/g/collect, bloqués jusqu'au 27 nov. 2026. */
+  'https://analytics.google.com',
   'https://www.googleadservices.com',
   'https://googleads.g.doubleclick.net',
   'https://*.doubleclick.net',
