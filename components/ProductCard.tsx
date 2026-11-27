@@ -318,11 +318,10 @@ export default function ProductCard({
           </label>
         ) : null}
 
-        {/* Rassurance au moment du clic. Aucun délai chiffré : le stock Shopify est
-            fictif, et le vrai délai dépend de la pièce (voir le badge plus haut). */}
+        {/* Rassurance au moment du clic. Aucune ligne de délai (Sam, 27 nov. 2026) :
+            le badge « Built to order » à côté du prix suffit. */}
         <ul className="assure">
           <li>Secure Shopify checkout, your details already filled in</li>
-          <li>Built to order in Brossard, QC · Tommy confirms timing</li>
           <li className="shipfree">
             {current.price >= freeShipMin()
               ? 'Free shipping to Canada & the US'
