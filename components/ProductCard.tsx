@@ -196,62 +196,12 @@ export default function ProductCard({
           </p>
         ) : null}
 
-        {/* Le son, sur le char du visiteur. Placé avec la note : c'est la même
-            famille de preuve, avant le fitment et avant le bloc de décision. */}
-        {video ? <HearIt video={video} handle={product.handle} productTitle={product.title} /> : null}
-
-        {/* Le bloc de fitment attaque le frein n°1 du créneau : 86 % des retours de
-            pièces en ligne sont un mauvais fitment. On l'imprime, on ne le cache pas. */}
-        {fits.length ? (
-          <div className="fitbox">
-            <p className="fitbox__head">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                strokeWidth="3.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M20 6 9 17l-5-5" />
-              </svg>
-              Built for these exact cars
-            </p>
-            <ul className="fitlist">
-              {shownFits.map((f) => (
-                <li key={`${f.years}|${f.car}`}>
-                  <span className="fitlist__car">{f.car}</span>
-                  {f.years ? <span className="fitlist__yr">{f.years}</span> : null}
-                </li>
-              ))}
-            </ul>
-            {shownFits.length < fits.length ? (
-              <button type="button" className="fitlist__more" onClick={() => setAllFits(true)}>
-                +{fits.length - shownFits.length} more cars
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-
-        {product.features.length ? (
-          <ul className="specs">
-            {product.features.slice(0, 3).map((f) => (
-              <li key={f}>{f}</li>
-            ))}
-          </ul>
-        ) : null}
-
-        {/* L'avis se place après les caractéristiques et avant le sélecteur : le
-            sélecteur, le prix et le bouton forment le bloc de décision, et rien ne
-            doit s'intercaler dedans. Coupé à 180 caractères — le plus long avis
-            récolté en fait 360, de quoi déformer la carte. */}
-        {proof?.quote ? (
-          <figure className="cardquote">
-            <blockquote>{trimQuote(proof.quote.text)}</blockquote>
-            <figcaption>
-              <b>{proof.quote.name}</b>
-              {proof.quote.date ? (
-                <time dateTime={proof.quote.date}>{formatMonth(proof.quote.date)}</time>
-              ) : null}
-              <span>azmotorsport.ca</span>
-            </figcaption>
-          </figure>
-        ) : null}
-
+        {/* LE BLOC DE DÉCISION MONTE SOUS LE NOM (Sam, 27 nov. 2026).
+            Le prix et « Buy now » arrivaient après la liste des chars, trois points
+            techniques, un avis et le sélecteur : 900 px de carte avant de voir un
+            chiffre sur un téléphone. Le visiteur a déjà vu « Fit your <char> » en tête
+            d'écran ; la preuve (son, fitment, specs, avis) se lit maintenant après la
+            décision. 30 oct.-26 nov. : 841 vues des pièces, 53 AddToCart. */}
         {opts.length ? (
           <div className="opts">
             {opts.map((o) => {
@@ -383,6 +333,60 @@ export default function ProductCard({
           </li>
         </ul>
 
+
+        {/* Le son, sur le char du visiteur. Placé avec la note : c'est la même
+            famille de preuve, avant le fitment et avant le bloc de décision. */}
+        {video ? <HearIt video={video} handle={product.handle} productTitle={product.title} /> : null}
+
+        {/* Le bloc de fitment attaque le frein n°1 du créneau : 86 % des retours de
+            pièces en ligne sont un mauvais fitment. On l'imprime, on ne le cache pas. */}
+        {fits.length ? (
+          <div className="fitbox">
+            <p className="fitbox__head">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                strokeWidth="3.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              Built for these exact cars
+            </p>
+            <ul className="fitlist">
+              {shownFits.map((f) => (
+                <li key={`${f.years}|${f.car}`}>
+                  <span className="fitlist__car">{f.car}</span>
+                  {f.years ? <span className="fitlist__yr">{f.years}</span> : null}
+                </li>
+              ))}
+            </ul>
+            {shownFits.length < fits.length ? (
+              <button type="button" className="fitlist__more" onClick={() => setAllFits(true)}>
+                +{fits.length - shownFits.length} more cars
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {product.features.length ? (
+          <ul className="specs">
+            {product.features.slice(0, 3).map((f) => (
+              <li key={f}>{f}</li>
+            ))}
+          </ul>
+        ) : null}
+
+        {/* L'avis ferme la carte, après le bloc de décision. Coupé à 180 caractères — le plus long avis
+            récolté en fait 360, de quoi déformer la carte. */}
+        {proof?.quote ? (
+          <figure className="cardquote">
+            <blockquote>{trimQuote(proof.quote.text)}</blockquote>
+            <figcaption>
+              <b>{proof.quote.name}</b>
+              {proof.quote.date ? (
+                <time dateTime={proof.quote.date}>{formatMonth(proof.quote.date)}</time>
+              ) : null}
+              <span>azmotorsport.ca</span>
+            </figcaption>
+          </figure>
+        ) : null}
 
         {/* La mention off-road n'apparaît que si aucune option ne l'explique déjà :
             l'aide sous le sélecteur dit la même chose, en plus clair. */}

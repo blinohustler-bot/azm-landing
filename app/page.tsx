@@ -146,6 +146,21 @@ export default async function Page({ searchParams }: { searchParams: Params }) {
             ...(car ? { content_name: car } : {})
           }}
         />
+        {/* LE MÊME ÉCRAN, SOUS UN NOM D'ÉVÉNEMENT À LUI (27 nov. 2026).
+            Les stats du pixel ne rendent pas les valeurs de `step` : impossible de dire
+            si l'on décroche au modèle ou au formulaire. Un nom par écran (Step_make,
+            Step_model, Step_gate, Step_results…) se compte directement, sans
+            conversion personnalisée. FormStep reste, pour ne rien casser. */}
+        <Track
+          key={`step|${step}|${make?.make ?? ''}|${model?.key ?? ''}|${gen?.from ?? ''}`}
+          custom
+          event={`Step_${step}`}
+          data={{
+            step_number: STEP_NUMBER[step],
+            ...(make ? { make: make.make } : {}),
+            ...(car ? { content_name: car } : {})
+          }}
+        />
 
         {step === 'make' ? <StepMake /> : null}
 

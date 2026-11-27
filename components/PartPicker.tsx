@@ -79,8 +79,69 @@ export default function PartPicker({ parts, shop }: { parts: PickerPart[]; shop:
       + `&utm_content=${encodeURIComponent(`bundle-${lines.length}`)}`
     : '';
 
+  /* LE SETUP COMPLET, EN UN CLIC (Sam, 27 nov. 2026).
+   *
+   * Avant le Black Friday, aucun panier de la LP n'avait deux pièces ; pendant, 3 sur 9
+   * (Shopify, 28 oct.-27 nov.). Les cases « Add to cart » existaient, mais personne ne
+   * voyait d'avance ce que vaut le tout : pour une RS6, downpipes + échappement font
+   * 7 295 $ et passent au palier 20 %. Le bloc le dit avant la grille.
+   *
+   * Une pièce par type (downpipe, échappement, headers) : deux échappements du même
+   * écran sont des alternatives, pas un setup. Le premier de chaque type, dans l'ordre
+   * de la grille, avec la variante choisie sur sa carte (High Flow par défaut). Moins
+   * de deux types sur l'écran : pas de bloc. */
+  const setupParts = parts.filter(
+    (p, i) => parts.findIndex((q) => q.product.part === p.product.part) === i
+  );
+  const setupLines = setupParts.map((p) => chosen[p.product.id]).filter(Boolean) as Chosen[];
+  const setupReady = setupParts.length > 1 && setupLines.length === setupParts.length;
+  const setupTotal = setupLines.reduce((s, l) => s + l.price, 0);
+  const setupTier = bfTier(setupTotal);
+  const setupHref = setupReady
+    ? `${shop}/cart/${setupLines.map((l) => `${l.variantId}:1`).join(',')}?${CONFIG.UTM}`
+      + `&utm_content=${encodeURIComponent(`full-setup-${setupLines.length}`)}`
+    : '';
+
   return (
     <>
+      {setupReady ? (
+        <section className="setup" aria-label="Complete setup">
+          <p className="setup__kicker">Complete setup</p>
+          <p className="setup__parts">{setupParts.map((p) => p.partLabel).join(' + ')}</p>
+          <p className="setup__price">
+            {isBfcm() ? (
+              <>
+                <s>{money(setupTotal)}</s>
+                <b>{money(Math.round(setupTotal * (1 - setupTier.pct / 100)))}</b>
+                <small>CAD</small>
+                <span className="setup__tag">Black Friday −{setupTier.pct}%</span>
+              </>
+            ) : (
+              <>
+                <b>{money(setupTotal)}</b>
+                <small>CAD</small>
+              </>
+            )}
+          </p>
+          <a
+            className="btn btn--wide"
+            href={setupHref}
+            onClick={(e) => {
+              e.currentTarget.href = withCheckout(setupHref);
+              track('AddToCart', {
+                content_ids: setupLines.map((l) => String(l.variantId)),
+                content_name: `full setup of ${setupLines.length}`,
+                value: setupTotal,
+                currency: 'CAD'
+              });
+            }}
+          >
+            Get the full setup →
+          </a>
+          <p className="setup__note">One order, one checkout. The options on each part below change this total.</p>
+        </section>
+      ) : null}
+
       <div className={`grid${parts.length === 1 ? ' grid--one' : ''}`}>
         {parts.map((p, i) => (
           <ProductCard
