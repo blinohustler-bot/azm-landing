@@ -538,6 +538,13 @@ export default function TylerChat({ firstName: firstNameProp, model, make, model
     startThread(modeRef.current);
   }, [startThread]);
 
+  /* Clic sur « Get an invoice » pendant que le chat retrouve encore le contact en
+     silence (vieux lead, quelques centaines de ms) : dès que le mode passe à tyler ou
+     human, la demande gardée part, sans rien redemander au visiteur. */
+  useEffect(() => {
+    if (open && mode !== 'identify' && pendingText.current) startThread(mode);
+  }, [open, mode, startThread]);
+
   /* Le bouton « Get an invoice · Text Tommy » des cartes ouvre ce chat avec sa demande. */
   useEffect(() => {
     window.__azmChatReady = true;
