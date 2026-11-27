@@ -248,9 +248,11 @@ export default function ProductCard({
             ? Math.round(current.price * (1 - bfTier(current.price).pct / 100))
             : current.price)}</b>
           <small>CAD</small>
-          <span className={`stock ${current.available ? 'stock--in' : 'stock--out'}`}>
-            {current.available ? 'In stock' : 'Built to order'}
-          </span>
+          {/* PLUS DE « IN STOCK » (Sam, 27 nov. 2026). Shopify met ~200 unités fictives
+              sur les 443 variantes : `available` est toujours vrai, et la carte promettait
+              un envoi en 1-2 jours pour des pièces fabriquées sur commande en 4 à 8
+              semaines (politique d'AZM, et ce que Tyler répond). Tommy confirme le délai. */}
+          <span className="stock stock--made">Built to order</span>
         </div>
         {/* AZM offre Klarna, pas Shop Pay Installments (vérifié sur azmotorsport.ca le
             2026-11-03). Klarna décide lui-même du plan selon le montant : « 4 payments »
@@ -316,16 +318,11 @@ export default function ProductCard({
           </label>
         ) : null}
 
-        {/* Rassurance au moment du clic. Faits lus sur azmotorsport.ca (politique
-            d'expédition, 2026-01-28). Le délai de 1–2 jours ne vaut que pour une pièce
-            en stock : une pièce fabriquée sur commande prend plus de temps. */}
+        {/* Rassurance au moment du clic. Aucun délai chiffré : le stock Shopify est
+            fictif, et le vrai délai dépend de la pièce (voir le badge plus haut). */}
         <ul className="assure">
           <li>Secure Shopify checkout, your details already filled in</li>
-          <li>
-            {current.available
-              ? 'Ships from Brossard, QC in 1–2 business days'
-              : 'Built and shipped from Brossard, QC'}
-          </li>
+          <li>Built to order in Brossard, QC · Tommy confirms timing</li>
           <li className="shipfree">
             {current.price >= freeShipMin()
               ? 'Free shipping to Canada & the US'

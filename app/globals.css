@@ -1402,3 +1402,6 @@ body[data-ship="no"] .shipfree{display:none !important}
   color:#000; background:#fff; padding:3px 7px;
 }
 .setup__note{margin:9px 0 0; font-size:.74rem; color:var(--muted)}
+
+/* « Built to order » : une information, pas une alerte. Ni lime ni orange. */
+.stock--made{color:#c9ced2}
